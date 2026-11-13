@@ -1084,6 +1084,64 @@ export function FairValueCalculator() {
         };
     }, [dividendYield, eps, quote?.price, quote?.trailingPE, pe, discountRate, growthRate]);
 
+    // Wachstums-Check & Plausibilitäts-Fazit (PEG-Ratio)
+    const growthCheck = useMemo(() => {
+        const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : Number(growthRate) || 0;
+        const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
+        const curP = quote?.price || 0;
+        const curPe = (curP > 0 && numEps > 0) ? (curP / numEps) : (quote?.trailingPE || 0);
+        const forwardPe = (quote?.forwardPE && quote.forwardPE > 2) ? quote.forwardPE : ((analysis?.forwardPE && analysis.forwardPE > 2) ? analysis.forwardPE : 0);
+        const exitPe = typeof pe === 'string' ? parseFloat(pe) || 0 : Number(pe) || 0;
+
+        // Als Referenz-KGV für die Wachstumsplausibilität: Bevorzugt Forward-KGV (Zukunftsbewertung), sonst exitPe oder curPe
+        const refPe = forwardPe > 0 ? forwardPe : (exitPe > 0 ? exitPe : curPe);
+
+        // Dynamischer PEG basierend auf aktuellem Wachstums-Input und Referenz-KGV
+        let peg: number | null = null;
+        if (numGrowth > 0 && refPe > 0) {
+            peg = parseFloat((refPe / numGrowth).toFixed(2));
+        } else if (analysis?.pegRatio && analysis.pegRatio > 0 && analysis.pegRatio < 20) {
+            peg = parseFloat(Number(analysis.pegRatio).toFixed(2));
+        }
+
+        if (!peg || peg <= 0 || numGrowth <= 0) return null;
+
+        if (peg < 1.0) {
+            return {
+                peg: peg.toFixed(2),
+                icon: '⭐',
+                title: `Wachstums-Check (PEG ${peg.toFixed(2)})`,
+                badgeColor: 'text-emerald-400',
+                text: `Seltenes Wachstums-Schnäppchen: Das erwartete Gewinnwachstum von ${numGrowth.toFixed(1)} % p.a. übertrifft das Bewertungs-KGV (${refPe.toFixed(1)}). Exzellentes Chance/Risiko-Profil.`
+            };
+        }
+        if (peg <= 1.5) {
+            return {
+                peg: peg.toFixed(2),
+                icon: '💡',
+                title: `Wachstums-Check (PEG ${peg.toFixed(2)})`,
+                badgeColor: 'text-emerald-400',
+                text: `Gesunde Wachstumsprämie: Das KGV von ${refPe.toFixed(1)} wird durch das starke EPS-Wachstum von ${numGrowth.toFixed(1)} % p.a. fundamental getragen (unter 1.5 gilt als faire Wachstumsprämie).`
+            };
+        }
+        if (peg <= 2.0) {
+            return {
+                peg: peg.toFixed(2),
+                icon: '⚖️',
+                title: `Wachstums-Check (PEG ${peg.toFixed(2)})`,
+                badgeColor: 'text-amber-400',
+                text: `Ambitionierte Bewertung: Das KGV von ${refPe.toFixed(1)} verlangt anhaltend hohes Wachstum von ${numGrowth.toFixed(1)} % p.a. ohne nennenswerte Fehltritte.`
+            };
+        }
+        return {
+            peg: peg.toFixed(2),
+            icon: '⚠️',
+            title: `Wachstums-Check (PEG ${peg.toFixed(2)})`,
+            badgeColor: 'text-rose-400',
+            text: `Erhöhtes Bewertungsrisiko: Das KGV von ${refPe.toFixed(1)} ist gegenüber dem Wachstum von ${numGrowth.toFixed(1)} % p.a. überdehnt (hohes Rückschlagpotenzial bei Wachstumsdellen).`
+        };
+    }, [growthRate, eps, quote?.price, quote?.trailingPE, quote?.forwardPE, analysis?.forwardPE, analysis?.pegRatio, pe]);
+
     // 4. AUTO-SYNC: Save Fair Value AND Fair Value Parameters to Stock
     useEffect(() => {
         if (isRestoring.current || loadingData || !selectedSymbol || !calculation || !quote) return;
@@ -2178,42 +2236,66 @@ export function FairValueCalculator() {
                                             })()}
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-1.5 text-[11px] lg:text-[10px] text-muted-foreground bg-muted/40 p-1.5 lg:p-1 rounded-lg border border-border/50">
-                                        <div>
-                                            <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Aktuell:</span>
-                                            <span className="font-mono font-bold text-foreground">
-                                                {(() => {
-                                                    const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
-                                                    if (quote.price && numEps > 0) {
-                                                        return (quote.price / numEps).toFixed(2);
-                                                    }
-                                                    if (quote.trailingPE && quote.trailingPE > 3 && quote.trailingPE < 200) {
-                                                        return quote.trailingPE.toFixed(2);
-                                                    }
-                                                    return '-';
-                                                })()}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Limit (R#1):</span>
-                                            <span className="font-mono font-bold text-foreground">{calculation.ruleOneLimit.toFixed(1)}</span>
-                                        </div>
-                                        {calculation.equivalentTerminalGrowth !== null && (
-                                            <div className="col-span-2 sm:col-span-1">
-                                                <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Terminal:</span>
-                                                <span className={cn(
-                                                    "font-mono font-bold",
-                                                    calculation.equivalentTerminalGrowth < 0
-                                                        ? "text-rose-400"
-                                                        : calculation.equivalentTerminalGrowth <= 2.0
-                                                            ? "text-emerald-400"
-                                                            : "text-purple-400"
-                                                )}>
-                                                    {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %
-                                                </span>
+                                    {(() => {
+                                        const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
+                                        const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : Number(growthRate) || 0;
+                                        const trailingPeVal = (quote?.trailingPE && quote.trailingPE > 3 && quote.trailingPE < 250)
+                                            ? quote.trailingPE
+                                            : (quote?.price && numEps > 0 ? quote.price / numEps : null);
+                                        const forwardPeVal = (quote?.forwardPE && quote.forwardPE > 2 && quote.forwardPE < 200)
+                                            ? quote.forwardPE
+                                            : ((analysis?.forwardPE && analysis.forwardPE > 2 && analysis.forwardPE < 200)
+                                                ? analysis.forwardPE
+                                                : (quote?.price && numEps > 0 ? quote.price / numEps : null));
+                                        const activePe = forwardPeVal || (typeof pe === 'string' ? parseFloat(pe) : Number(pe)) || trailingPeVal;
+                                        const pegVal = (numGrowth > 0 && activePe && activePe > 0)
+                                            ? parseFloat((activePe / numGrowth).toFixed(2))
+                                            : (analysis?.pegRatio && analysis.pegRatio > 0 && analysis.pegRatio < 20 ? parseFloat(Number(analysis.pegRatio).toFixed(2)) : null);
+
+                                        return (
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:gap-1.5 text-[11px] lg:text-[10px] text-muted-foreground bg-muted/40 p-1.5 lg:p-1 rounded-lg border border-border/50">
+                                                <div title="Historisches KGV der vergangenen 12 Monate (Trailing Twelve Months)">
+                                                    <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">KGV (TTM):</span>
+                                                    <span className="font-mono font-bold text-foreground">
+                                                        {trailingPeVal !== null ? trailingPeVal.toFixed(1) : '-'}
+                                                    </span>
+                                                </div>
+                                                <div title="Erwartetes KGV bezogen auf den geschätzten Konsens-Gewinn der nächsten 12 Monate">
+                                                    <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Forward (1J):</span>
+                                                    <span className="font-mono font-bold text-foreground">
+                                                        {forwardPeVal !== null ? forwardPeVal.toFixed(1) : '-'}
+                                                    </span>
+                                                </div>
+                                                <div title={pegVal !== null ? ('PEG ' + pegVal.toFixed(2) + ': KGV (' + (activePe ? activePe.toFixed(1) : '-') + ') geteilt durch ' + numGrowth.toFixed(1) + ' % EPS-Wachstum. Unter 1.5 gilt als gesunde Wachstumsprämie.') : 'Price/Earnings-to-Growth Verhältnis'}>
+                                                    <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">PEG-Ratio:</span>
+                                                    <span className={cn(
+                                                        "font-mono font-bold",
+                                                        pegVal === null ? "text-foreground" :
+                                                        pegVal < 1.0 ? "text-emerald-400" :
+                                                        pegVal <= 1.5 ? "text-emerald-300" :
+                                                        pegVal <= 2.0 ? "text-amber-400" : "text-rose-400"
+                                                    )}>
+                                                        {pegVal !== null ? pegVal.toFixed(2) : '-'}
+                                                    </span>
+                                                </div>
+                                                <div title="Impliziertes ewiges Wachstum für Phase 2 (DCF-Äquivalent)">
+                                                    <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Terminal:</span>
+                                                    <span className={cn(
+                                                        "font-mono font-bold",
+                                                        calculation.equivalentTerminalGrowth === null
+                                                            ? "text-foreground"
+                                                            : calculation.equivalentTerminalGrowth < 0
+                                                                ? "text-rose-400"
+                                                                : calculation.equivalentTerminalGrowth <= 2.0
+                                                                    ? "text-emerald-400"
+                                                                    : "text-purple-400"
+                                                    )}>
+                                                        {calculation.equivalentTerminalGrowth !== null ? ((calculation.equivalentTerminalGrowth > 0 ? '+' : '') + calculation.equivalentTerminalGrowth.toFixed(1) + ' %') : '-'}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
+                                        );
+                                    })()}
                                     <div className="relative">
                                         <input
                                             type="number"
@@ -2588,6 +2670,17 @@ export function FairValueCalculator() {
                                                     )}
                                                 </div>
                                             </div>
+
+                                            {/* Wachstums- & Plausibilitäts-Check (PEG-Fazit) - Einheitlich 12px */}
+                                            {growthCheck && (
+                                                <div className="pt-2.5 border-t border-border/40 text-[12px] text-left leading-normal flex items-start gap-1.5 text-foreground">
+                                                    <span className="text-sm shrink-0 select-none mt-0.5">{growthCheck.icon}</span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <strong className={cn("font-bold mr-1.5 text-[12px]", growthCheck.badgeColor)}>{growthCheck.title}:</strong>
+                                                        <span className="text-foreground/95 text-[12px]">{growthCheck.text}</span>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* Fundamentale Abwärtsabsicherung / Risikoprofil - Einheitlich 12px */}
                                             <div className="pt-2.5 border-t border-border/40 text-[12px] text-left leading-normal flex items-start gap-1.5 text-foreground">
