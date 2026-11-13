@@ -252,6 +252,10 @@ export default defineConfig({
 
                 regularMarketOpen: getRawVal(quoteBasic?.regularMarketOpen) || getRawVal(summaryDetail.open) || null,
                 regularMarketPreviousClose: getRawVal(quoteBasic?.regularMarketPreviousClose) || getRawVal(summaryDetail.previousClose) || getRawVal(price.regularMarketPreviousClose) || null,
+                preMarketPrice: getRawVal(quoteBasic?.preMarketPrice) ?? getRawVal(price.preMarketPrice) ?? null,
+                preMarketChangePercent: getRawVal(quoteBasic?.preMarketChangePercent) ?? getRawVal(price.preMarketChangePercent) ?? null,
+                postMarketPrice: getRawVal(quoteBasic?.postMarketPrice) ?? getRawVal(price.postMarketPrice) ?? null,
+                postMarketChangePercent: getRawVal(quoteBasic?.postMarketChangePercent) ?? getRawVal(price.postMarketChangePercent) ?? null,
 
                 country: summaryProfile.country || null,
                 sector: summaryProfile.sector || null,

@@ -416,6 +416,16 @@ export function StockDetail() {
                     hasUpdates = true;
                 }
 
+                // Pre-Market / After-Hours Indikation (immer synchronisieren, auch zum Zuruecksetzen)
+                const extKeys = ['marketState', 'preMarketPrice', 'preMarketChangePercent', 'postMarketPrice', 'postMarketChangePercent'] as const;
+                for (const key of extKeys) {
+                    const nv = (quoteResponse as any)[key] ?? undefined;
+                    if (nv !== ((currentStock as any)[key] ?? undefined)) {
+                        updates[key] = nv;
+                        hasUpdates = true;
+                    }
+                }
+
                 if (hasUpdates) {
                     if (stockFromContext) {
                         updateStock(stock.id, updates);
@@ -922,6 +932,33 @@ export function StockDetail() {
                             {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(safePreviousClose || 0, stock.currency, false)}
                         </span>
                     </div>
+
+                    {/* Pre-Market / After-Hours Indikation (Yahoo) */}
+                    {(() => {
+                        const st = stock.marketState;
+                        const isPre = st === 'PRE' || st === 'PREPRE';
+                        const isPost = st === 'POST' || st === 'POSTPOST' || st === 'CLOSED';
+                        const ext = isPre
+                            ? { label: 'Pre-Market', price: stock.preMarketPrice, pct: stock.preMarketChangePercent }
+                            : isPost
+                                ? { label: 'After-Hours', price: stock.postMarketPrice, pct: stock.postMarketChangePercent }
+                                : null;
+                        if (!ext || !ext.price) return null;
+                        const pct = ext.pct ?? 0;
+                        return (
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                <span className="text-muted-foreground">{ext.label}</span>
+                                <span className="font-medium tabular-nums text-right">
+                                    {formatCurrency(ext.price, stock.currency, false)}
+                                    {ext.pct !== null && ext.pct !== undefined && (
+                                        <span className={`ml-2 ${pct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            ({pct >= 0 ? '+' : ''}{pct.toFixed(2)} %)
+                                        </span>
+                                    )}
+                                </span>
+                            </div>
+                        );
+                    })()}
 
                     {(() => {
                         void fvModeTick;

@@ -97,6 +97,10 @@ export interface Stock {
     quickLinks?: QuickLink[]; // NEW: Custom URLs for charts, financial sites, etc.
     fairValueQuickLinks?: QuickLink[]; // Specific custom URLs for Fair Value research/calculation
     marketState?: 'REGULAR' | 'CLOSED' | 'PRE' | 'POST' | 'PREPRE' | 'POSTPOST'; // Yahoo Finance Market State
+    preMarketPrice?: number | null; // Yahoo Pre-Market Indikation
+    preMarketChangePercent?: number | null;
+    postMarketPrice?: number | null; // Yahoo After-Hours Indikation
+    postMarketChangePercent?: number | null;
     sectorWeights?: { [key: string]: number }; // NEW: For ETFs (Sector Allocation)
     countryWeights?: { [key: string]: number }; // NEW: For ETFs (Country Allocation)
 }

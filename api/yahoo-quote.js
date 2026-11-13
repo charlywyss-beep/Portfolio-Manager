@@ -256,6 +256,11 @@ export default async function handler(req, res) {
             regularMarketOpen: quoteBasic?.regularMarketOpen || quoteSummary?.price?.regularMarketOpen || quoteSummary?.summaryDetail?.open,
             // Try ALL sources for Prev Close
             regularMarketPreviousClose: quoteBasic?.regularMarketPreviousClose || quoteSummary?.price?.regularMarketPreviousClose || quoteSummary?.summaryDetail?.previousClose,
+            marketState: quoteBasic?.marketState || quoteSummary?.price?.marketState || null,
+            preMarketPrice: quoteBasic?.preMarketPrice ?? quoteSummary?.price?.preMarketPrice ?? null,
+            preMarketChangePercent: quoteBasic?.preMarketChangePercent ?? quoteSummary?.price?.preMarketChangePercent ?? null,
+            postMarketPrice: quoteBasic?.postMarketPrice ?? quoteSummary?.price?.postMarketPrice ?? null,
+            postMarketChangePercent: quoteBasic?.postMarketChangePercent ?? quoteSummary?.price?.postMarketChangePercent ?? null,
             currency: quoteBasic?.currency || quoteSummary?.price?.currency,
 
             regularMarketTime: (quoteBasic?.regularMarketTime || quoteSummary?.price?.regularMarketTime) ?
