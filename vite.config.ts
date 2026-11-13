@@ -121,6 +121,44 @@ export default defineConfig({
                        
                        if (!chartMeta) return { symbol: sym, error: 'No chart data' };
                        
+                        // Pre-Market / After-Hours aus 5m-Chart (includePrePost) ableiten - kein Crumb noetig
+                        const ext: { state: string | null; prePrice: number | null; prePct: number | null; postPrice: number | null; postPct: number | null } =
+                            { state: null, prePrice: null, prePct: null, postPrice: null, postPct: null };
+                        try {
+                            const exRes = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=5m&range=1d&includePrePost=true`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+                            if (exRes.ok) {
+                                const exData: any = await exRes.json();
+                                const r0 = exData.chart?.result?.[0];
+                                const tp = r0?.meta?.currentTradingPeriod;
+                                const ts: number[] = r0?.timestamp || [];
+                                const closes: (number | null)[] = r0?.indicators?.quote?.[0]?.close || [];
+                                if (tp?.regular) {
+                                    const nowSec = Math.floor(Date.now() / 1000);
+                                    const inP = (per: any, t: number) => !!per && t >= per.start && t < per.end;
+                                    ext.state = inP(tp.pre, nowSec) ? 'PRE' : inP(tp.regular, nowSec) ? 'REGULAR' : inP(tp.post, nowSec) ? 'POST' : 'CLOSED';
+                                    // Kerzen koennen vom Vortag stammen (z.B. vor Pre-Market): Perioden um ganze Tage verschieben
+                                    const refPer = tp.pre || tp.regular;
+                                    const dayShift = ts.length ? Math.max(0, Math.round((refPer.start - ts[0]) / 86400)) * 86400 : 0;
+                                    const lastIn = (per: any): number | null => {
+                                        if (!per) return null;
+                                        for (let i = ts.length - 1; i >= 0; i--) {
+                                            if (ts[i] >= per.start - dayShift && ts[i] < per.end - dayShift && typeof closes[i] === 'number') return closes[i] as number;
+                                        }
+                                        return null;
+                                    };
+                                    const regPx = chartMeta.regularMarketPrice;
+                                    const pct = (v: number | null) => (v && regPx) ? (v / regPx - 1) * 100 : null;
+                                    if (ext.state === 'PRE') {
+                                        ext.prePrice = lastIn(tp.pre);
+                                        ext.prePct = pct(ext.prePrice);
+                                    } else if (ext.state === 'POST' || ext.state === 'CLOSED') {
+                                        ext.postPrice = lastIn(tp.post);
+                                        ext.postPct = pct(ext.postPrice);
+                                    }
+                                }
+                            }
+                        } catch (_) { /* Indikation optional */ }
+
                        let kcvValue = null;
                        if (tsFallback.cap && tsFallback.flow && tsFallback.flow > 0) {
                            kcvValue = tsFallback.cap / tsFallback.flow;
@@ -137,7 +175,11 @@ export default defineConfig({
                            regularMarketPrice: chartMeta.regularMarketPrice,
                            currency: chartMeta.currency,
                            regularMarketTime: chartMeta.regularMarketTime,
-                           marketState: null,
+                            marketState: ext.state,
+                            preMarketPrice: ext.prePrice,
+                            preMarketChangePercent: ext.prePct,
+                            postMarketPrice: ext.postPrice,
+                            postMarketChangePercent: ext.postPct,
                            trailingPE: (chartMeta.regularMarketPrice && fallbackEps) ? (chartMeta.regularMarketPrice / fallbackEps) : null,
                            forwardPE: null,
                            eps: fallbackEps,
