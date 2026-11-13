@@ -2887,6 +2887,9 @@ export function FairValueCalculator() {
                                                         effectiveLimitType = 'manual';
                                                     }
 
+                                                    if (effectiveLimitType === 'fairValue') {
+                                                        effectiveLimitType = valuationProfile === 'risk' ? 'risk' : valuationProfile === 'quality' ? 'quality' : 'conservative';
+                                                    }
                                                     const isCustom = effectiveLimitType === 'manual';
                                                     const iconAndLabelColor = isCustom
                                                         ? "text-pink-400"
@@ -2948,8 +2951,8 @@ export function FairValueCalculator() {
                                                         badgeLabel = 'Sicherheit (A)';
                                                         badgeColor = 'text-blue-400';
                                                     } else if (effectiveLimitType === 'fairValue') {
-                                                        badgeLabel = 'Fairer Wert';
-                                                        badgeColor = 'text-blue-300';
+                                                        badgeLabel = valuationProfile === 'risk' ? 'Fairer Wert (C)' : valuationProfile === 'quality' ? 'Fairer Wert (B)' : 'Fairer Wert (A)';
+                                                        badgeColor = valuationProfile === 'risk' ? 'text-amber-400' : valuationProfile === 'quality' ? 'text-purple-400' : 'text-blue-400';
                                                     }
 
                                                     return (
@@ -2983,6 +2986,12 @@ export function FairValueCalculator() {
                                                     } else {
                                                         inputColorType = 'manual';
                                                     }
+
+                                                    if (inputColorType === 'fairValue') {
+                                                        inputColorType = valuationProfile === 'risk' ? 'risk' : valuationProfile === 'quality' ? 'quality' : 'conservative';
+                                                    }
+                                                    const parsedInput = parseFloat(buyLimitInput.replace(',', '.'));
+                                                    const isLimitDirty = !isNaN(parsedInput) && parsedInput > 0 && !(currentStock?.targetPrice && Math.abs(parsedInput - currentStock.targetPrice) < 0.01);
 
                                                     const inputTextColor = inputColorType === 'manual'
                                                         ? "text-pink-400 font-bold"
@@ -3037,6 +3046,7 @@ export function FairValueCalculator() {
                                                                 </span>
                                                             </div>
 
+                                                            {isLimitDirty ? (
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
@@ -3046,6 +3056,12 @@ export function FairValueCalculator() {
                                                                 <Check className="size-3.5" />
                                                                 <span>Speichern</span>
                                                             </button>
+                                                            ) : (
+                                                                <span className={cn("px-2 py-1 text-[11px] font-semibold rounded-lg flex items-center gap-1 shrink-0 select-none h-7 sm:h-8 lg:h-6.5", inputTextColor)} title="Kauflimit ist aktiv und gespeichert">
+                                                                    <Check className="size-3.5" />
+                                                                    <span>Aktiv</span>
+                                                                </span>
+                                                            )}
                                                         </>
                                                     );
                                                 })()}
