@@ -747,10 +747,10 @@ export function PriceHistoryChart({
                                         key={range}
                                         onClick={() => handleRangeChange(range)}
                                         className={cn(
-                                            "h-7 inline-flex items-center justify-center px-2 sm:px-3 py-0 text-xs font-medium leading-none rounded-md border border-transparent transition-all whitespace-nowrap",
+                                            "h-7 inline-flex items-center justify-center px-2 sm:px-3 py-0 text-xs font-medium leading-none rounded-md border transition-all whitespace-nowrap",
                                             selectedRange === range
-                                                ? "bg-background shadow-sm text-foreground"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                                ? "bg-background border-slate-300/80 dark:border-slate-500/50 shadow-sm text-foreground"
+                                                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-background/70"
                                         )}
                                     >
                                         {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : formatRangeLabel(range)}
@@ -765,8 +765,8 @@ export function PriceHistoryChart({
                                         className={cn(
                                             toolbarToggleClass,
                                             showInCHF
-                                                ? "bg-emerald-600 text-white border-emerald-700 shadow-md"
-                                                : "bg-background hover:bg-muted text-muted-foreground border-border"
+                                                ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-700"
+                                                : "bg-background text-muted-foreground border-slate-300/80 dark:border-slate-500/50 hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/50"
                                         )}
                                         title="Währung in CHF umschalten"
                                     >
@@ -783,8 +783,8 @@ export function PriceHistoryChart({
                                         className={cn(
                                             toolbarToggleClass,
                                             showPrePost
-                                                ? "bg-indigo-600 text-white border-indigo-700 shadow-md"
-                                                : "bg-background hover:bg-muted text-muted-foreground border-border"
+                                                ? "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-700"
+                                                : "bg-background text-muted-foreground border-slate-300/80 dark:border-slate-500/50 hover:bg-indigo-500/15 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500/50"
                                         )}
                                         title="Vor- und nachbörsliche Kurse (Pre-Market / After-Hours) im 1D-Chart ein-/ausblenden"
                                     >
@@ -806,8 +806,8 @@ export function PriceHistoryChart({
                                     className={cn(
                                         toolbarToggleClass,
                                         isMeasureMode
-                                            ? "bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-400/50"
-                                            : "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                                            ? "bg-blue-600 hover:bg-blue-500 text-white border-blue-700 ring-1 ring-blue-400/50"
+                                            : "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/40 hover:bg-blue-100 dark:hover:bg-blue-900/25"
                                     )}
                                     title="Messmodus: Punkte im Chart anklicken oder Hoch (H) / Tief (T) wählen"
                                 >
