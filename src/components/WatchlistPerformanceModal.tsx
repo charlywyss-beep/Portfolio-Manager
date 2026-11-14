@@ -11,15 +11,15 @@ import { fetchMultipleHistoricalCloses, type HistoricalRange } from '../services
 
 export type WatchlistPeriod = '1D' | HistoricalRange;
 
-const PERIOD_CONFIG: { key: WatchlistPeriod; label: string; shortLabel: string; avgLabel: string; hint: string }[] = [
-    { key: '1D', label: 'Heute', shortLabel: 'Heute', avgLabel: 'Heute', hint: 'Live Tag' },
-    { key: '1W', label: '1 Woche', shortLabel: '1W', avgLabel: '1 Woche', hint: '7 Tage' },
-    { key: '1M', label: '1 Monat', shortLabel: '1M', avgLabel: '1 Monat', hint: '30 Tage' },
-    { key: '3M', label: '3 Monate', shortLabel: '3M', avgLabel: '3 Monate', hint: 'Quartal' },
-    { key: '6M', label: '6 Monate', shortLabel: '6M', avgLabel: '6 Monate', hint: 'Halbjahr' },
-    { key: '1Y', label: '1 Jahr', shortLabel: '1J', avgLabel: 'Jahr', hint: '12 Monate' },
-    { key: '3Y', label: '3 Jahre', shortLabel: '3J', avgLabel: '3 Jahre', hint: '36 Monate' },
-    { key: '5Y', label: '5 Jahre', shortLabel: '5J', avgLabel: '5 Jahre', hint: '60 Monate' }
+const PERIOD_CONFIG: { key: WatchlistPeriod; label: string; shortLabel: string; hint: string }[] = [
+    { key: '1D', label: 'Heute', shortLabel: 'Heute', hint: 'Live Tag' },
+    { key: '1W', label: '1 Woche', shortLabel: '1 W', hint: '7 Tage' },
+    { key: '1M', label: '1 Monat', shortLabel: '1 M', hint: '30 Tage' },
+    { key: '3M', label: '3 Monate', shortLabel: '3 M', hint: 'Quartal' },
+    { key: '6M', label: '6 Monate', shortLabel: '6 M', hint: 'Halbjahr' },
+    { key: '1Y', label: '1 Jahr', shortLabel: '1 J', hint: '12 Monate' },
+    { key: '3Y', label: '3 Jahre', shortLabel: '3 J', hint: '36 Monate' },
+    { key: '5Y', label: '5 Jahre', shortLabel: '5 J', hint: '60 Monate' }
 ];
 
 interface WatchlistPerformanceModalProps {
@@ -516,7 +516,10 @@ export function WatchlistPerformanceModal({
                         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-card/60 border border-border/50">
                             <Trophy className="size-4 text-amber-400 shrink-0" />
                             <div className="min-w-0">
-                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">1. Platz ({activePeriodMeta.shortLabel})</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-semibold flex items-center gap-2">
+                                    <span>1. Platz</span>
+                                    <span className="text-foreground/75">{activePeriodMeta.label}</span>
+                                </div>
                                 <div className="font-bold truncate text-foreground flex items-center gap-1">
                                     <span className="truncate">{stats.best.stock.name.replace(/\r?\n/g, ' ')}</span>
                                     <span className={cn("font-mono font-bold text-xs shrink-0", stats.best.effectiveGainPercent >= 0 ? "text-green-500" : "text-red-500")}>
@@ -529,7 +532,10 @@ export function WatchlistPerformanceModal({
                         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-card/60 border border-border/50">
                             <Flame className="size-4 text-blue-400 shrink-0" />
                             <div className="min-w-0">
-                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Durchschnitt {activePeriodMeta.avgLabel}</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-semibold flex items-center gap-2">
+                                    <span>Durchschnitt</span>
+                                    <span className="text-foreground/75">{activePeriodMeta.label}</span>
+                                </div>
                                 <div className={cn("font-mono font-bold text-sm", stats.avgGain >= 0 ? "text-green-500" : "text-red-500")}>
                                     {isPeriodMode && isLoadingPeriod
                                         ? '...'
@@ -553,7 +559,10 @@ export function WatchlistPerformanceModal({
                         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-card/60 border border-border/50">
                             <TrendingDown className="size-4 text-red-400 shrink-0" />
                             <div className="min-w-0">
-                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Schlusslicht</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-semibold flex items-center gap-2">
+                                    <span>Schlusslicht</span>
+                                    <span className="text-foreground/75">{activePeriodMeta.label}</span>
+                                </div>
                                 <div className="font-bold truncate text-foreground flex items-center gap-1">
                                     <span className="truncate">{stats.worst.stock.name.replace(/\r?\n/g, ' ')}</span>
                                     <span className={cn("font-mono font-bold text-xs shrink-0", stats.worst.effectiveGainPercent >= 0 ? "text-green-500" : "text-red-500")}>
@@ -618,8 +627,15 @@ export function WatchlistPerformanceModal({
                                         onClick={() => handleSort('gain')}
                                         className="text-right py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground min-w-[140px]"
                                     >
-                                        <div className="flex items-center justify-end gap-1">
-                                            <span>{isPeriodMode ? `Rendite (${activePeriodMeta.shortLabel})` : 'Tag %'}</span>
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            {isPeriodMode ? (
+                                                <>
+                                                    <span>Rendite</span>
+                                                    <span className="text-foreground/80">{activePeriodMeta.shortLabel}</span>
+                                                </>
+                                            ) : (
+                                                <span>Tag %</span>
+                                            )}
                                             {sortConfig.key === 'gain' && (
                                                 sortConfig.direction === 'desc' ? <ChevronDown className="size-3 text-primary" /> : <ChevronUp className="size-3 text-primary" />
                                             )}
