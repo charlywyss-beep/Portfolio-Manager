@@ -620,7 +620,7 @@ export function Dashboard() {
                                 {performancePeriod === '1D' && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setShowPerformanceDetails(true); }}
-                                        className="h-7 px-2.5 rounded-lg border text-xs font-medium inline-flex items-center justify-center leading-none py-0 transition-colors shadow-sm bg-background border-border text-foreground hover:bg-accent"
+                                        className="h-7 px-2.5 rounded-lg border border-border/80 dark:border-slate-600 bg-background hover:bg-accent text-foreground text-xs font-medium inline-flex items-center justify-center leading-none py-0 transition-colors shadow-2xs hover:border-border dark:hover:border-slate-500"
                                         title="Performance Details öffnen"
                                     >
                                         Details
@@ -630,7 +630,7 @@ export function Dashboard() {
                                 {/* Timeframe Selector */}
                                 <div className="relative">
                                     <select
-                                        className="h-7 appearance-none bg-background border border-border rounded-lg text-xs font-medium pl-2.5 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 leading-none py-0 inline-flex items-center"
+                                        className="h-7 appearance-none bg-background border border-border/80 dark:border-slate-600 rounded-lg text-xs font-medium pl-2.5 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 leading-none py-0 inline-flex items-center"
                                         value={performancePeriod}
                                         onClick={(e) => e.stopPropagation()}
                                         onChange={(e) => setPerformancePeriod(e.target.value)}

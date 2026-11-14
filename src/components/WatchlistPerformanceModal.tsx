@@ -247,6 +247,15 @@ export function WatchlistPerformanceModal({
     // Sorting
     const sortedData = useMemo(() => {
         return [...enrichedData].sort((a, b) => {
+            const stateA = estimateMarketState(a.stock.symbol, a.stock.currency);
+            const stateB = estimateMarketState(b.stock.symbol, b.stock.currency);
+            const isOpenA = stateA === 'REGULAR';
+            const isOpenB = stateB === 'REGULAR';
+
+            if (isOpenA !== isOpenB) {
+                return isOpenA ? -1 : 1;
+            }
+
             const dir = sortConfig.direction === 'desc' ? -1 : 1;
             if (sortConfig.key === 'gain') {
                 return (a.effectiveGainPercent - b.effectiveGainPercent) * dir;
