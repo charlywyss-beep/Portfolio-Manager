@@ -1306,7 +1306,7 @@ export function StockDetail() {
                                         <span className="text-muted-foreground">Kauflimit</span>
                                         {stock.targetPrice ? (
                                             <span className={cn(
-                                                "text-[10px] font-semibold px-1.5 py-0.5 rounded border shadow-xs",
+                                                "inline-flex items-center text-[11px] sm:text-xs landscape:text-[10px] leading-4 font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border shadow-xs",
                                                 resolvedTargetType === 'risk'
                                                     ? "text-amber-800 dark:text-amber-300 bg-amber-500/15 border-amber-500/30"
                                                     : resolvedTargetType === 'quality'
@@ -1318,7 +1318,7 @@ export function StockDetail() {
                                                                 : "text-pink-800 dark:text-pink-300 bg-pink-500/15 border-pink-500/30"
                                             )}>
                                                 {resolvedTargetType === 'risk'
-                                                    ? 'Risiko-Abschlag (C)'
+                                                    ? 'Risiko-Abschlag C'
                                                     : resolvedTargetType === 'quality'
                                                         ? 'Qualität B'
                                                         : resolvedTargetType === 'conservative'
@@ -1355,7 +1355,7 @@ export function StockDetail() {
                                         type="button"
                                         onClick={handleToggleFvMode}
                                         className={cn(
-                                            "flex items-center gap-1 text-[11px] sm:text-xs landscape:text-[10px] font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border transition-colors cursor-pointer",
+                                            "flex items-center gap-1 text-[11px] sm:text-xs landscape:text-[10px] leading-4 font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border transition-colors cursor-pointer",
                                             currentMode === 'manual'
                                                 ? "text-pink-800 dark:text-pink-300 bg-pink-500/15 hover:bg-pink-500/25 border-pink-500/30 dark:border-pink-500/40"
                                                 : currentMode === 'risk'
@@ -1380,12 +1380,12 @@ export function StockDetail() {
                                         {currentMode === 'manual' && <Sliders className="size-3 shrink-0" />}
                                         <span>
                                             {currentMode === 'manual'
-                                                ? 'Kaufpreis (Manuell)'
+                                                ? 'Kaufpreis Manuell'
                                                 : currentMode === 'risk'
-                                                    ? 'Kaufpreis (Risiko C)'
+                                                    ? 'Kaufpreis Risiko C'
                                                     : currentMode === 'quality'
-                                                        ? 'Kaufpreis (Qualität B)'
-                                                        : 'Kaufpreis (Sicherheit A)'}
+                                                        ? 'Kaufpreis Qualität B'
+                                                        : 'Kaufpreis Sicherheit A'}
                                         </span>
                                     </button>
                                     <span className={cn(
