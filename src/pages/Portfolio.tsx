@@ -428,7 +428,7 @@ export function Portfolio() {
                                     onClick={() => setIsAddChoiceModalOpen(false)}
                                     title="Zurück"
                                     aria-label="Zurück"
-                                    className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-border shadow-sm shrink-0 transition-all active:scale-95"
+                                    className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-foreground/40 hover:border-foreground/75 shadow-sm shrink-0 transition-all active:scale-95 cursor-pointer"
                                 >
                                     <ArrowLeft className="size-4" />
                                 </button>

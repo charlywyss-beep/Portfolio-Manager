@@ -18,7 +18,7 @@ export function LandscapeBackButton({ onClick, className }: LandscapeBackButtonP
             type="button"
             onClick={onClick || (() => (window.history.length > 1 ? navigate(-1) : navigate('/')))}
             className={cn(
-                "flex items-center justify-center p-2 rounded-xl border border-border bg-card text-foreground hover:bg-accent transition-all shadow-sm shrink-0 active:scale-95 group",
+                "flex items-center justify-center p-2 rounded-xl border border-foreground/40 hover:border-foreground/75 bg-card text-foreground hover:bg-accent transition-all shadow-sm shrink-0 active:scale-95 group cursor-pointer",
                 className
             )}
             title="Zurück"
