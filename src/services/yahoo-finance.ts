@@ -148,9 +148,11 @@ export function clearHistoricalCloseCache(): void {
     historicalCloseCache.clear();
 }
 
+export type HistoricalRange = '1W' | '1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y';
+
 export async function fetchHistoricalClose(
     symbol: string,
-    range: '1W' | '1M' | '3M' | '6M' | '1Y'
+    range: HistoricalRange
 ): Promise<HistoricalCloseData | null> {
     if (!symbol) return null;
 
@@ -160,18 +162,20 @@ export async function fetchHistoricalClose(
         return cached.data;
     }
 
-    const rangeParamMap: Record<string, string> = {
-        '1W': '5d',
-        '1M': '1mo',
-        '3M': '3mo',
-        '6M': '6mo',
-        '1Y': '1y'
+    const rangeParamMap: Record<HistoricalRange, { period: string; interval: string }> = {
+        '1W': { period: '5d', interval: '1d' },
+        '1M': { period: '1mo', interval: '1d' },
+        '3M': { period: '3mo', interval: '1d' },
+        '6M': { period: '6mo', interval: '1d' },
+        '1Y': { period: '1y', interval: '1d' },
+        '3Y': { period: '3y', interval: '1d' },
+        '5Y': { period: '5y', interval: '1wk' }
     };
 
-    const period = rangeParamMap[range] || '5d';
+    const { period, interval } = rangeParamMap[range] || { period: '5d', interval: '1d' };
 
     try {
-        const url = `/api/yahoo-finance?symbol=${encodeURIComponent(symbol)}&period=${period}&interval=1d&_=${Date.now()}`;
+        const url = `/api/yahoo-finance?symbol=${encodeURIComponent(symbol)}&period=${period}&interval=${interval}&_=${Date.now()}`;
         let data: any = null;
 
         try {
@@ -186,7 +190,7 @@ export async function fetchHistoricalClose(
         // Fallback proxy (e.g. for GitHub Pages / CORS):
         if (!data || !data.chart?.result?.[0]) {
             try {
-                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period=${period}&interval=1d&_=${Date.now()}`;
+                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period=${period}&interval=${interval}&_=${Date.now()}`;
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
                 const fallbackRes = await fetch(proxyUrl);
                 if (fallbackRes.ok) {
@@ -240,7 +244,7 @@ export async function fetchHistoricalClose(
  */
 export async function fetchMultipleHistoricalCloses(
     symbols: string[],
-    range: '1W' | '1M' | '3M' | '6M' | '1Y'
+    range: HistoricalRange
 ): Promise<Record<string, HistoricalCloseData>> {
     if (!symbols || symbols.length === 0) return {};
     const uniqueSymbols = Array.from(new Set(symbols.filter(Boolean)));

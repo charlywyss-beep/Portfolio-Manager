@@ -7,17 +7,19 @@ import { cn } from '../utils';
 import { Logo } from './Logo';
 import { estimateMarketState, hasMarketOpenedToday, isAnyStockMarketActiveToday, getMarketOpeningTimeHint } from '../utils/market';
 import { usePortfolio } from '../context/PortfolioContext';
-import { fetchMultipleHistoricalCloses } from '../services/yahoo-finance';
+import { fetchMultipleHistoricalCloses, type HistoricalRange } from '../services/yahoo-finance';
 
-export type WatchlistPeriod = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y';
+export type WatchlistPeriod = '1D' | HistoricalRange;
 
-const PERIOD_CONFIG: { key: WatchlistPeriod; label: string; hint: string }[] = [
-    { key: '1D', label: 'Heute', hint: 'Live Tag' },
-    { key: '1W', label: '1 Woche', hint: '7 Tage' },
-    { key: '1M', label: '1 Monat', hint: '30 Tage' },
-    { key: '3M', label: '3 Monate', hint: 'Quartal' },
-    { key: '6M', label: '6 Monate', hint: 'Halbjahr' },
-    { key: '1Y', label: '1 Jahr', hint: '12 Monate' }
+const PERIOD_CONFIG: { key: WatchlistPeriod; label: string; shortLabel: string; avgLabel: string; hint: string }[] = [
+    { key: '1D', label: 'Heute', shortLabel: 'Heute', avgLabel: 'Heute', hint: 'Live Tag' },
+    { key: '1W', label: '1 Woche', shortLabel: '1W', avgLabel: '1 Woche', hint: '7 Tage' },
+    { key: '1M', label: '1 Monat', shortLabel: '1M', avgLabel: '1 Monat', hint: '30 Tage' },
+    { key: '3M', label: '3 Monate', shortLabel: '3M', avgLabel: '3 Monate', hint: 'Quartal' },
+    { key: '6M', label: '6 Monate', shortLabel: '6M', avgLabel: '6 Monate', hint: 'Halbjahr' },
+    { key: '1Y', label: '1 Jahr', shortLabel: '1J', avgLabel: 'Jahr', hint: '12 Monate' },
+    { key: '3Y', label: '3 Jahre', shortLabel: '3J', avgLabel: '3 Jahre', hint: '36 Monate' },
+    { key: '5Y', label: '5 Jahre', shortLabel: '5J', avgLabel: '5 Jahre', hint: '60 Monate' }
 ];
 
 interface WatchlistPerformanceModalProps {
@@ -134,9 +136,10 @@ export function WatchlistPerformanceModal({
 
         async function loadHistoricalData() {
             setIsLoadingPeriod(true);
+            setPeriodData({});
             try {
                 const symbols = relevantStocks.map(s => s.symbol).filter(Boolean);
-                const range = selectedPeriod as '1W' | '1M' | '3M' | '6M' | '1Y';
+                const range = selectedPeriod as HistoricalRange;
                 const histMap = await fetchMultipleHistoricalCloses(symbols, range);
 
                 if (isCancelled) return;
@@ -312,6 +315,7 @@ export function WatchlistPerformanceModal({
     if (!isOpen) return null;
 
     const isPeriodMode = selectedPeriod !== '1D';
+    const activePeriodMeta = PERIOD_CONFIG.find(p => p.key === selectedPeriod) || PERIOD_CONFIG[0];
 
     return (
         <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden w-full h-full animate-in fade-in duration-150">
@@ -321,9 +325,9 @@ export function WatchlistPerformanceModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-border shadow-sm shrink-0 transition-all active:scale-95 cursor-pointer"
-                            title="Zurück"
-                            aria-label="Zurück"
+                            className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-foreground/40 hover:border-foreground/75 shadow-sm shrink-0 transition-all active:scale-95 cursor-pointer"
+                            title="Zurück zur Watchlist"
+                            aria-label="Zurück zur Watchlist"
                         >
                             <ArrowLeft className="size-4" />
                         </button>
@@ -512,7 +516,7 @@ export function WatchlistPerformanceModal({
                         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-card/60 border border-border/50">
                             <Trophy className="size-4 text-amber-400 shrink-0" />
                             <div className="min-w-0">
-                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">1. Platz ({selectedPeriod === '1D' ? 'Heute' : selectedPeriod})</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">1. Platz ({activePeriodMeta.shortLabel})</div>
                                 <div className="font-bold truncate text-foreground flex items-center gap-1">
                                     <span className="truncate">{stats.best.stock.name.replace(/\r?\n/g, ' ')}</span>
                                     <span className={cn("font-mono font-bold text-xs shrink-0", stats.best.effectiveGainPercent >= 0 ? "text-green-500" : "text-red-500")}>
@@ -525,9 +529,11 @@ export function WatchlistPerformanceModal({
                         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-card/60 border border-border/50">
                             <Flame className="size-4 text-blue-400 shrink-0" />
                             <div className="min-w-0">
-                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Durchschnitt</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Durchschnitt {activePeriodMeta.avgLabel}</div>
                                 <div className={cn("font-mono font-bold text-sm", stats.avgGain >= 0 ? "text-green-500" : "text-red-500")}>
-                                    {stats.avgGain >= 0 ? '+' : ''}{stats.avgGain.toFixed(2)}%
+                                    {isPeriodMode && isLoadingPeriod
+                                        ? '...'
+                                        : `${stats.avgGain >= 0 ? '+' : ''}${stats.avgGain.toFixed(2)}%`}
                                 </div>
                             </div>
                         </div>
@@ -613,7 +619,7 @@ export function WatchlistPerformanceModal({
                                         className="text-right py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground min-w-[140px]"
                                     >
                                         <div className="flex items-center justify-end gap-1">
-                                            <span>{isPeriodMode ? `Rendite (${selectedPeriod})` : 'Tag %'}</span>
+                                            <span>{isPeriodMode ? `Rendite (${activePeriodMeta.shortLabel})` : 'Tag %'}</span>
                                             {sortConfig.key === 'gain' && (
                                                 sortConfig.direction === 'desc' ? <ChevronDown className="size-3 text-primary" /> : <ChevronUp className="size-3 text-primary" />
                                             )}
