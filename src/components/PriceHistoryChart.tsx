@@ -1058,7 +1058,7 @@ export function PriceHistoryChart({
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                         <AreaChart
                             data={displayData}
-                            margin={{ top: 14, right: 6, left: 0, bottom: 18 }}
+                            margin={{ top: selectedRange === '1D' && showPrePost ? 26 : 14, right: 6, left: 0, bottom: 18 }}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);
@@ -1303,7 +1303,7 @@ export function PriceHistoryChart({
                                 const hasPre = displayData.some(p => p.session === 'pre');
                                 const hasPost = displayData.some(p => p.session === 'post');
                                 const firstReg = hasPre ? displayData.find(p => p.session === 'regular') : null;
-                                const lastReg = hasPost ? [...displayData].reverse().find(p => p.session === 'regular') : null;
+                                const firstPost = hasPost ? displayData.find(p => p.session === 'post') : null;
                                 return (
                                     <>
                                         {firstReg && (
@@ -1311,30 +1311,67 @@ export function PriceHistoryChart({
                                                 x={firstReg.date}
                                                 stroke="#64748b"
                                                 strokeDasharray="3 3"
-                                                strokeOpacity={0.75}
-                                                label={{
-                                                    position: 'insideTopLeft',
-                                                    value: 'Handel',
-                                                    fill: '#94a3b8',
-                                                    fontSize: 10
+                                                strokeOpacity={0.8}
+                                                label={(props: any) => {
+                                                    const { viewBox } = props || {};
+                                                    if (!viewBox) return <g />;
+                                                    const { x, y } = viewBox;
+                                                    return (
+                                                        <g>
+                                                            <text
+                                                                x={x - 6}
+                                                                y={y - 8}
+                                                                textAnchor="end"
+                                                                fill="#fbbf24"
+                                                                fontSize={10}
+                                                                fontWeight={600}
+                                                            >
+                                                                ← Vorbörse
+                                                            </text>
+                                                            <text
+                                                                x={x + 6}
+                                                                y={y - 8}
+                                                                textAnchor="start"
+                                                                fill="#94a3b8"
+                                                                fontSize={10}
+                                                                fontWeight={600}
+                                                            >
+                                                                Handelsstart →
+                                                            </text>
+                                                        </g>
+                                                    );
                                                 }}
                                             />
                                         )}
-                                        {lastReg && (
-                                            <ReferenceLine
-                                                x={lastReg.date}
-                                                stroke="#818cf8"
-                                                strokeDasharray="3 3"
-                                                strokeOpacity={0.85}
-                                                label={{
-                                                    position: 'insideTopRight',
-                                                    value: 'Nachbörse',
-                                                    fill: '#818cf8',
-                                                    fontSize: 10,
-                                                    fontWeight: 600
-                                                }}
-                                            />
-                                        )}
+                                        {firstPost && (() => {
+                                            const firstPostIdx = displayData.indexOf(firstPost);
+                                            const nearRightEdge = firstPostIdx >= 0 && displayData.length > 5 && ((displayData.length - 1 - firstPostIdx) / displayData.length) < 0.14;
+                                            return (
+                                                <ReferenceLine
+                                                    x={firstPost.date}
+                                                    stroke="#818cf8"
+                                                    strokeDasharray="3 3"
+                                                    strokeOpacity={0.85}
+                                                    label={(props: any) => {
+                                                        const { viewBox } = props || {};
+                                                        if (!viewBox) return <g />;
+                                                        const { x, y } = viewBox;
+                                                        return (
+                                                            <text
+                                                                x={nearRightEdge ? x - 6 : x + 6}
+                                                                y={y - 8}
+                                                                textAnchor={nearRightEdge ? 'end' : 'start'}
+                                                                fill="#818cf8"
+                                                                fontSize={10}
+                                                                fontWeight={700}
+                                                            >
+                                                                Nachbörse →
+                                                            </text>
+                                                        );
+                                                    }}
+                                                />
+                                            );
+                                        })()}
                                     </>
                                 );
                             })()}

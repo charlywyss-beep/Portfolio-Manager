@@ -58,9 +58,9 @@ function getExtendedHoursInfo(stock: ExtendedHoursSource | null | undefined) {
     const isPre = st === 'PRE' || st === 'PREPRE';
     const isPost = st === 'POST' || st === 'POSTPOST' || st === 'CLOSED';
     const ext = isPre
-        ? { label: 'Pre-Market', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
+        ? { label: 'Vorbörse', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
         : isPost
-            ? { label: 'After-Hours', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
+            ? { label: 'Nachbörse', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
             : null;
     if (!ext || !ext.price) return null;
     const timeText = ext.time ? (() => {
@@ -384,8 +384,20 @@ export function StockDetail() {
             // Price is already normalized by fetchStockHistory (v3.12.72)
             setChartData(response.data);
 
-            // Sync Open & PreviousClose from 1D Chart so "Eröffnung / Vortag" is always current
+            // Sync regular market price & Open & PreviousClose from 1D Chart (never overwrite with Pre/Post price)
             if (rangeToUse === '1D' && response.data && response.data.length > 0) {
+                const lastRegularPoint = [...response.data].reverse().find(p => p.session === 'regular')
+                    || (!showPrePost ? response.data[response.data.length - 1] : undefined);
+                const regPrice = response.regularMarketPrice ?? lastRegularPoint?.value;
+                const regDateStr = (response.regularMarketTime || (lastRegularPoint ? new Date(lastRegularPoint.date) : undefined))?.toISOString();
+                if (regPrice && regPrice > 0) {
+                    if (stockFromContext) {
+                        updateStockPrice(currentStock.id, regPrice, undefined, regDateStr);
+                    } else if (!currentStock.currentPrice || Math.abs(currentStock.currentPrice - regPrice) > 0.001) {
+                        setVirtualStock((prev: any) => ({ ...prev, currentPrice: regPrice, ...(regDateStr ? { lastQuoteDate: regDateStr } : {}) }));
+                    }
+                }
+
                 const chartUpdates: any = {};
                 const derivedOpen = (response as any).open || response.data[0].value;
                 if (derivedOpen && Math.abs((currentStock.open || 0) - derivedOpen) > 0.001) {
@@ -503,20 +515,19 @@ export function StockDetail() {
         }
     }, [stock]);
 
-    // Update Price for Virtual Stock (always use regular session close/price, never extended hours)
+    // Keep regular session close/price synced safely when regular-only chartData updates
     useEffect(() => {
-        if (timeRange === '1D' && chartData && chartData.length > 0 && stock) {
-            const lastRegularPoint = [...chartData].reverse().find(p => !p.session || p.session === 'regular') || chartData[chartData.length - 1];
+        if (timeRange === '1D' && !showPrePost && chartData && chartData.length > 0 && stock) {
+            const lastRegularPoint = [...chartData].reverse().find(p => !p.session || p.session === 'regular');
             if (lastRegularPoint && lastRegularPoint.value) {
                 if (stockFromContext) {
-                    // Stable update check happens inside updateStockPrice (v3.12.111)
                     updateStockPrice(stock.id, lastRegularPoint.value, undefined, lastRegularPoint.date);
                 } else if (!virtualStock?.currentPrice || Math.abs(virtualStock.currentPrice - lastRegularPoint.value) > 0.001) {
                     setVirtualStock((prev: any) => ({ ...prev, currentPrice: lastRegularPoint.value }));
                 }
             }
         }
-    }, [chartData, timeRange, id, !!stockFromContext]); // STABLE: only depend on id and flag
+    }, [chartData, timeRange, showPrePost, id, !!stockFromContext]); // STABLE: only depend on id and flag
 
     if (!stock) return <div className="p-8">Aktie nicht gefunden.</div>;
 
@@ -1064,16 +1075,27 @@ export function StockDetail() {
                         </span>
                     </div>
 
-                    {/* Pre-Market / After-Hours Indikation (Yahoo) */}
+                    {/* Vorbörse / Nachbörse Indikation (Yahoo) */}
                     {(() => {
                         const ext = getExtendedHoursInfo(stock);
                         if (!ext) return null;
                         const pct = ext.pct ?? 0;
                         return (
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                <span className="text-muted-foreground">{ext.label}{ext.timeText ? ` · ${ext.timeText}` : ''}</span>
+                            <div className={cn(
+                                "flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] transition-colors",
+                                showPrePost && "bg-indigo-500/10 -mx-2 px-2 rounded-md border-indigo-500/30"
+                            )}>
+                                <span className={cn(
+                                    "inline-flex items-center gap-1.5",
+                                    showPrePost ? "text-indigo-600 dark:text-indigo-400 font-semibold" : "text-muted-foreground"
+                                )}>
+                                    {showPrePost && <span className="size-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 shrink-0" />}
+                                    <span>{ext.label}{ext.timeText ? ` · ${ext.timeText}` : ''}</span>
+                                </span>
                                 <span className="font-medium tabular-nums text-right">
-                                    {formatCurrency(ext.price!, stock.currency, false)}
+                                    <span className={showPrePost ? "font-bold text-indigo-700 dark:text-indigo-300" : ""}>
+                                        {formatCurrency(ext.price!, stock.currency, false)}
+                                    </span>
                                     {ext.pct !== null && ext.pct !== undefined && (
                                         <span className={`ml-2 ${pct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                             {pct >= 0 ? '+' : ''}{pct.toFixed(2)}%

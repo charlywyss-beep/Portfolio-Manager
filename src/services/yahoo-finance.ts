@@ -51,7 +51,7 @@ export async function fetchStockHistory(
     range: TimeRange,
     _apiKey?: string,
     options?: { includePrePost?: boolean }
-): Promise<{ data: ChartDataPoint[] | null, currency?: string, error?: string, previousClose?: number, open?: number }> {
+): Promise<{ data: ChartDataPoint[] | null, currency?: string, error?: string, previousClose?: number, open?: number, regularMarketPrice?: number, regularMarketTime?: Date }> {
     try {
         const { period, interval } = getYahooParams(range);
         const includePrePostParam = (range === '1D' && options?.includePrePost) ? '&includePrePost=true' : '';
@@ -109,7 +109,7 @@ export async function fetchStockHistory(
                 if (range === '1D' && options?.includePrePost && tp?.regular) {
                     const regStart = tp.regular.start - dayShift;
                     const regEnd = tp.regular.end - dayShift;
-                    session = timestamp < regStart ? 'pre' : timestamp > regEnd ? 'post' : 'regular';
+                    session = timestamp < regStart ? 'pre' : timestamp >= regEnd ? 'post' : 'regular';
                 }
                 return {
                     date: new Date(timestamp * 1000).toISOString(),
@@ -142,7 +142,16 @@ export async function fetchStockHistory(
             else if (ratio > 0.008 && ratio < 0.012) normalizedPrevClose = normalizedPrevClose / 100;
         }
 
-        return { data: points.length > 0 ? points : null, currency: resultCurrency, previousClose: normalizedPrevClose, open: normalizedOpen };
+        const rawRegPrice = result.meta?.regularMarketPrice;
+        const normalizedRegPrice = (typeof rawRegPrice === "number" && rawRegPrice > 0)
+            ? normalizeYahooPrice(rawRegPrice, resultCurrency, symbol)
+            : undefined;
+        const regTimeSec = result.meta?.regularMarketTime;
+        const normalizedRegTime = (typeof regTimeSec === "number" && regTimeSec > 0)
+            ? new Date(regTimeSec * 1000)
+            : undefined;
+
+        return { data: points.length > 0 ? points : null, currency: resultCurrency, previousClose: normalizedPrevClose, open: normalizedOpen, regularMarketPrice: normalizedRegPrice, regularMarketTime: normalizedRegTime };
 
     } catch (error) {
         console.error("Yahoo Finance Proxy Error:", error);
