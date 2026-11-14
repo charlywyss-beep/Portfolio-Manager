@@ -737,83 +737,87 @@ export function PriceHistoryChart({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1.5">
-                <div className="flex bg-muted/50 p-0.5 rounded-lg items-center overflow-x-auto scroller-none max-w-full sm:max-w-fit">
-                    <div className="flex flex-1">
-                        {(['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
-                            <button
-                                key={range}
-                                onClick={() => handleRangeChange(range)}
-                                className={cn(
-                                    "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap",
-                                    selectedRange === range
-                                        ? "bg-background shadow-sm text-foreground"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                                )}
-                            >
-                                {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : formatRangeLabel(range)}
-                            </button>
-                        ))}
-                    </div>
-                    {/* Toggle Button for Currency */}
-                    {canConvert && (
-                        <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
-                            <button
-                                onClick={() => setShowInCHF(!showInCHF)}
-                                className={cn(
-                                    "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
-                                    showInCHF
-                                        ? "bg-emerald-600 text-white border-emerald-700 shadow-md"
-                                        : "bg-background hover:bg-muted text-muted-foreground"
-                                )}
-                                title="Währung in CHF umschalten"
-                            >
-                                <span className={cn("text-[10px] font-bold", showInCHF ? "text-white" : "")}>CHF</span>
-                            </button>
-                        </div>
-                    )}
-
-                    {selectedRange === '1D' && onTogglePrePost && (
-                        <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
-                            <button
-                                type="button"
-                                onClick={onTogglePrePost}
-                                className={cn(
-                                    "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm whitespace-nowrap cursor-pointer",
-                                    showPrePost
-                                        ? "bg-indigo-600 text-white border-indigo-700 shadow-md"
-                                        : "bg-background hover:bg-muted text-muted-foreground border-border"
-                                )}
-                                title="Vor- und nachbörsliche Kurse (Pre-Market / After-Hours) im 1D-Chart ein-/ausblenden"
-                            >
-                                <span className={cn("text-[10px] font-bold", showPrePost ? "text-white" : "")}>Vor-/Nachbörse</span>
-                            </button>
-                        </div>
-                    )}
-
-                    <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
-                        <button
-                            onClick={() => {
-                                setIsMeasureMode(prev => {
-                                    const next = !prev;
-                                    setMeasurePoints([]);
-                                    if (next) setSelectedExtremum(null);
-                                    return next;
-                                });
-                            }}
-                            className={cn(
-                                "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
-                                isMeasureMode
-                                    ? "bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-400/50"
-                                    : "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                {(() => {
+                    const toolbarToggleClass = "h-7 inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-0 rounded-lg border text-[11px] sm:text-xs font-bold leading-none transition-all shadow-sm whitespace-nowrap cursor-pointer";
+                    return (
+                        <div className="flex bg-muted/50 p-0.5 rounded-lg items-center overflow-x-auto scroller-none max-w-full sm:max-w-fit">
+                            <div className="flex flex-1 items-center gap-0.5">
+                                {(['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
+                                    <button
+                                        key={range}
+                                        onClick={() => handleRangeChange(range)}
+                                        className={cn(
+                                            "h-7 inline-flex items-center justify-center px-2 sm:px-3 py-0 text-xs font-medium leading-none rounded-md border border-transparent transition-all whitespace-nowrap",
+                                            selectedRange === range
+                                                ? "bg-background shadow-sm text-foreground"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                        )}
+                                    >
+                                        {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : formatRangeLabel(range)}
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Toggle Button for Currency */}
+                            {canConvert && (
+                                <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
+                                    <button
+                                        onClick={() => setShowInCHF(!showInCHF)}
+                                        className={cn(
+                                            toolbarToggleClass,
+                                            showInCHF
+                                                ? "bg-emerald-600 text-white border-emerald-700 shadow-md"
+                                                : "bg-background hover:bg-muted text-muted-foreground border-border"
+                                        )}
+                                        title="Währung in CHF umschalten"
+                                    >
+                                        <span className={cn("text-[10px] sm:text-xs font-bold leading-none", showInCHF ? "text-white" : "")}>CHF</span>
+                                    </button>
+                                </div>
                             )}
-                            title="Messmodus: Punkte im Chart anklicken oder Hoch (H) / Tief (T) wählen"
-                        >
-                            <Ruler className="size-3.5" />
-                            <span className="text-[10px] font-bold hidden sm:inline">Messen</span>
-                        </button>
-                    </div>
 
-                </div>
+                            {selectedRange === '1D' && onTogglePrePost && (
+                                <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
+                                    <button
+                                        type="button"
+                                        onClick={onTogglePrePost}
+                                        className={cn(
+                                            toolbarToggleClass,
+                                            showPrePost
+                                                ? "bg-indigo-600 text-white border-indigo-700 shadow-md"
+                                                : "bg-background hover:bg-muted text-muted-foreground border-border"
+                                        )}
+                                        title="Vor- und nachbörsliche Kurse (Pre-Market / After-Hours) im 1D-Chart ein-/ausblenden"
+                                    >
+                                        <span className={cn("text-[10px] sm:text-xs font-bold leading-none", showPrePost ? "text-white" : "")}>Vor-/Nachbörse</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
+                                <button
+                                    onClick={() => {
+                                        setIsMeasureMode(prev => {
+                                            const next = !prev;
+                                            setMeasurePoints([]);
+                                            if (next) setSelectedExtremum(null);
+                                            return next;
+                                        });
+                                    }}
+                                    className={cn(
+                                        toolbarToggleClass,
+                                        isMeasureMode
+                                            ? "bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-400/50"
+                                            : "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                                    )}
+                                    title="Messmodus: Punkte im Chart anklicken oder Hoch (H) / Tief (T) wählen"
+                                >
+                                    <Ruler className="size-3.5 shrink-0" />
+                                    <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Messen</span>
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {/* Desktop Dynamic Header Info (Replaces Tooltip) */}
                 {hoveredData && (
