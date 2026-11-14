@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { useCurrencyFormatter } from '../utils/currency';
 import { Ruler, X, ArrowLeftRight } from 'lucide-react';
 import { cn } from '../utils';
-import { type TimeRange } from '../services/yahoo-finance';
+import { type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 
 export interface MeasurePoint {
@@ -28,9 +28,11 @@ interface PriceHistoryChartProps {
     currency: string;
     volatility?: number;
     trend?: 'up' | 'down' | 'neutral';
-    historyData?: { date: string; value: number }[] | null;
+    historyData?: ChartDataPoint[] | null;
     selectedRange?: TimeRange;
     onRangeChange?: (range: TimeRange) => void;
+    showPrePost?: boolean;
+    onTogglePrePost?: () => void;
     isRealtime?: boolean;
     quoteDate?: Date | null;
     previousClose?: number;
@@ -56,6 +58,8 @@ export function PriceHistoryChart({
     historyData,
     selectedRange = '1Y',
     onRangeChange,
+    showPrePost = false,
+    onTogglePrePost,
     quoteDate,
     previousClose,
     isMarketOpen = true,
@@ -81,7 +85,7 @@ export function PriceHistoryChart({
     const [isMeasureMode, setIsMeasureMode] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<MeasurePoint[]>([]);
     const lastMeasureClickRef = useRef(0);
-    const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null } | null>(null);
+    const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null; session?: 'pre' | 'regular' | 'post' } | null>(null);
     const [selectedExtremum, setSelectedExtremum] = useState<'high' | 'low' | null>(null);
 
     useEffect(() => {
@@ -145,14 +149,11 @@ export function PriceHistoryChart({
     const rawData = useMemo(() => {
         if (historyData && historyData.length > 0) {
             // Check if we should append the currentPrice (Live connection)
-            // Only for 1D range to bridge gap between last history point and Quote
-            if (selectedRange === '1D' && currentPrice > 0) {
+            // Only during active regular market session (avoids flat tail at 08:54 on weekends/closed hours)
+            if (selectedRange === '1D' && isMarketOpen && !showPrePost && currentPrice > 0) {
                 const lastPoint = historyData[historyData.length - 1];
                 const lastDate = new Date(lastPoint.date).getTime();
-
-                // Use quoteDate if available, otherwise now (if within market hours)
-                // But quoteDate is usually more reliable for "market time"
-                const liveDate = quoteDate ? quoteDate.getTime() : new Date().getTime();
+                const liveDate = quoteDate ? quoteDate.getTime() : Date.now();
 
                 // If live date is significantly newer (> 5 min) than last history point
                 if (liveDate > lastDate + 5 * 60 * 1000) {
@@ -168,7 +169,7 @@ export function PriceHistoryChart({
             return historyData;
         }
 
-        const points = [];
+        const points: ChartDataPoint[] = [];
         const now = new Date();
         let days = 30; // default for loops
         let intervalHours = 24; // default for loops
@@ -216,7 +217,7 @@ export function PriceHistoryChart({
         }
 
         return points.reverse();
-    }, [currentPrice, selectedRange, volatility, trend, historyData]);
+    }, [currentPrice, selectedRange, volatility, trend, historyData, isMarketOpen, showPrePost, quoteDate]);
 
     const data = useMemo(() => {
         if (conversionRate === 1) return rawData;
@@ -771,6 +772,24 @@ export function PriceHistoryChart({
                         </div>
                     )}
 
+                    {selectedRange === '1D' && onTogglePrePost && (
+                        <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
+                            <button
+                                type="button"
+                                onClick={onTogglePrePost}
+                                className={cn(
+                                    "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm whitespace-nowrap cursor-pointer",
+                                    showPrePost
+                                        ? "bg-indigo-600 text-white border-indigo-700 shadow-md"
+                                        : "bg-background hover:bg-muted text-muted-foreground border-border"
+                                )}
+                                title="Vor- und nachbörsliche Kurse (Pre-Market / After-Hours) im 1D-Chart ein-/ausblenden"
+                            >
+                                <span className={cn("text-[10px] font-bold", showPrePost ? "text-white" : "")}>Vor-/Nachbörse</span>
+                            </button>
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
                         <button
                             onClick={() => {
@@ -820,7 +839,13 @@ export function PriceHistoryChart({
                                     {formatCurrency(hoveredData.value, displayCurrency, false)}
                                 </span>
                             </div>
-                            <span className="text-xs font-semibold text-foreground">Kurs</span>
+                            <span className="text-xs font-semibold text-foreground">
+                                {hoveredData.session === 'pre'
+                                    ? 'Kurs · Vorbörse'
+                                    : hoveredData.session === 'post'
+                                        ? 'Kurs · Nachbörse'
+                                        : 'Kurs'}
+                            </span>
                         </div>
                         {hoveredData.sma200 && (
                             <>
@@ -1273,6 +1298,46 @@ export function PriceHistoryChart({
                                 width={46}
                                 mirror={false}
                             />
+                            {/* Extended Hours Session Dividers (1D when Vor-/Nachbörse active) */}
+                            {selectedRange === '1D' && showPrePost && (() => {
+                                const hasPre = displayData.some(p => p.session === 'pre');
+                                const hasPost = displayData.some(p => p.session === 'post');
+                                const firstReg = hasPre ? displayData.find(p => p.session === 'regular') : null;
+                                const lastReg = hasPost ? [...displayData].reverse().find(p => p.session === 'regular') : null;
+                                return (
+                                    <>
+                                        {firstReg && (
+                                            <ReferenceLine
+                                                x={firstReg.date}
+                                                stroke="#64748b"
+                                                strokeDasharray="3 3"
+                                                strokeOpacity={0.75}
+                                                label={{
+                                                    position: 'insideTopLeft',
+                                                    value: 'Handel',
+                                                    fill: '#94a3b8',
+                                                    fontSize: 10
+                                                }}
+                                            />
+                                        )}
+                                        {lastReg && (
+                                            <ReferenceLine
+                                                x={lastReg.date}
+                                                stroke="#818cf8"
+                                                strokeDasharray="3 3"
+                                                strokeOpacity={0.85}
+                                                label={{
+                                                    position: 'insideTopRight',
+                                                    value: 'Nachbörse',
+                                                    fill: '#818cf8',
+                                                    fontSize: 10,
+                                                    fontWeight: 600
+                                                }}
+                                            />
+                                        )}
+                                    </>
+                                );
+                            })()}
                             {effectivePurchasePrice && (
                                 <ReferenceLine
                                     y={effectivePurchasePrice}

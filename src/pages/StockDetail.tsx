@@ -42,6 +42,37 @@ function parseBuyDate(dateStr?: string | null): Date | null {
     }
 }
 
+interface ExtendedHoursSource {
+    marketState?: string | null;
+    preMarketPrice?: number | null;
+    preMarketChangePercent?: number | null;
+    preMarketTime?: number | null;
+    postMarketPrice?: number | null;
+    postMarketChangePercent?: number | null;
+    postMarketTime?: number | null;
+}
+
+function getExtendedHoursInfo(stock: ExtendedHoursSource | null | undefined) {
+    if (!stock) return null;
+    const st = stock.marketState;
+    const isPre = st === 'PRE' || st === 'PREPRE';
+    const isPost = st === 'POST' || st === 'POSTPOST' || st === 'CLOSED';
+    const ext = isPre
+        ? { label: 'Pre-Market', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
+        : isPost
+            ? { label: 'After-Hours', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
+            : null;
+    if (!ext || !ext.price) return null;
+    const timeText = ext.time ? (() => {
+        const d = new Date(ext.time * 1000);
+        const hm = d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+        return d.toDateString() === new Date().toDateString()
+            ? hm
+            : `${d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} ${hm}`;
+    })() : '';
+    return { ...ext, timeText };
+}
+
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -111,6 +142,13 @@ export function StockDetail() {
     const [minutesAgo, setMinutesAgo] = useState(0);
     const [fvModeTick, setFvModeTick] = useState(0);
     const [showKursInfo, setShowKursInfo] = useState(false);
+    const [showPrePost, setShowPrePost] = useState<boolean>(() => {
+        return localStorage.getItem('chart_show_prepost') !== 'false';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('chart_show_prepost', String(showPrePost));
+    }, [showPrePost]);
 
     // Update time ago string every minute
     useEffect(() => {
@@ -284,7 +322,12 @@ export function StockDetail() {
             }
         }
 
-        let response = await fetchStockHistory(symbol, rangeToUse);
+        let response = await fetchStockHistory(
+            symbol,
+            rangeToUse,
+            undefined,
+            rangeToUse === '1D' ? { includePrePost: showPrePost } : undefined
+        );
 
         // FALLBACK: If 1D data is empty (common for EU stocks), try 1W
         if ((!response.data || response.data.length === 0) && rangeToUse === '1D') {
@@ -440,7 +483,7 @@ export function StockDetail() {
         }
         setIsRefreshing(false);
         setLastUpdate(new Date());
-    }, [timeRange, id, position?.buyDate]); // STABLE: only depend on id string, not stock object
+    }, [timeRange, id, position?.buyDate, showPrePost]); // STABLE: only depend on id string, not stock object
 
     // Initial load
     useEffect(() => {
@@ -460,16 +503,16 @@ export function StockDetail() {
         }
     }, [stock]);
 
-    // Update Price for Virtual Stock
+    // Update Price for Virtual Stock (always use regular session close/price, never extended hours)
     useEffect(() => {
         if (timeRange === '1D' && chartData && chartData.length > 0 && stock) {
-            const lastPoint = chartData[chartData.length - 1];
-            if (lastPoint && lastPoint.value) {
+            const lastRegularPoint = [...chartData].reverse().find(p => !p.session || p.session === 'regular') || chartData[chartData.length - 1];
+            if (lastRegularPoint && lastRegularPoint.value) {
                 if (stockFromContext) {
                     // Stable update check happens inside updateStockPrice (v3.12.111)
-                    updateStockPrice(stock.id, lastPoint.value, undefined, lastPoint.date);
-                } else if (!virtualStock?.currentPrice || Math.abs(virtualStock.currentPrice - lastPoint.value) > 0.001) {
-                    setVirtualStock((prev: any) => ({ ...prev, currentPrice: lastPoint.value }));
+                    updateStockPrice(stock.id, lastRegularPoint.value, undefined, lastRegularPoint.date);
+                } else if (!virtualStock?.currentPrice || Math.abs(virtualStock.currentPrice - lastRegularPoint.value) > 0.001) {
+                    setVirtualStock((prev: any) => ({ ...prev, currentPrice: lastRegularPoint.value }));
                 }
             }
         }
@@ -767,6 +810,28 @@ export function StockDetail() {
                                             <span>{origDiffStr}</span>
                                         </div>
                                     )}
+
+                                    {/* Row 4: Extended Hours (Pre-Market / After-Hours) */}
+                                    {(() => {
+                                        const ext = getExtendedHoursInfo(stock);
+                                        if (!ext) return null;
+                                        const pct = ext.pct ?? 0;
+                                        return (
+                                            <div className="mt-1.5 inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-xs font-semibold tabular-nums whitespace-nowrap">
+                                                <span className="text-indigo-400">
+                                                    {ext.label}{ext.timeText ? ` · ${ext.timeText}` : ''}
+                                                </span>
+                                                <span className="font-bold text-foreground">
+                                                    {formatCurrency(ext.price!, stock.currency, false)}
+                                                </span>
+                                                {ext.pct !== null && ext.pct !== undefined && (
+                                                    <span className={cn("font-bold", pct >= 0 ? "text-green-500" : "text-red-500")}>
+                                                        {pct >= 0 ? '+' : ''}{pct.toFixed(2)}%
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             );
                         })()}
@@ -818,6 +883,8 @@ export function StockDetail() {
                         historyData={chartData}
                         selectedRange={timeRange}
                         onRangeChange={(range) => setTimeRange(range)}
+                        showPrePost={showPrePost}
+                        onTogglePrePost={() => setShowPrePost(prev => !prev)}
                         isRealtime={true}
                         quoteDate={quoteDate}
                         previousClose={safePreviousClose || 0}
@@ -999,30 +1066,17 @@ export function StockDetail() {
 
                     {/* Pre-Market / After-Hours Indikation (Yahoo) */}
                     {(() => {
-                        const st = stock.marketState;
-                        const isPre = st === 'PRE' || st === 'PREPRE';
-                        const isPost = st === 'POST' || st === 'POSTPOST' || st === 'CLOSED';
-                        const fmtT = (s?: number | null) => {
-                            if (!s) return '';
-                            const d = new Date(s * 1000);
-                            const hm = d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
-                            return d.toDateString() === new Date().toDateString() ? hm : d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' }) + ' ' + hm;
-                        };
-                        const ext = isPre
-                            ? { label: 'Pre-Market', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
-                            : isPost
-                                ? { label: 'After-Hours', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
-                                : null;
-                        if (!ext || !ext.price) return null;
+                        const ext = getExtendedHoursInfo(stock);
+                        if (!ext) return null;
                         const pct = ext.pct ?? 0;
                         return (
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                <span className="text-muted-foreground">{ext.label}{(ext as any).time ? ` · ${fmtT((ext as any).time)}` : ''}</span>
+                                <span className="text-muted-foreground">{ext.label}{ext.timeText ? ` · ${ext.timeText}` : ''}</span>
                                 <span className="font-medium tabular-nums text-right">
-                                    {formatCurrency(ext.price, stock.currency, false)}
+                                    {formatCurrency(ext.price!, stock.currency, false)}
                                     {ext.pct !== null && ext.pct !== undefined && (
                                         <span className={`ml-2 ${pct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                            ({pct >= 0 ? '+' : ''}{pct.toFixed(2)} %)
+                                            {pct >= 0 ? '+' : ''}{pct.toFixed(2)}%
                                         </span>
                                     )}
                                 </span>

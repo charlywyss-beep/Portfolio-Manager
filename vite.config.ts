@@ -409,6 +409,7 @@ export default defineConfig({
           const range = url.searchParams.get('range') || url.searchParams.get('period') || '10y';
           const interval = url.searchParams.get('interval') || '1mo';
           const events = url.searchParams.get('events') || 'div';
+          const includePrePost = url.searchParams.get('includePrePost') === 'true' ? '&includePrePost=true' : '';
 
           if (!symbol) {
             res.statusCode = 400;
@@ -416,7 +417,7 @@ export default defineConfig({
             return;
           }
 
-          const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=${events}`;
+          const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=${events}${includePrePost}`;
           let response = await fetch(yahooUrl, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -425,7 +426,7 @@ export default defineConfig({
           });
 
           if (!response.ok) {
-            const yahooUrl2 = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=${events}`;
+            const yahooUrl2 = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=${events}${includePrePost}`;
             response = await fetch(yahooUrl2, {
               headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -462,7 +463,8 @@ export default defineConfig({
           const symbol = url.searchParams.get('symbol');
           const period = url.searchParams.get('period');
           const interval = url.searchParams.get('interval');
-          return `/v8/finance/chart/${symbol}?range=${period}&interval=${interval}`;
+          const includePrePost = url.searchParams.get('includePrePost');
+          return `/v8/finance/chart/${symbol}?range=${period}&interval=${interval}${includePrePost ? `&includePrePost=${includePrePost}` : ''}`;
         },
         // Error handling for proxy?
         configure: (proxy, _options) => {

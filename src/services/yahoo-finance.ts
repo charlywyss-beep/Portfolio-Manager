@@ -7,6 +7,7 @@ import { translateSector } from '../utils/sectorTranslation';
 export interface ChartDataPoint {
     date: string;
     value: number;
+    session?: 'pre' | 'regular' | 'post';
 }
 
 export type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y' | 'BUY';
@@ -48,11 +49,13 @@ export function normalizeYahooPrice(price: number, currency: string | null, symb
 export async function fetchStockHistory(
     symbol: string,
     range: TimeRange,
-    _apiKey?: string
+    _apiKey?: string,
+    options?: { includePrePost?: boolean }
 ): Promise<{ data: ChartDataPoint[] | null, currency?: string, error?: string, previousClose?: number, open?: number }> {
     try {
         const { period, interval } = getYahooParams(range);
-        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=${interval}&_=${Date.now()}`;
+        const includePrePostParam = (range === '1D' && options?.includePrePost) ? '&includePrePost=true' : '';
+        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=${interval}${includePrePostParam}&_=${Date.now()}`;
 
         console.log('[Yahoo Finance Proxy] Fetching:', symbol, 'Period:', period, 'Interval:', interval);
         let data: any = null;
@@ -69,7 +72,7 @@ export async function fetchStockHistory(
         // Fallback for GitHub Pages / static hosting:
         if (!data || !data.chart?.result?.[0]) {
             try {
-                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period=${period}&interval=${interval}&_=${Date.now()}`;
+                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${period}&interval=${interval}${includePrePostParam}&_=${Date.now()}`;
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
                 const fallbackRes = await fetch(proxyUrl);
                 if (fallbackRes.ok) {
@@ -88,18 +91,30 @@ export async function fetchStockHistory(
             return { data: null, error: 'Keine Daten verfügbar' };
         }
 
-        const timestamps = result.timestamp;
+        const timestamps: number[] = result.timestamp;
         const closes = result.indicators.quote[0].close;
         const opens = result.indicators.quote[0].open || [];
         const resultCurrency = result.meta?.currency || null;
+        const tp = result.meta?.currentTradingPeriod;
+        const refPer = tp?.pre || tp?.regular;
+        const dayShift = (refPer && timestamps.length > 0)
+            ? Math.max(0, Math.round((refPer.start - timestamps[0]) / 86400)) * 86400
+            : 0;
 
         const points: ChartDataPoint[] = timestamps
             .map((timestamp: number, index: number) => {
                 const close = closes[index];
                 if (close === null || close === undefined) return null;
+                let session: 'pre' | 'regular' | 'post' | undefined;
+                if (range === '1D' && options?.includePrePost && tp?.regular) {
+                    const regStart = tp.regular.start - dayShift;
+                    const regEnd = tp.regular.end - dayShift;
+                    session = timestamp < regStart ? 'pre' : timestamp > regEnd ? 'post' : 'regular';
+                }
                 return {
                     date: new Date(timestamp * 1000).toISOString(),
-                    value: normalizeYahooPrice(close, resultCurrency, symbol)
+                    value: normalizeYahooPrice(close, resultCurrency, symbol),
+                    ...(session ? { session } : {})
                 };
             })
             .filter((p: ChartDataPoint | null): p is ChartDataPoint => p !== null);
@@ -107,13 +122,14 @@ export async function fetchStockHistory(
         const rawPrevClose = result.meta?.regularMarketPreviousClose || result.meta?.chartPreviousClose || result.meta?.previousClose;
         let normalizedPrevClose = rawPrevClose ? normalizeYahooPrice(rawPrevClose, resultCurrency, symbol) : undefined;
 
+        const firstRegularPoint = points.find(p => !p.session || p.session === 'regular') || points[0];
         const firstValidOpen = opens.find((o: number | null | undefined) => o !== null && o !== undefined && o > 0);
         const rawOpen = result.meta?.regularMarketOpen || firstValidOpen;
-        let normalizedOpen = rawOpen ? normalizeYahooPrice(rawOpen, resultCurrency, symbol) : (points.length > 0 ? points[0].value : undefined);
+        let normalizedOpen = rawOpen ? normalizeYahooPrice(rawOpen, resultCurrency, symbol) : (firstRegularPoint ? firstRegularPoint.value : undefined);
 
         // Smart Baseline Validation
-        if (range === '1D' && points.length > 0 && normalizedPrevClose) {
-            const firstPoint = points[0].value;
+        if (range === '1D' && firstRegularPoint && normalizedPrevClose) {
+            const firstPoint = firstRegularPoint.value;
             const deviation = Math.abs((normalizedPrevClose - firstPoint) / firstPoint);
             if (deviation > 0.03) normalizedPrevClose = firstPoint;
         }
