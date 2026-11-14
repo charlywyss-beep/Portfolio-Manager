@@ -1871,13 +1871,13 @@ export function FairValueCalculator() {
                                             </div>
                                         </div>
                                         {isSavedForStock ? (
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold pl-2.5 pr-1 py-0.5 rounded-lg bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 whitespace-nowrap shrink-0 shadow-2xs">
-                                                <Check className="size-3.5 shrink-0 text-emerald-400" />
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold pl-2.5 pr-1 py-0.5 rounded-lg bg-pink-500/20 text-pink-300 border border-pink-500/50 whitespace-nowrap shrink-0 shadow-2xs">
+                                                <Check className="size-3.5 shrink-0 text-pink-400" />
                                                 <span>Manuell</span>
                                                 <button
                                                     type="button"
                                                     onClick={clearManualValues}
-                                                    className="ml-0.5 p-0.5 rounded hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 transition-colors"
+                                                    className="ml-0.5 p-0.5 rounded hover:bg-rose-500/30 text-pink-300/80 hover:text-rose-200 transition-colors"
                                                     title="Manuelle Eingabe löschen und auf Auto-Werte zurücksetzen"
                                                 >
                                                     <X className="size-3.5 shrink-0" />
@@ -2591,7 +2591,7 @@ export function FairValueCalculator() {
                                     }
 
                                     const limitName = effectiveLimitType === 'manual'
-                                        ? 'eigenem Limit'
+                                        ? 'Kauflimit (Manuell)'
                                         : effectiveLimitType === 'risk'
                                             ? 'Kauflimit (C)'
                                             : effectiveLimitType === 'quality'
@@ -2938,7 +2938,7 @@ export function FairValueCalculator() {
                                                         effectiveLimitType = 'manual';
                                                     }
 
-                                                    let badgeLabel = 'Eigenes Limit';
+                                                    let badgeLabel = 'Manuell';
                                                     let badgeColor = 'text-pink-400';
 
                                                     if (effectiveLimitType === 'risk') {

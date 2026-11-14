@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { InfoHelp } from '../components/InfoHelp';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
@@ -884,9 +884,9 @@ export function StockDetail() {
                                                 ['Eröffnung / Vortag', 'Erster Kurs des heutigen Handelstages / Schlusskurs des Vortages. Die Tagesperformance rechnet gegen den Vortag.'],
                                                 ['Pre-Market', 'Handel vor der Börseneröffnung (nur US-Aktien). Der Kurs ist nur eine Indikation und kann sich bis zur Eröffnung stark ändern.'],
                                                 ['After-Hours', 'Handel nach Börsenschluss (nur US-Aktien). Gibt einen Hinweis, wie die Eröffnung am nächsten Tag ausfallen könnte. Die Uhrzeit hinter dem Namen zeigt, wann der Kurs zuletzt gehandelt wurde.'],
-                                                ['Kauflimit', 'Preis, bis zu dem du kaufen oder nachkaufen willst. Das Etikett zeigt die Herkunft: Sicherheit (A), Qualität (B), Risiko-Abschlag (C), Fairer Wert oder Eigenes Limit (aus dem Fairen-Wert-Rechner).'],
+                                                ['Kauflimit', 'Preis, bis zu dem du kaufen oder nachkaufen willst. Das Etikett zeigt die Herkunft: Sicherheit (A), Qualität (B), Risiko-Abschlag (C), Fairer Wert oder Manuell.'],
                                                 ['Verkaufslimit', 'Preis, ab dem du verkaufen willst.'],
-                                                ['Kaufpreis (A / B / Manuell)', 'Aus dem Fairen-Wert-Rechner berechneter Kaufpreis (Fairer Wert minus Sicherheitsmarge). Ein Klick auf die Beschriftung wechselt zwischen Sicherheit A, Qualität B und Manuell.'],
+                                                ['Kaufpreis (A / B / C)', 'Aus dem Fairen-Wert-Rechner berechneter Kaufpreis (Fairer Wert minus Sicherheitsmarge). Ein Klick auf die Beschriftung wechselt zwischen Sicherheit (A), Qualität (B) und Risiko-Abschlag (C).'],
                                                 ['Fairer Wert', 'Innerer Wert der Aktie heute laut deinen Parametern im Fairen-Wert-Rechner (Zielrendite und Dividenden).'],
                                                 ['Zielkurs (5J)', 'Erwarteter Kurs in 5 Jahren laut deinen Parametern im Fairen-Wert-Rechner (Wachstum und Verkaufs-KGV).'],
                                                 ['Gewinn 5J (Bestand)', 'Erwarteter Gewinn deines aktuellen Bestands bis zum Zielkurs. Darunter steht die Rendite pro Jahr ab heute.'],
@@ -1078,8 +1078,13 @@ export function StockDetail() {
                         };
 
                         const isManualFv = Boolean(activeParams?.isCustom);
-                        const currentValuationMode: 'conservative' | 'quality' = activeParams?.valuationMode === 'quality' ? 'quality' : 'conservative';
-                        const currentMode: 'conservative' | 'quality' | 'manual' = isManualFv ? 'manual' : currentValuationMode;
+                        const currentValuationMode: 'conservative' | 'quality' | 'risk' =
+                            activeParams?.valuationMode === 'risk'
+                                ? 'risk'
+                                : activeParams?.valuationMode === 'quality'
+                                    ? 'quality'
+                                    : 'conservative';
+                        const currentMode: 'conservative' | 'quality' | 'risk' | 'manual' = isManualFv ? 'manual' : currentValuationMode;
 
                         let effectiveFairValue = 0;
                         let calcBuyPrice: number | null = null;
@@ -1102,6 +1107,13 @@ export function StockDetail() {
                         } else if (currentMode === 'quality') {
                             const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoQuality;
                             const dcf = calculateDcfFairValue(qParams, effectivePrice);
+                            effectiveFairValue = dcf.fairValue;
+                            calcBuyPrice = dcf.buyPrice;
+                            calcFuturePrice = (dcf as any)?.futurePrice ?? null;
+                            mosPct = dcf.mos;
+                        } else if (currentMode === 'risk') {
+                            const rParams = (activeParams?.valuationMode === 'risk' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoRisk;
+                            const dcf = calculateDcfFairValue(rParams, effectivePrice);
                             effectiveFairValue = dcf.fairValue;
                             calcBuyPrice = dcf.buyPrice;
                             calcFuturePrice = (dcf as any)?.futurePrice ?? null;
@@ -1152,103 +1164,52 @@ export function StockDetail() {
                             const existingLocal = map[symKey] || {};
                             const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
 
-                            if (currentMode === 'conservative') {
-                                // Switch to Qualität (B)
-                                const dcfQuality = calculateDcfFairValue(smartAutoQuality, effectivePrice);
-                                const newFv = parseFloat(dcfQuality.fairValue.toFixed(2));
-                                const nextEntry = {
-                                    ...smartAutoQuality,
-                                    isCustom: false,
-                                    valuationMode: 'quality' as const,
-                                    ...(existingBackup ? { customBackup: existingBackup } : {}),
-                                    updatedAt: now
-                                };
-                                map[symKey] = nextEntry;
-                                try {
-                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
-                                } catch {
-                                    // ignore
-                                }
-                                if (stockFromContext) {
-                                    updateStock(stock.id, {
-                                        ...(newFv > 0 ? { fairValue: newFv } : {}),
-                                        fairValueParams: nextEntry
-                                    });
-                                } else {
-                                    setVirtualStock((prev: any) => ({
-                                        ...prev,
-                                        ...(newFv > 0 ? { fairValue: newFv } : {}),
-                                        fairValueParams: nextEntry
-                                    }));
-                                }
-                            } else if (currentMode === 'quality') {
-                                // Switch to Manuell
-                                const backupToRestore = existingBackup || {
-                                    ...(activeParams || smartAutoQuality),
-                                    ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {})
-                                };
-                                const restoredDcf = calculateDcfFairValue(backupToRestore, effectivePrice);
-                                const newManualFv = (backupToRestore.manualFairValue && Number(backupToRestore.manualFairValue) > 0)
-                                    ? parseFloat(Number(backupToRestore.manualFairValue).toFixed(2))
-                                    : parseFloat(restoredDcf.fairValue.toFixed(2));
-                                const nextEntry = {
-                                    ...backupToRestore,
-                                    isCustom: true,
-                                    customBackup: backupToRestore,
-                                    updatedAt: now
-                                };
-                                map[symKey] = nextEntry;
-                                try {
-                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
-                                } catch {
-                                    // ignore
-                                }
-                                if (stockFromContext) {
-                                    updateStock(stock.id, {
-                                        ...(newManualFv > 0 ? { fairValue: newManualFv } : {}),
-                                        fairValueParams: nextEntry
-                                    });
-                                } else {
-                                    setVirtualStock((prev: any) => ({
-                                        ...prev,
-                                        ...(newManualFv > 0 ? { fairValue: newManualFv } : {}),
-                                        fairValueParams: nextEntry
-                                    }));
-                                }
+                            const nextMode: 'conservative' | 'quality' | 'risk' =
+                                currentMode === 'conservative'
+                                    ? 'quality'
+                                    : currentMode === 'quality'
+                                        ? 'risk'
+                                        : 'conservative';
+
+                            const targetSmartParams =
+                                nextMode === 'quality'
+                                    ? smartAutoQuality
+                                    : nextMode === 'risk'
+                                        ? smartAutoRisk
+                                        : smartAutoConservative;
+
+                            const manualBackupToSave = currentMode === 'manual' ? {
+                                ...(existingBackup || activeParams || smartAutoConservative),
+                                ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {}),
+                                updatedAt: now
+                            } : existingBackup;
+
+                            const dcfNext = calculateDcfFairValue(targetSmartParams, effectivePrice);
+                            const newFv = parseFloat(dcfNext.fairValue.toFixed(2));
+                            const nextEntry = {
+                                ...targetSmartParams,
+                                isCustom: false,
+                                valuationMode: nextMode,
+                                ...(manualBackupToSave ? { customBackup: manualBackupToSave } : {}),
+                                updatedAt: now
+                            };
+                            map[symKey] = nextEntry;
+                            try {
+                                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                            } catch {
+                                // ignore
+                            }
+                            if (stockFromContext) {
+                                updateStock(stock.id, {
+                                    ...(newFv > 0 ? { fairValue: newFv } : {}),
+                                    fairValueParams: nextEntry
+                                });
                             } else {
-                                // Switch from Manuell to Sicherheit (A)
-                                const manualBackupToSave = {
-                                    ...(existingBackup || activeParams || smartAutoConservative),
-                                    ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {}),
-                                    updatedAt: now
-                                };
-                                const dcfConservative = calculateDcfFairValue(smartAutoConservative, effectivePrice);
-                                const newAutoFv = parseFloat(dcfConservative.fairValue.toFixed(2));
-                                const nextEntry = {
-                                    ...smartAutoConservative,
-                                    isCustom: false,
-                                    valuationMode: 'conservative' as const,
-                                    customBackup: manualBackupToSave,
-                                    updatedAt: now
-                                };
-                                map[symKey] = nextEntry;
-                                try {
-                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
-                                } catch {
-                                    // ignore
-                                }
-                                if (stockFromContext) {
-                                    updateStock(stock.id, {
-                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
-                                        fairValueParams: nextEntry
-                                    });
-                                } else {
-                                    setVirtualStock((prev: any) => ({
-                                        ...prev,
-                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
-                                        fairValueParams: nextEntry
-                                    }));
-                                }
+                                setVirtualStock((prev: any) => ({
+                                    ...prev,
+                                    ...(newFv > 0 ? { fairValue: newFv } : {}),
+                                    fairValueParams: nextEntry
+                                }));
                             }
                             setFvModeTick(t => t + 1);
                         };
@@ -1279,7 +1240,7 @@ export function StockDetail() {
                                                             ? 'Sicherheit A'
                                                             : resolvedTargetType === 'fairValue'
                                                                 ? 'Fairer Wert'
-                                                                : 'Eigenes Limit'}
+                                                                : 'Manuell'}
                                             </span>
                                         ) : null}
                                     </div>
@@ -1311,38 +1272,47 @@ export function StockDetail() {
                                         className={cn(
                                             "flex items-center gap-1 text-[11px] sm:text-xs landscape:text-[10px] font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border transition-colors cursor-pointer",
                                             currentMode === 'manual'
-                                                ? "text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 dark:border-emerald-500/40"
-                                                : currentMode === 'quality'
-                                                    ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/30 dark:border-purple-500/40"
-                                                    : "text-blue-800 dark:text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/30 dark:border-blue-500/40"
+                                                ? "text-pink-800 dark:text-pink-300 bg-pink-500/15 hover:bg-pink-500/25 border-pink-500/30 dark:border-pink-500/40"
+                                                : currentMode === 'risk'
+                                                    ? "text-amber-800 dark:text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 dark:border-amber-500/40"
+                                                    : currentMode === 'quality'
+                                                        ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/30 dark:border-purple-500/40"
+                                                        : "text-blue-800 dark:text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/30 dark:border-blue-500/40"
                                         )}
                                         title={
                                             currentMode === 'conservative'
                                                 ? "Sicherheit (A): Klick für Wechsel zu Qualität (B)"
                                                 : currentMode === 'quality'
-                                                    ? "Qualität (B): Klick für Wechsel zu Manuell"
-                                                    : "Manuell: Klick für Wechsel zu Sicherheit (A)"
+                                                    ? "Qualität (B): Klick für Wechsel zu Risiko-Abschlag (C)"
+                                                    : currentMode === 'risk'
+                                                        ? "Risiko-Abschlag (C): Klick für Wechsel zu Sicherheit (A)"
+                                                        : "Manuell: Klick für Wechsel zu Sicherheit (A)"
                                         }
                                     >
                                         {currentMode === 'conservative' && <ShieldCheck className="size-3 shrink-0" />}
                                         {currentMode === 'quality' && <Sparkles className="size-3 shrink-0" />}
+                                        {currentMode === 'risk' && <TriangleAlert className="size-3 shrink-0" />}
                                         {currentMode === 'manual' && <Sliders className="size-3 shrink-0" />}
                                         <span>
                                             {currentMode === 'manual'
                                                 ? 'Kaufpreis (Manuell)'
-                                                : currentMode === 'quality'
-                                                    ? 'Kaufpreis (Qualität B)'
-                                                    : 'Kaufpreis (Sicherheit A)'}
+                                                : currentMode === 'risk'
+                                                    ? 'Kaufpreis (Risiko C)'
+                                                    : currentMode === 'quality'
+                                                        ? 'Kaufpreis (Qualität B)'
+                                                        : 'Kaufpreis (Sicherheit A)'}
                                         </span>
                                     </button>
                                     <span className={cn(
                                         "font-medium tabular-nums",
                                         calcBuyPrice !== null
                                             ? currentMode === 'manual'
-                                                ? "text-emerald-700 dark:text-emerald-400 font-semibold"
-                                                : currentMode === 'quality'
-                                                    ? "text-purple-700 dark:text-purple-400 font-semibold"
-                                                    : "text-blue-700 dark:text-blue-400 font-semibold"
+                                                ? "text-pink-700 dark:text-pink-400 font-semibold"
+                                                : currentMode === 'risk'
+                                                    ? "text-amber-700 dark:text-amber-400 font-semibold"
+                                                    : currentMode === 'quality'
+                                                        ? "text-purple-700 dark:text-purple-400 font-semibold"
+                                                        : "text-blue-700 dark:text-blue-400 font-semibold"
                                             : ""
                                     )}>
                                         {calcBuyPrice !== null ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
@@ -1354,10 +1324,12 @@ export function StockDetail() {
                                         "font-medium tabular-nums",
                                         effectiveFairValue > 0
                                             ? currentMode === 'manual'
-                                                ? "text-emerald-700 dark:text-emerald-400 font-semibold"
-                                                : currentMode === 'quality'
-                                                    ? "text-purple-700 dark:text-purple-400 font-semibold"
-                                                    : "text-blue-700 dark:text-blue-400 font-semibold"
+                                                ? "text-pink-700 dark:text-pink-400 font-semibold"
+                                                : currentMode === 'risk'
+                                                    ? "text-amber-700 dark:text-amber-400 font-semibold"
+                                                    : currentMode === 'quality'
+                                                        ? "text-purple-700 dark:text-purple-400 font-semibold"
+                                                        : "text-blue-700 dark:text-blue-400 font-semibold"
                                             : ""
                                     )}>
                                         {effectiveFairValue > 0 ? formatCurrency(effectiveFairValue, stock.currency, false) : '-'}
