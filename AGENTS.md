@@ -10,4 +10,5 @@
 ## 3. Build- & Push-Workflow (Lokal vs. „Run Build“)
 - **Standard bei normalen Änderungen am PC:** Nur Quelldateien (`src/...`) ändern und die Version in `package.json` trotzdem jedes Mal hochzählen. **Kein** `npm run build` (`docs/`) und **kein** `git push`, solange der User am PC lokal testet (`localhost:5173` lädt Änderungen per Vite direkt nach; maximal optional ein schnelles `npx tsc --noEmit` falls nötig).
 - **Erst auf explizite Anweisung (z. B. „Run Build“, „Hochladen“ oder „Push“):** Dann `npm run build` ausführen (`docs/` neu erzeugen), committen und nach `origin main` pushen.
+- **Wichtige Ausnahme für iPad & iPhone:** Sobald Änderungen die mobile Ansicht betreffen oder für iPad/iPhone getestet werden, **immer automatisch** `npm run build`, committen und direkt nach `origin main` pushen, damit der User es sofort auf den echten Mobilgeräten prüfen kann.
 
