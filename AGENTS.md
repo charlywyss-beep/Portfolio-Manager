@@ -6,3 +6,8 @@
 
 ## 2. Deutsche Bezeichnungen ohne unnötige Klammern
 - Keine runden Klammern `(...)` um Abkürzungen oder Kennwerte bei kompakten Labels und Badges (z. B. `Kaufpreis Manuell`, `1 M`, `Rendite 1 M`, `Risiko-Abschlag C`).
+
+## 3. Build- & Push-Workflow (Lokal vs. „Run Build“)
+- **Standard bei normalen Änderungen am PC:** Nur Quelldateien (`src/...`) ändern und die Version in `package.json` trotzdem jedes Mal hochzählen. **Kein** `npm run build` (`docs/`) und **kein** `git push`, solange der User am PC lokal testet (`localhost:5173` lädt Änderungen per Vite direkt nach; maximal optional ein schnelles `npx tsc --noEmit` falls nötig).
+- **Erst auf explizite Anweisung (z. B. „Run Build“, „Hochladen“ oder „Push“):** Dann `npm run build` ausführen (`docs/` neu erzeugen), committen und nach `origin main` pushen.
+

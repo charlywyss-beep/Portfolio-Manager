@@ -635,7 +635,7 @@ export function PriceHistoryChart({
                         {/* Mobile-Only Hover Info (Directly over H/T, below Performance) */}
                         {hoveredData && (
                             <div className="flex sm:hidden justify-between items-center gap-2 text-sm animate-in fade-in duration-150 z-20 bg-card px-3 py-1.5 rounded-xl border border-border shadow-lg absolute inset-x-0 -top-0.5">
-                                <div className="flex flex-col items-start leading-snug">
+                                <div className="flex flex-col items-start leading-tight">
                                     <span className="font-bold text-sm text-foreground whitespace-nowrap">
                                         {(() => {
                                             const d = new Date(hoveredData.date);
@@ -648,11 +648,11 @@ export function PriceHistoryChart({
                                         {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
-                                <div className="h-8 w-px bg-border shrink-0" />
-                                <div className="flex flex-col items-end leading-snug">
+                                <div className="h-7 w-px bg-border shrink-0" />
+                                <div className="flex flex-col items-end leading-tight">
                                     <div className="flex items-center gap-1.5">
                                         <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
-                                        <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
+                                        <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
                                             {formatCurrency(hoveredData.value, displayCurrency, false)}
                                         </span>
                                     </div>
@@ -736,7 +736,7 @@ export function PriceHistoryChart({
                 )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1.5">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1.5 min-h-[38px]">
                 {(() => {
                     const toolbarToggleClass = "h-7 inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-0 rounded-lg border text-[11px] sm:text-xs font-bold leading-none transition-all shadow-sm whitespace-nowrap cursor-pointer";
                     return (
@@ -822,7 +822,7 @@ export function PriceHistoryChart({
                 {/* Desktop Dynamic Header Info (Replaces Tooltip) */}
                 {hoveredData && (
                     <div className="hidden sm:flex items-center gap-4 text-sm animate-in fade-in duration-150 z-10 border-l border-border/50 pl-3 sm:pl-5">
-                        <div className="flex flex-col items-start leading-snug">
+                        <div className="flex flex-col items-start leading-tight">
                             <span className="font-bold text-sm text-foreground whitespace-nowrap">
                                 {(() => {
                                     const d = new Date(hoveredData.date);
@@ -835,11 +835,11 @@ export function PriceHistoryChart({
                                 {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
-                        <div className="h-8 w-px bg-border" />
-                        <div className="flex flex-col items-start leading-snug">
+                        <div className="h-7 w-px bg-border" />
+                        <div className="flex flex-col items-start leading-tight">
                             <div className="flex items-center gap-1.5">
                                 <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
-                                <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
+                                <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
                                     {formatCurrency(hoveredData.value, displayCurrency, false)}
                                 </span>
                             </div>
@@ -853,8 +853,8 @@ export function PriceHistoryChart({
                         </div>
                         {hoveredData.sma200 && (
                             <>
-                                <div className="h-8 w-px bg-border" />
-                                <div className="flex flex-col items-start leading-snug">
+                                <div className="h-7 w-px bg-border" />
+                                <div className="flex flex-col items-start leading-tight">
                                     <div className="flex items-center gap-1.5">
                                         <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
                                         <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
