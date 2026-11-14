@@ -945,16 +945,16 @@ export function StockDetail() {
                                                 title="Europa-Frühstart • Tradegate & Xetra"
                                                 items={[
                                                     {
-                                                        term: "Was bedeutet diese Indikation?",
-                                                        text: "Europäische Handelsplätze wie Tradegate und Xetra handeln große US-Aktien (wie Microsoft unter MSF.DE) bereits ab 08:00 Uhr MEZ in Euro. Die offizielle US-Vorbörse startet erst um 10:00 Uhr MEZ und die Wall Street um 15:30 Uhr MEZ."
+                                                        term: "Warum vorne Euro und hinten Dollar?",
+                                                        text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deiner Aktie zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD)."
                                                     },
                                                     {
-                                                        term: "Umrechnung in USD",
-                                                        text: "Der Euro-Kurs wird mit dem aktuellen Wechselkurs in die Heimatwährung der Aktie (USD) umgerechnet. Die Prozentangabe zeigt die Differenz zum offiziellen US-Schlusskurs."
+                                                        term: "Was zeigt die Prozentzahl?",
+                                                        text: "Sie zeigt dir auf einen Blick, ob die Aktie in Europa gerade höher (grün) oder tiefer (rot) gehandelt wird als zum letzten offiziellen New Yorker Schlusskurs."
                                                     },
                                                     {
-                                                        term: "Vorteil am Montagmorgen",
-                                                        text: "Nachrichten vom Wochenende schlagen sich hier bereits ab 08:00 Uhr MEZ in ersten echten Trades nieder – Stunden bevor in New York der Handel startet."
+                                                        term: "Dein Vorteil (7,5 Stunden Frühwarnsystem)",
+                                                        text: "Deutsche Börsen handeln US-Aktien montags bereits ab 08:00 Uhr morgens – die Wall Street in New York öffnet erst um 15:30 Uhr. Wenn am Wochenende wichtige Neuigkeiten zu einer Firma bekannt werden, siehst du hier schon morgens beim Kaffee, wie die Anleger reagieren und wohin die Reise geht – volle 7,5 Stunden bevor die US-Börsen überhaupt aufwachen."
                                                     }
                                                 ]}
                                             />
@@ -1266,16 +1266,16 @@ export function StockDetail() {
                                     title="Europa-Frühstart • Tradegate & Xetra"
                                     items={[
                                         {
-                                            term: "Warum sieht man hier Kurse in Euro?",
-                                            text: "Europäische Handelsplätze wie Tradegate und Xetra handeln große US-Aktien (wie Microsoft unter MSF.DE) bereits ab 08:00 Uhr MEZ. Der offizielle US-Pre-Market startet erst um 10:00 Uhr MEZ und die Wall Street um 15:30 Uhr MEZ."
+                                            term: "Warum vorne Euro und hinten Dollar?",
+                                            text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deiner Aktie zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD)."
                                         },
                                         {
-                                            term: "Umrechnung in USD",
-                                            text: "Der Euro-Kurs wird mit dem aktuellen Wechselkurs in die Heimatwährung der Aktie (USD) umgerechnet. Die Prozentangabe zeigt die Veränderung gegenüber dem offiziellen US-Schlusskurs."
+                                            term: "Was zeigt die Prozentzahl?",
+                                            text: "Sie zeigt dir auf einen Blick, ob die Aktie in Europa gerade höher (grün) oder tiefer (rot) gehandelt wird als zum letzten offiziellen New Yorker Schlusskurs."
                                         },
                                         {
-                                            term: "Nutzen am Montagmorgen",
-                                            text: "Wenn am Wochenende Nachrichten zu einer US-Aktie bekannt werden, siehst du hier bereits ab 08:00 Uhr MEZ beim Frühstück die allererste reale Kursreaktion europäischer Händler."
+                                            term: "Dein Vorteil (7,5 Stunden Frühwarnsystem)",
+                                            text: "Deutsche Börsen handeln US-Aktien montags bereits ab 08:00 Uhr morgens – die Wall Street in New York öffnet erst um 15:30 Uhr. Wenn am Wochenende wichtige Neuigkeiten zu einer Firma bekannt werden, siehst du hier schon morgens beim Kaffee, wie die Anleger reagieren und wohin die Reise geht – volle 7,5 Stunden bevor die US-Börsen überhaupt aufwachen."
                                         }
                                     ]}
                                 />

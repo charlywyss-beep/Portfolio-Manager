@@ -117,16 +117,16 @@ export function PositionTable({
                                 title="Europa / Tradegate Frühindikation"
                                 items={[
                                     {
-                                        term: "Was bedeuten die 🇪🇺 Euro-Preise?",
-                                        text: "Europäische Handelsplätze wie Tradegate und Xetra handeln US-Aktien (z. B. Microsoft als MSF.DE) bereits ab 08:00 Uhr MEZ. In dieser Kurszeile siehst du den aktuellen Tradegate-Kurs in Euro sowie den prozentualen Unterschied zum offiziellen US-Schlusskurs."
+                                        term: "Warum Euro-Preise bei US-Aktien?",
+                                        text: "Deutsche Handelsplätze wie Tradegate und Xetra handeln US-Aktien bereits ab 08:00 Uhr morgens in Euro. Du siehst hier den echten Euro-Handelskurs und direkt daneben die prozentuale Abweichung zum US-Schlusskurs."
                                     },
                                     {
-                                        term: "Umrechnung & Prozentwert",
-                                        text: "Der Euro-Kurs wird zum aktuellen Wechselkurs in USD umgerechnet. Die grüne oder rote Prozentzahl zeigt, ob die Aktie in Europa höher oder tiefer gehandelt wird als an der Wall Street zuletzt geschlossen wurde."
+                                        term: "Dein Vorteil (7,5 Stunden Zeitvorsprung)",
+                                        text: "Die Wall Street in New York öffnet erst um 15:30 Uhr MEZ. Über Tradegate siehst du montags schon ab 08:00 Uhr morgens beim Kaffee, wie der Markt auf News vom Wochenende reagiert und wo deine Aktien am Nachmittag voraussichtlich eröffnen werden."
                                     },
                                     {
                                         term: "Button 🇪🇺 Tradegate",
-                                        text: "Mit diesem Button kannst du zwischen der Tradegate-Euro-Indikation und der Standard-CHF-Umrechnung umschalten."
+                                        text: "Mit diesem Button schaltest du zwischen der Tradegate-Euro-Indikation und der normalen Depotansicht hin und her."
                                     }
                                 ]}
                             />
