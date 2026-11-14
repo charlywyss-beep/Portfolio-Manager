@@ -58,9 +58,17 @@ export function Watchlist() {
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap' | 'price', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
+    const ownedStockIds = useMemo(
+        () => new Set(positions.map(p => String(p.stockId))),
+        [positions]
+    );
+
     // Filter stocks that are in the watchlist
     const watchlistStocks = stocks
         .filter(s => {
+            if (activeWatchlistId === 'owned') {
+                return ownedStockIds.has(String(s.id));
+            }
             if (!activeWatchlist) return false;
 
             // Check explicit membership
@@ -68,7 +76,7 @@ export function Watchlist() {
 
             // For Default List ("Merkliste"), AUTO-INCLUDE all owned positions
             if (activeWatchlist.isDefault) {
-                const isOwned = positions.some(p => String(p.stockId) === String(s.id));
+                const isOwned = ownedStockIds.has(String(s.id));
                 return explicitlyInList || isOwned;
             }
 
@@ -113,20 +121,12 @@ export function Watchlist() {
             return 0;
         });
 
-    // Split into sections (Stocks vs ETFs)
-    const ownedStocks = watchlistStocks.filter(s =>
-        positions.some(p => String(p.stockId) === String(s.id)) && (!s.type || s.type === 'stock')
-    );
-    const ownedEtfs = watchlistStocks.filter(s =>
-        positions.some(p => String(p.stockId) === String(s.id)) && s.type === 'etf'
-    );
+    // Split into sections (Stocks vs ETFs); keep owned & unowned together in custom watchlists
+    const allStocks = watchlistStocks.filter(s => !s.type || s.type === 'stock');
+    const allEtfs = watchlistStocks.filter(s => s.type === 'etf');
 
-    const potentialStocks = watchlistStocks.filter(s =>
-        !positions.some(p => String(p.stockId) === String(s.id)) && (!s.type || s.type === 'stock')
-    );
-    const potentialEtfs = watchlistStocks.filter(s =>
-        !positions.some(p => String(p.stockId) === String(s.id)) && s.type === 'etf'
-    );
+    const ownedStocks = allStocks.filter(s => ownedStockIds.has(String(s.id)));
+    const ownedEtfs = allEtfs.filter(s => ownedStockIds.has(String(s.id)));
 
     // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
 
@@ -170,35 +170,20 @@ export function Watchlist() {
             { id: 'owned-stocks', label: 'Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks },
             { id: 'owned-etfs', label: 'ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }
         ]
-        : isEtfList
-            ? [
-                ...(ownedEtfs.length > 0
-                    ? [{ id: 'owned-etfs', label: 'Bestand ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }]
-                    : []),
-                ...(ownedStocks.length > 0
-                    ? [{ id: 'owned-stocks', label: 'Bestand Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks }]
-                    : []),
-                ...(potentialEtfs.length > 0 || (ownedEtfs.length === 0 && potentialStocks.length === 0 && ownedStocks.length === 0)
-                    ? [{ id: 'pot-etfs', label: (ownedEtfs.length > 0 || ownedStocks.length > 0) ? 'Watchlist ETFs' : 'ETFs', count: potentialEtfs.length, icon: PieChart, stocks: potentialEtfs }]
-                    : []),
-                ...(potentialStocks.length > 0
-                    ? [{ id: 'pot-stocks', label: (ownedStocks.length > 0 || ownedEtfs.length > 0) ? 'Watchlist Aktien' : 'Aktien', count: potentialStocks.length, icon: ShoppingBag, stocks: potentialStocks }]
-                    : [])
-            ]
-            : [
-                ...(ownedStocks.length > 0
-                    ? [{ id: 'owned-stocks', label: 'Bestand Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks }]
-                    : []),
-                ...(ownedEtfs.length > 0
-                    ? [{ id: 'owned-etfs', label: 'Bestand ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }]
-                    : []),
-                ...(potentialStocks.length > 0 || (ownedStocks.length === 0 && potentialEtfs.length === 0 && ownedEtfs.length === 0)
-                    ? [{ id: 'pot-stocks', label: (ownedStocks.length > 0 || ownedEtfs.length > 0) ? 'Watchlist Aktien' : 'Aktien', count: potentialStocks.length, icon: ShoppingBag, stocks: potentialStocks }]
-                    : []),
-                ...(potentialEtfs.length > 0
-                    ? [{ id: 'pot-etfs', label: (ownedStocks.length > 0 || ownedEtfs.length > 0) ? 'Watchlist ETFs' : 'ETFs', count: potentialEtfs.length, icon: PieChart, stocks: potentialEtfs }]
-                    : [])
+        : (() => {
+            const stockTab = { id: 'all-stocks', label: 'Aktien', count: allStocks.length, icon: ShoppingBag, stocks: allStocks };
+            const etfTab = { id: 'all-etfs', label: 'ETFs', count: allEtfs.length, icon: PieChart, stocks: allEtfs };
+            if (isEtfList) {
+                return [
+                    ...(allEtfs.length > 0 || allStocks.length === 0 ? [etfTab] : []),
+                    ...(allStocks.length > 0 ? [stockTab] : [])
+                ];
+            }
+            return [
+                ...(allStocks.length > 0 || allEtfs.length === 0 ? [stockTab] : []),
+                ...(allEtfs.length > 0 ? [etfTab] : [])
             ];
+        })();
 
     const SUBTAB_STORAGE_KEY = 'watchlist_active_subtab';
     const [activeSubTab, setActiveSubTab] = useState<string>(() => {
@@ -466,6 +451,8 @@ export function Watchlist() {
                 {/* Watchlist Table */}
                 <WatchlistTable
                     stocks={currentTabStocks}
+                    ownedStockIds={ownedStockIds}
+                    showOwnedBadge={activeWatchlistId !== 'owned'}
                     sortConfig={sortConfig}
                     setSortConfig={setSortConfig}
                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
@@ -521,6 +508,8 @@ export function Watchlist() {
 
 interface WatchlistTableProps {
     stocks: Stock[];
+    ownedStockIds: Set<string>;
+    showOwnedBadge: boolean;
     sortConfig: { key: string; direction: 'asc' | 'desc' };
     setSortConfig: (config: any) => void;
     onNavigate: (id: string) => void;
@@ -533,6 +522,8 @@ interface WatchlistTableProps {
 
 function WatchlistTable({
     stocks,
+    ownedStockIds,
+    showOwnedBadge,
     sortConfig,
     setSortConfig,
     onNavigate,
@@ -1016,6 +1007,15 @@ function WatchlistTable({
                                                     <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                                 ) : (
                                                     <div className="size-2 rounded-full bg-red-500 shrink-0 border border-background" title={`Markt geschlossen (${calcState})`} />
+                                                )}
+                                                {showOwnedBadge && ownedStockIds.has(String(stock.id)) && (
+                                                    <span
+                                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 shrink-0 leading-none"
+                                                        title="Aktuell im Bestand"
+                                                    >
+                                                        <ShoppingBag className="size-2.5 shrink-0" />
+                                                        <span>Bestand</span>
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
