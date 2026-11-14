@@ -86,7 +86,7 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
       }}
     >
       <Icon className="size-4 xl:size-[22px] shrink-0" />
-      <span className="truncate">{label}</span>
+      <span className="leading-normal">{label}</span>
     </NavLink>
   );
 };

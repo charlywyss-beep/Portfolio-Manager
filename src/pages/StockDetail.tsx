@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { InfoHelp } from '../components/InfoHelp';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
@@ -15,6 +15,8 @@ import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
 import { translateSector } from '../utils/sectorTranslation';
+import { useExchangeRates } from '../context/ExchangeRateContext';
+import { getEuropeanTicker, type EuropeanIndicationQuote } from '../utils/europeanMarket';
 import { Logo } from '../components/Logo';
 import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
 import { EditPositionModal } from '../components/EditPositionModal';
@@ -79,6 +81,7 @@ export function StockDetail() {
     const [searchParams] = useSearchParams();
     const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists, updatePosition, deletePosition, orderBook } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const { rates } = useExchangeRates();
     const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
     const [isEditPositionModalOpen, setIsEditPositionModalOpen] = useState(false);
 
@@ -145,6 +148,75 @@ export function StockDetail() {
     const [showPrePost, setShowPrePost] = useState<boolean>(() => {
         return localStorage.getItem('chart_show_prepost') !== 'false';
     });
+
+    // European Indication Quote (Tradegate / Xetra early market)
+    const [europeanQuote, setEuropeanQuote] = useState<EuropeanIndicationQuote | null>(null);
+
+    const euTickerInfo = useMemo(() => {
+        return stock ? getEuropeanTicker(stock.symbol, (stock as any).europeanSymbol) : null;
+    }, [stock?.symbol, (stock as any)?.europeanSymbol]);
+
+    useEffect(() => {
+        if (!euTickerInfo?.symbol) {
+            setEuropeanQuote(null);
+            return;
+        }
+        let cancelled = false;
+        const fetchEuQuote = async () => {
+            try {
+                const sym = euTickerInfo.symbol;
+                const res = await fetch(`/api/yahoo-quote?symbol=${encodeURIComponent(sym)}&_=${Date.now()}`);
+                if (!res.ok) return;
+                const json = await res.json();
+                const result = json.quoteResponse?.result?.[0];
+                if (result && result.regularMarketPrice && !cancelled) {
+                    const priceEUR = result.regularMarketPrice;
+                    const prevCloseEUR = result.regularMarketPreviousClose || priceEUR;
+                    const changeAmount = priceEUR - prevCloseEUR;
+                    const changePercent = prevCloseEUR > 0 ? (changeAmount / prevCloseEUR) * 100 : (result.regularMarketChangePercent || 0);
+                    const time = result.regularMarketTime;
+
+                    const timeText = time ? (() => {
+                        const d = new Date(time * 1000);
+                        const hm = d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+                        return d.toDateString() === new Date().toDateString()
+                            ? hm
+                            : `${d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} ${hm}`;
+                    })() : undefined;
+
+                    let impliedTargetPrice: number | undefined;
+                    let impliedDeltaPercent: number | undefined;
+
+                    const eurRate = rates['EUR'] || 1.06;
+                    const targetRate = rates[stock?.currency || 'USD'] || 1.12;
+                    if (eurRate > 0 && targetRate > 0) {
+                        const eurToTarget = targetRate / eurRate;
+                        impliedTargetPrice = priceEUR * eurToTarget;
+                        if (stock && stock.currentPrice > 0) {
+                            impliedDeltaPercent = ((impliedTargetPrice - stock.currentPrice) / stock.currentPrice) * 100;
+                        }
+                    }
+
+                    setEuropeanQuote({
+                        symbol: sym,
+                        priceEUR,
+                        previousCloseEUR: prevCloseEUR,
+                        changePercent,
+                        changeAmount,
+                        time,
+                        timeText,
+                        impliedTargetPrice,
+                        impliedTargetCurrency: stock?.currency || 'USD',
+                        impliedDeltaPercent
+                    });
+                }
+            } catch (e) {
+                console.warn('[StockDetail] European quote fetch skipped:', e);
+            }
+        };
+        fetchEuQuote();
+        return () => { cancelled = true; };
+    }, [euTickerInfo?.symbol, stock?.currency, stock?.currentPrice, rates]);
 
     useEffect(() => {
         localStorage.setItem('chart_show_prepost', String(showPrePost));
@@ -848,6 +920,46 @@ export function StockDetail() {
                                             </div>
                                         );
                                     })()}
+
+                                    {/* Row 5: European Pre-Trading Indication (Tradegate / Xetra in EUR) */}
+                                    {europeanQuote && (
+                                        <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-blue-500/35 bg-blue-500/10 text-xs font-semibold tabular-nums whitespace-nowrap">
+                                            <span className="text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
+                                                <span>🇪🇺 Europa / Tradegate</span>
+                                                {europeanQuote.timeText && <span className="opacity-80 font-normal">· {europeanQuote.timeText}</span>}
+                                            </span>
+                                            <span className="font-bold text-foreground">
+                                                {europeanQuote.priceEUR.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
+                                            </span>
+                                            {europeanQuote.impliedTargetPrice && (
+                                                <span className="text-muted-foreground text-[11px]">
+                                                    ≈ {formatCurrency(europeanQuote.impliedTargetPrice, stock.currency, false)}
+                                                </span>
+                                            )}
+                                            {europeanQuote.impliedDeltaPercent !== undefined && (
+                                                <span className={cn("font-bold", europeanQuote.impliedDeltaPercent >= 0 ? "text-green-500" : "text-red-500")}>
+                                                    {europeanQuote.impliedDeltaPercent >= 0 ? '+' : ''}{europeanQuote.impliedDeltaPercent.toFixed(2)}%
+                                                </span>
+                                            )}
+                                            <InfoHelp
+                                                title="Europa-Frühstart • Tradegate & Xetra"
+                                                items={[
+                                                    {
+                                                        term: "Was bedeutet diese Indikation?",
+                                                        text: "Europäische Handelsplätze wie Tradegate und Xetra handeln große US-Aktien (wie Microsoft unter MSF.DE) bereits ab 08:00 Uhr MEZ in Euro. Die offizielle US-Vorbörse startet erst um 10:00 Uhr MEZ und die Wall Street um 15:30 Uhr MEZ."
+                                                    },
+                                                    {
+                                                        term: "Umrechnung in USD",
+                                                        text: "Der Euro-Kurs wird mit dem aktuellen Wechselkurs in die Heimatwährung der Aktie (USD) umgerechnet. Die Prozentangabe zeigt die Differenz zum offiziellen US-Schlusskurs."
+                                                    },
+                                                    {
+                                                        term: "Vorteil am Montagmorgen",
+                                                        text: "Nachrichten vom Wochenende schlagen sich hier bereits ab 08:00 Uhr MEZ in ersten echten Trades nieder – Stunden bevor in New York der Handel startet."
+                                                    }
+                                                ]}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })()}
@@ -1054,29 +1166,58 @@ export function StockDetail() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] gap-2">
-                                    <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
+                                <div 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsEditPositionModalOpen(true);
+                                        setTimeout(() => {
+                                            const el = document.getElementById('position-broker-input');
+                                            if (el) {
+                                                el.focus();
+                                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            }
+                                        }, 120);
+                                    }}
+                                    className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] gap-2 cursor-pointer hover:bg-muted/40 px-1 -mx-1 rounded transition-colors group"
+                                    title="Bank / Broker bearbeiten (Klicken zum Ändern)"
+                                >
+                                    <span className="text-muted-foreground flex items-center gap-1.5 shrink-0 group-hover:text-primary transition-colors">
                                         <Landmark className="size-3.5 text-primary shrink-0" />
                                         Bank / Broker
                                     </span>
-                                    <span className="font-medium text-foreground text-right truncate max-w-[200px] sm:max-w-[280px]" title={pos.broker || '-'}>
-                                        {pos.broker || '-'}
+                                    <span className="font-medium text-foreground text-right truncate max-w-[200px] sm:max-w-[280px] flex items-center gap-1.5" title={pos.broker || 'Klicken zum Festlegen'}>
+                                        <span className="group-hover:text-primary transition-colors underline decoration-dotted decoration-muted-foreground/60 underline-offset-2">{pos.broker || '-'}</span>
+                                        <Edit className="size-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                                     </span>
                                 </div>
                             </>
                         );
                     })()}
 
-                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                        <span className="text-muted-foreground">Aktueller Kurs</span>
-                        <span className="font-medium tabular-nums">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
-                    </div>
+                    {/* Trenner 1: Zwischen Mein Depot und Börsenkursen */}
+                    <div className="my-2.5 h-px bg-border" />
 
-                    {/* Added Open and Previous Close in one line */}
+                    {/* Eröffnung und Vortag vor Aktuellem Kurs */}
                     <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                         <span className="text-muted-foreground">Eröffnung / Vortag</span>
                         <span className="font-medium tabular-nums text-right">
                             {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(safePreviousClose || 0, stock.currency, false)}
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                        <span className="text-muted-foreground">Aktueller Kurs</span>
+                        <span className="font-medium tabular-nums text-right">
+                            <span>{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
+                            {safePreviousClose && safePreviousClose > 0 && stock.currentPrice > 0 && (() => {
+                                const diff = stock.currentPrice - safePreviousClose;
+                                const pct = (diff / safePreviousClose) * 100;
+                                return (
+                                    <span className={cn("ml-2 font-bold", diff >= 0 ? "text-green-500" : "text-red-500")}>
+                                        {diff >= 0 ? '+' : ''}{pct.toFixed(2)}%
+                                    </span>
+                                );
+                            })()}
                         </span>
                     </div>
 
@@ -1114,6 +1255,51 @@ export function StockDetail() {
                             </div>
                         );
                     })()}
+
+                    {/* Europa-Frühstart Indikation (Tradegate / Xetra in EUR) */}
+                    {europeanQuote && (
+                        <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] transition-colors">
+                            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                                <span className="text-blue-600 dark:text-blue-400 font-semibold">🇪🇺 Europa / Tradegate</span>
+                                {europeanQuote.timeText && <span className="text-[11px]">· {europeanQuote.timeText}</span>}
+                                <InfoHelp
+                                    title="Europa-Frühstart • Tradegate & Xetra"
+                                    items={[
+                                        {
+                                            term: "Warum sieht man hier Kurse in Euro?",
+                                            text: "Europäische Handelsplätze wie Tradegate und Xetra handeln große US-Aktien (wie Microsoft unter MSF.DE) bereits ab 08:00 Uhr MEZ. Der offizielle US-Pre-Market startet erst um 10:00 Uhr MEZ und die Wall Street um 15:30 Uhr MEZ."
+                                        },
+                                        {
+                                            term: "Umrechnung in USD",
+                                            text: "Der Euro-Kurs wird mit dem aktuellen Wechselkurs in die Heimatwährung der Aktie (USD) umgerechnet. Die Prozentangabe zeigt die Veränderung gegenüber dem offiziellen US-Schlusskurs."
+                                        },
+                                        {
+                                            term: "Nutzen am Montagmorgen",
+                                            text: "Wenn am Wochenende Nachrichten zu einer US-Aktie bekannt werden, siehst du hier bereits ab 08:00 Uhr MEZ beim Frühstück die allererste reale Kursreaktion europäischer Händler."
+                                        }
+                                    ]}
+                                />
+                            </span>
+                            <span className="font-medium tabular-nums text-right">
+                                <span className="font-bold text-foreground">
+                                    {europeanQuote.priceEUR.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
+                                </span>
+                                {europeanQuote.impliedTargetPrice && (
+                                    <span className="text-muted-foreground text-xs ml-1.5">
+                                        ≈ {formatCurrency(europeanQuote.impliedTargetPrice, stock.currency, false)}
+                                    </span>
+                                )}
+                                {europeanQuote.impliedDeltaPercent !== undefined && (
+                                    <span className={cn("ml-2 font-bold", europeanQuote.impliedDeltaPercent >= 0 ? "text-green-500" : "text-red-500")}>
+                                        {europeanQuote.impliedDeltaPercent >= 0 ? '+' : ''}{europeanQuote.impliedDeltaPercent.toFixed(2)}%
+                                    </span>
+                                )}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Trenner 2: Zwischen Börsenkursen und Bewertung/Limits */}
+                    <div className="my-2.5 h-px bg-border" />
 
                     {(() => {
                         void fvModeTick;
@@ -1421,7 +1607,7 @@ export function StockDetail() {
                                     </span>
                                 </div>
                                 <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                    <span className="text-muted-foreground">Zielkurs (5J)</span>
+                                    <span className="text-muted-foreground">Zielkurs 5 J</span>
                                     <span className="font-medium tabular-nums text-foreground">
                                         {calcFuturePrice !== null && calcFuturePrice > 0 ? formatCurrency(calcFuturePrice, stock.currency, false) : '-'}
                                     </span>
@@ -1439,7 +1625,7 @@ export function StockDetail() {
                                     return (
                                         <div className="flex justify-between items-center py-1.5 md:py-2 landscape:py-1 border border-emerald-500/30 dark:border-emerald-500/20 text-xs sm:text-sm landscape:text-[11px] bg-emerald-500/15 dark:bg-emerald-500/10 px-2.5 rounded-lg mt-1 shadow-2xs">
                                             <div className="flex flex-col">
-                                                <span className="text-emerald-900 dark:text-emerald-300 font-bold text-[11px] sm:text-xs">Gewinn 5J (Bestand)</span>
+                                                <span className="text-emerald-900 dark:text-emerald-300 font-bold text-[11px] sm:text-xs">Gewinn 5 J Bestand</span>
                                                 <span className="text-[10px] text-emerald-800/80 dark:text-muted-foreground">~{cagr.toFixed(1)}% p.a. ab heute</span>
                                             </div>
                                             <div className="text-right">
@@ -1447,7 +1633,7 @@ export function StockDetail() {
                                                     {expectedGain >= 0 ? '+' : ''}{formatCurrency(expectedGain, stock.currency, false)}
                                                 </span>
                                                 <span className="block text-[10px] text-emerald-700 dark:text-emerald-400/90 font-semibold font-mono">
-                                                    ({gainPct >= 0 ? '+' : ''}{gainPct.toFixed(1)}%)
+                                                    {gainPct >= 0 ? '+' : ''}{gainPct.toFixed(1)}%
                                                 </span>
                                             </div>
                                         </div>

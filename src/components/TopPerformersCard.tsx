@@ -83,10 +83,10 @@ export function TopPerformersCard({ className }: { className?: string }) {
     };
 
     return (
-        <div className={cn("p-5 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col justify-between", className)}>
+        <div className={cn("p-4 sm:p-5 2xl:p-6 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col justify-between", className)}>
             <div>
                 {/* Header: Icon + Title side-by-side */}
-                <div className="flex items-center gap-2.5 mb-4">
+                <div className="flex items-center gap-2.5 h-10 mb-4">
                     <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 shrink-0">
                         <TrendingUp className="size-5" />
                     </div>

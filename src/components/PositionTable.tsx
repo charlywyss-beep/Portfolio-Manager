@@ -8,7 +8,9 @@ import { estimateMarketState } from '../utils/market';
 import { translateSector } from '../utils/sectorTranslation';
 import { Edit, Trash2, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
+import { useEuropeanQuotes, getEuropeanTicker } from '../utils/europeanMarket';
+import { InfoHelp } from './InfoHelp';
 
 interface PositionTableProps {
     title: string;
@@ -37,7 +39,12 @@ export function PositionTable({
 }: PositionTableProps) {
     const { deletePosition } = usePortfolio();
     const navigate = useNavigate();
-    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const { formatCurrency, convertToCHF, rates } = useCurrencyFormatter();
+    const [showTradegate, setShowTradegate] = useState(true);
+    const { quotes: euQuotes } = useEuropeanQuotes(data, rates);
+    const hasAnyEuQuote = useMemo(() => {
+        return data.some(p => Boolean(getEuropeanTicker(p.stock?.symbol, p.stock?.europeanSymbol)));
+    }, [data]);
     const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, posId: string | null, name: string }>({ isOpen: false, posId: null, name: '' });
 
     // 0: Anzahl, 1: Ø Kauf, 2: Invest, 3: Kurs, 4: Wert, 5: %, 6: +/-, 7: Aktion
@@ -90,6 +97,41 @@ export function PositionTable({
                     <Icon className="size-6 text-primary" />
                     <h2 className="text-xl font-bold tracking-tight">{title}</h2>
                     <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
+                    {hasAnyEuQuote && (
+                        <div className="flex items-center gap-1.5 ml-1">
+                            <button
+                                type="button"
+                                onClick={() => setShowTradegate(prev => !prev)}
+                                className={cn(
+                                    "h-7 px-2.5 rounded-lg border text-xs font-medium inline-flex items-center justify-center gap-1.5 leading-none py-0 transition-colors shadow-2xs select-none",
+                                    showTradegate 
+                                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/20"
+                                        : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                                )}
+                                title="Tradegate / Europa-Frühindikation für US-Aktien ein-/ausblenden"
+                            >
+                                <span>🇪🇺 Tradegate</span>
+                                <span className={cn("size-1.5 rounded-full", showTradegate ? "bg-blue-500 animate-pulse" : "bg-muted-foreground/50")} />
+                            </button>
+                            <InfoHelp
+                                title="Europa / Tradegate Frühindikation"
+                                items={[
+                                    {
+                                        term: "Was bedeuten die 🇪🇺 Euro-Preise?",
+                                        text: "Europäische Handelsplätze wie Tradegate und Xetra handeln US-Aktien (z. B. Microsoft als MSF.DE) bereits ab 08:00 Uhr MEZ. In dieser Kurszeile siehst du den aktuellen Tradegate-Kurs in Euro sowie den prozentualen Unterschied zum offiziellen US-Schlusskurs."
+                                    },
+                                    {
+                                        term: "Umrechnung & Prozentwert",
+                                        text: "Der Euro-Kurs wird zum aktuellen Wechselkurs in USD umgerechnet. Die grüne oder rote Prozentzahl zeigt, ob die Aktie in Europa höher oder tiefer gehandelt wird als an der Wall Street zuletzt geschlossen wurde."
+                                    },
+                                    {
+                                        term: "Button 🇪🇺 Tradegate",
+                                        text: "Mit diesem Button kannst du zwischen der Tradegate-Euro-Indikation und der Standard-CHF-Umrechnung umschalten."
+                                    }
+                                ]}
+                            />
+                        </div>
+                    )}
                     {headerAction && <div className="ml-auto">{headerAction}</div>}
                 </div>
             )}
@@ -524,14 +566,33 @@ export function PositionTable({
 
                                         {/* 4. Aktueller Kurs */}
                                         <td className={cn("pl-1 pr-3.5 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
-                                            <div className="flex flex-col items-end">
-                                                <span className="font-medium whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
-                                                {pos.stock.currency !== 'CHF' && (
-                                                    <span className="font-medium whitespace-nowrap text-xs text-muted-foreground">
-                                                        {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
-                                                    </span>
-                                                )}
-                                            </div>
+                                            {(() => {
+                                                const euQuote = showTradegate && pos.stock?.symbol ? euQuotes[pos.stock.symbol] : null;
+                                                return (
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="font-medium whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
+                                                        {euQuote ? (
+                                                            <span
+                                                                className="font-medium whitespace-nowrap text-[11px] inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 cursor-help"
+                                                                title={`Tradegate (${euQuote.symbol}): ${euQuote.priceEUR.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR ≈ ${formatCurrency(euQuote.impliedTargetPrice ?? 0, pos.stock.currency, false)} (${euQuote.impliedDeltaPercent !== undefined && euQuote.impliedDeltaPercent >= 0 ? '+' : ''}${euQuote.impliedDeltaPercent?.toFixed(2)}% ggü. US-Schluss)`}
+                                                            >
+                                                                <span className="opacity-90">🇪🇺 {euQuote.priceEUR.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span>
+                                                                {euQuote.impliedDeltaPercent !== undefined && (
+                                                                    <span className={cn("font-bold text-[10px]", euQuote.impliedDeltaPercent >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                                                                        {euQuote.impliedDeltaPercent >= 0 ? '+' : ''}{euQuote.impliedDeltaPercent.toFixed(1)}%
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        ) : (
+                                                            pos.stock.currency !== 'CHF' && (
+                                                                <span className="font-medium whitespace-nowrap text-xs text-muted-foreground">
+                                                                    {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
+                                                                </span>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
 
                                         {/* 5. Aktueller Wert */}

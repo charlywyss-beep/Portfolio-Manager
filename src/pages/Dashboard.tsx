@@ -17,6 +17,7 @@ import { DividendCalendarChart } from '../components/DividendCalendarChart';
 import { AssetAllocationChart } from '../components/AssetAllocationChart';
 import { RiskAnalysisCard } from '../components/RiskAnalysisCard';
 import { TopPerformersCard } from '../components/TopPerformersCard';
+import { WeekendRadarBanner } from '../components/WeekendRadarBanner';
 import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Logo } from '../components/Logo';
@@ -363,16 +364,19 @@ export function Dashboard() {
                     </div>
                 )}
 
+                {/* Wochenstart- & Nacht-Radar */}
+                <WeekendRadarBanner />
+
                 {/* Top Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 min-[1680px]:grid-cols-4 gap-4 md:gap-5 2xl:gap-6">
                     {/* Total Value */}
-                    <div className="p-5 sm:p-6 rounded-xl bg-card border border-border shadow-sm order-1">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                    <div className="p-4 sm:p-5 2xl:p-6 rounded-xl bg-card border border-border shadow-sm order-1">
+                        <div className="flex justify-between items-center h-10 mb-4">
+                            <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
                                 <DollarSign className="size-6" />
                             </div>
                             <span className={cn(
-                                "flex items-center text-sm font-medium px-2 py-1 rounded-full",
+                                "flex items-center text-sm font-medium px-2 py-1 rounded-full shrink-0",
                                 totals.gainLoss >= 0 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                             )}>
                                 {totals.gainLoss >= 0 ? <ArrowUpRight className="size-4 mr-1" /> : <ArrowDownRight className="size-4 mr-1" />}
@@ -380,8 +384,8 @@ export function Dashboard() {
                             </span>
                         </div>
                         <div>
-                            <p className="text-sm text-muted-foreground font-medium">Gesamtwert</p>
-                            <h3 className="text-xl lg:text-2xl font-bold mt-1 tracking-tight">
+                            <p className="text-sm text-muted-foreground font-medium leading-none">Gesamtwert</p>
+                            <h3 className={cn("text-xl 2xl:text-2xl font-bold mt-2 tracking-tight whitespace-nowrap", totals.gainLoss >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
                                 {totals.totalValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                             </h3>
                             <p className={cn("text-sm mt-2 font-medium flex items-center gap-2.5 sm:gap-3 flex-wrap",
@@ -510,32 +514,34 @@ export function Dashboard() {
                         return (
                             <div
                                 onClick={() => navigate('/dividends')}
-                                className="p-5 sm:p-6 rounded-xl bg-card border border-border shadow-sm order-4 md:order-3 cursor-pointer hover:border-primary/40 transition-colors"
+                                className="p-4 sm:p-5 2xl:p-6 rounded-xl bg-card border border-border shadow-sm order-4 md:order-3 cursor-pointer hover:border-primary/40 transition-colors"
                             >
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                <div className="flex justify-between items-center h-10 mb-4">
+                                    <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 shrink-0">
                                         <TrendingUp className="size-6" />
                                     </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className="flex items-center text-sm font-medium px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="flex items-center text-sm font-medium px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">
                                             <ArrowUpRight className="size-4 mr-1" />
                                             {currentYieldPercent.toFixed(2)}%
                                         </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground font-medium leading-none">Erwartete Dividende im Jahr</p>
+                                    <h3 className="text-xl 2xl:text-2xl font-bold mt-2 tracking-tight text-green-600 dark:text-green-400 whitespace-nowrap">
+                                        +{totals.projectedYearlyDividends.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                    </h3>
+                                    <div className="flex items-center justify-between gap-2 mt-2">
+                                        <p className="text-sm font-medium text-green-600 dark:text-green-400 truncate">
+                                            Ø +{(totals.projectedYearlyDividends / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF / Monat
+                                        </p>
                                         {yieldOnCostPercent > 0 && (
-                                            <span className="text-[11px] text-muted-foreground font-medium">
+                                            <span className="text-xs text-muted-foreground font-medium shrink-0">
                                                 Kaufrendite {yieldOnCostPercent.toFixed(2)}%
                                             </span>
                                         )}
                                     </div>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground font-medium">Erwartete Dividende im Jahr</p>
-                                    <h3 className="text-xl lg:text-2xl font-bold mt-1 tracking-tight text-green-600 dark:text-green-400">
-                                        +{totals.projectedYearlyDividends.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                    </h3>
-                                    <p className="text-sm mt-2 font-medium text-green-600 dark:text-green-400">
-                                        Ø +{(totals.projectedYearlyDividends / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF / Monat
-                                    </p>
 
                                     <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5">
                                         <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
@@ -578,21 +584,21 @@ export function Dashboard() {
                     {/* Performance Card with Timeframe Selection */}
                     <div
                         onClick={(e) => { e.stopPropagation(); setShowPerformanceDetails(true); }}
-                        className="p-5 sm:p-6 rounded-xl bg-card border border-border shadow-sm order-2 md:order-2 cursor-pointer hover:border-primary/40 transition-colors"
+                        className="p-4 sm:p-5 2xl:p-6 rounded-xl bg-card border border-border shadow-sm order-2 md:order-2 cursor-pointer hover:border-primary/40 transition-colors"
                     >
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                        <div className="flex justify-between items-center h-10 mb-4">
+                            <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 shrink-0">
                                 <TrendingUp className="size-6" />
                             </div>
 
-                            <div className="flex flex-col items-end gap-2 w-full max-w-[200px]">
-                                {/* NEW: Details Button (Only for 1D) */}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                {/* Refresh Button (Only for 1D) */}
                                 {performancePeriod === '1D' && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); refreshAllPrices(true); }}
                                         disabled={isGlobalRefreshing}
                                         className={cn(
-                                            "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                            "h-7 px-2.5 rounded-lg border text-xs font-medium inline-flex items-center justify-center gap-1.5 leading-none py-0 transition-all shadow-sm",
                                             "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                             "active:scale-95",
                                             isGlobalRefreshing && "opacity-50 cursor-not-allowed"
@@ -610,34 +616,34 @@ export function Dashboard() {
                                     </button>
                                 )}
 
-                                <div className="flex items-center justify-end gap-2 w-full">
-                                    {performancePeriod === '1D' && (
-                                        <button
-                                            onClick={() => setShowPerformanceDetails(true)}
-                                            className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors px-3 py-1.5 rounded-xl bg-white border border-blue-100 shadow-sm hover:scale-105 hover:bg-blue-50"
-                                        >
-                                            Details
-                                        </button>
-                                    )}
+                                {/* Details Button (Only for 1D) */}
+                                {performancePeriod === '1D' && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setShowPerformanceDetails(true); }}
+                                        className="h-7 px-2.5 rounded-lg border text-xs font-medium inline-flex items-center justify-center leading-none py-0 transition-colors shadow-sm bg-background border-border text-foreground hover:bg-accent"
+                                        title="Performance Details öffnen"
+                                    >
+                                        Details
+                                    </button>
+                                )}
 
-                                    {/* Timeframe Selector */}
-                                    <div className="relative">
-                                        <select
-                                            className="appearance-none bg-background border border-border rounded-md text-xs font-medium px-2 py-1 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                            value={performancePeriod}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onChange={(e) => setPerformancePeriod(e.target.value)}
-                                            title="Zeitraum auswählen"
-                                        >
-                                            <option value="1D">Tag</option>
-                                            <option value="1W">Woche</option>
-                                            <option value="1M">Monat</option>
-                                            <option value="6M">6 Monate</option>
-                                            <option value="1Y">Jahr</option>
-                                        </select>
-                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
-                                            <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                                        </div>
+                                {/* Timeframe Selector */}
+                                <div className="relative">
+                                    <select
+                                        className="h-7 appearance-none bg-background border border-border rounded-lg text-xs font-medium pl-2.5 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 leading-none py-0 inline-flex items-center"
+                                        value={performancePeriod}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={(e) => setPerformancePeriod(e.target.value)}
+                                        title="Zeitraum auswählen"
+                                    >
+                                        <option value="1D">Tag</option>
+                                        <option value="1W">Woche</option>
+                                        <option value="1M">Monat</option>
+                                        <option value="6M">6 Monate</option>
+                                        <option value="1Y">Jahr</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
+                                        <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                                     </div>
                                 </div>
                             </div>
@@ -704,7 +710,7 @@ export function Dashboard() {
                             if (isLoading) {
                                 return (
                                     <div>
-                                        <p className="text-sm text-muted-foreground font-medium">Performance</p>
+                                        <p className="text-sm text-muted-foreground font-medium leading-none">Performance</p>
                                         <div className="animate-pulse space-y-2 mt-2">
                                             <div className="h-7 bg-muted rounded w-36"></div>
                                             <div className="h-4 bg-muted rounded w-24"></div>
@@ -715,8 +721,8 @@ export function Dashboard() {
 
                             return (
                                 <div>
-                                    <p className="text-sm text-muted-foreground font-medium">Performance</p>
-                                    <h3 className={cn("text-xl lg:text-2xl font-bold mt-1 tracking-tight", displayValue >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                    <p className="text-sm text-muted-foreground font-medium leading-none">Performance</p>
+                                    <h3 className={cn("text-xl 2xl:text-2xl font-bold mt-2 tracking-tight whitespace-nowrap", displayValue >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
                                         {displayValue >= 0 ? '+' : ''}{displayValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                     </h3>
                                     <div className="flex items-center gap-2 mt-2">

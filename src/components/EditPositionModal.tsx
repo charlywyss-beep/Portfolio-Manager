@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { X, Save, Trash2, Plus, Pencil, Landmark, Calculator } from 'lucide-react';
@@ -241,11 +242,10 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none overflow-hidden">
-            <div className="relative pointer-events-auto w-full max-w-5xl px-2 py-4 md:px-4">
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-xl"></div>
-                <div className="bg-card border border-border rounded-xl shadow-xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative z-10 max-h-[calc(100vh-48px)]">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
+            <div className="relative w-full max-w-4xl my-auto animate-in fade-in zoom-in-95 duration-200">
+                <div className="bg-card border border-border rounded-xl shadow-2xl w-full flex flex-col overflow-hidden relative max-h-[calc(100dvh-32px)]">
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-border">
                         <div>
@@ -364,6 +364,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 <label className="text-xs font-semibold text-foreground whitespace-nowrap">Bank / Broker:</label>
                                 <div className="relative flex-1">
                                     <input
+                                        id="position-broker-input"
                                         type="text"
                                         list="broker-list-options"
                                         value={broker}
@@ -598,6 +599,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                     </form>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

@@ -13,7 +13,10 @@ import {
     TrendingDown,
     Wallet,
     ArrowUpDown,
-    GripVertical
+    GripVertical,
+    Zap,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { usePortfolioData } from '../hooks/usePortfolioData';
@@ -22,6 +25,7 @@ import { convertToCHF } from '../utils/currency';
 import { estimateMarketState, isAnyStockMarketActiveToday } from '../utils/market';
 import { cn } from '../utils';
 import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
+import { InfoHelp } from '../components/InfoHelp';
 
 export interface MarketItem {
     id: string;
@@ -55,6 +59,8 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '5', symbol: 'SREN.SW', name: 'Swiss Re', category: 'stocks', decimals: 2 },
     { id: 'idx-spx', symbol: '^GSPC', name: 'S&P 500 Index', category: 'indices', decimals: 2 },
     { id: 'idx-dji', symbol: '^DJI', name: 'Dow Jones Industrial', category: 'indices', decimals: 2 },
+    { id: 'fut-nq', symbol: 'NQ=F', name: 'Nasdaq 100 Future', category: 'indices', decimals: 2 },
+    { id: 'fut-es', symbol: 'ES=F', name: 'S&P 500 Future', category: 'indices', decimals: 2 },
     { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Index', category: 'indices', decimals: 2 },
     { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 },
     { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 },
@@ -78,6 +84,9 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
     'VWCE.DE': { price: 170.88, previousClose: 170.44, changePercent: 0.26, changeAmount: 0.44, currency: 'EUR' },
     '^SSMI': { price: 14368.78, previousClose: 14391.77, changePercent: -0.16, changeAmount: -22.99, currency: 'CHF' },
     'SREN.SW': { price: 161.60, previousClose: 160.30, changePercent: 0.81, changeAmount: 1.30, currency: 'CHF' },
+    'NQ=F': { price: 21540.50, previousClose: 21420.00, changePercent: 0.56, changeAmount: 120.50, currency: 'USD' },
+    'ES=F': { price: 5985.25, previousClose: 5962.50, changePercent: 0.38, changeAmount: 22.75, currency: 'USD' },
+    'YM=F': { price: 43620.00, previousClose: 43510.00, changePercent: 0.25, changeAmount: 110.00, currency: 'USD' },
     '^NDX': { price: 29529.34, previousClose: 29187.84, changePercent: 1.17, changeAmount: 341.50, currency: 'USD' },
     '^GSPC': { price: 5864.67, previousClose: 5851.20, changePercent: 0.23, changeAmount: 13.47, currency: 'USD' },
     '^DJI': { price: 42863.86, previousClose: 42740.40, changePercent: 0.29, changeAmount: 123.46, currency: 'USD' },
@@ -106,6 +115,11 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
 };
 
 export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
+    // US & globale Futures (Nacht- & Wochenend-Handel)
+    { symbol: 'NQ=F', name: 'Nasdaq 100 Future (E-mini)', category: 'indices', decimals: 2 },
+    { symbol: 'ES=F', name: 'S&P 500 Future (E-mini)', category: 'indices', decimals: 2 },
+    { symbol: 'YM=F', name: 'Dow Jones Future (E-mini)', category: 'indices', decimals: 2 },
+    { symbol: 'RTY=F', name: 'Russell 2000 Future', category: 'indices', decimals: 2 },
     // Asiatische Indizes (Morgen-Check)
     { symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'asia', decimals: 2 },
     { symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'asia', decimals: 2 },
@@ -313,12 +327,16 @@ export function MarketOverviewPage() {
                     const hasSSE = migrated.some((it: MarketItem) => it.symbol === '000001.SS');
                     const hasDAX = migrated.some((it: MarketItem) => it.symbol === '^GDAXI');
                     const hasFTSE = migrated.some((it: MarketItem) => it.symbol === '^FTSE');
+                    const hasNQ = migrated.some((it: MarketItem) => it.symbol === 'NQ=F');
+                    const hasES = migrated.some((it: MarketItem) => it.symbol === 'ES=F');
                     const toAdd: MarketItem[] = [];
                     if (!hasN225) toAdd.push({ id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 });
                     if (!hasHSI) toAdd.push({ id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 });
                     if (!hasSSE) toAdd.push({ id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 });
                     if (!hasDAX) toAdd.push({ id: 'idx-dax', symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 });
                     if (!hasFTSE) toAdd.push({ id: 'idx-ftse', symbol: '^FTSE', name: 'FTSE 100 (London)', category: 'indices', decimals: 2 });
+                    if (!hasNQ) toAdd.push({ id: 'fut-nq', symbol: 'NQ=F', name: 'Nasdaq 100 Future', category: 'indices', decimals: 2 });
+                    if (!hasES) toAdd.push({ id: 'fut-es', symbol: 'ES=F', name: 'S&P 500 Future', category: 'indices', decimals: 2 });
                     if (toAdd.length > 0) {
                         migrated = [...migrated, ...toAdd];
                     }
@@ -418,6 +436,67 @@ export function MarketOverviewPage() {
             console.warn('Failed to save market quotes', e);
         }
     }, [quotes]);
+
+    // Radar collapse state
+    const [isRadarCollapsed, setIsRadarCollapsed] = useState(() => {
+        try {
+            return localStorage.getItem('portfolio_radar_collapsed') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    const toggleRadarCollapsed = () => {
+        setIsRadarCollapsed(prev => {
+            const next = !prev;
+            try { localStorage.setItem('portfolio_radar_collapsed', String(next)); } catch {}
+            return next;
+        });
+    };
+
+    // Radar market phase timing
+    const marketPhase = useMemo(() => {
+        const now = new Date();
+        const day = now.getDay(); // 0 = Sun, 6 = Sat
+        const hour = now.getHours();
+        // Weekend before futures open (Saturday all day, Sunday until 23:59 MEZ)
+        if (day === 6 || (day === 0 && hour < 24)) {
+            return {
+                status: 'weekend',
+                label: 'Wochenende',
+                hint: 'US-Futures öffnen So 24:00 MEZ',
+                badgeClass: 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+            };
+        }
+        // Sunday night / Monday pre-market (up to 15:30 MEZ)
+        if (day === 1 && (hour < 15 || (hour === 15 && now.getMinutes() < 30))) {
+            return {
+                status: 'early',
+                label: 'Wochenstart aktiv',
+                hint: 'Asien & US-Futures im Handel',
+                badgeClass: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+            };
+        }
+        return {
+            status: 'active',
+            label: 'Terminhandel aktiv',
+            hint: '23h US-Futures im Handel',
+            badgeClass: 'bg-blue-500/15 text-blue-400 border-blue-500/30'
+        };
+    }, []);
+
+    // Radar Quotes & Sentiment
+    const nqQuote = quotes['NQ=F'] || DEFAULT_FALLBACK_QUOTES['NQ=F'];
+    const esQuote = quotes['ES=F'] || DEFAULT_FALLBACK_QUOTES['ES=F'];
+    const ymQuote = quotes['YM=F'] || DEFAULT_FALLBACK_QUOTES['YM=F'];
+    const btcQuote = quotes['BTC-CHF'] || quotes['BTC-USD'] || DEFAULT_FALLBACK_QUOTES['BTC-CHF'];
+    const goldQuote = quotes['GC=F'] || DEFAULT_FALLBACK_QUOTES['GC=F'];
+
+    const avgFuturesChange = useMemo(() => {
+        const nqPct = nqQuote?.changePercent ?? 0;
+        const esPct = esQuote?.changePercent ?? 0;
+        return (nqPct + esPct) / 2;
+    }, [nqQuote, esQuote]);
 
     // Keep quotes in ref to avoid infinite re-render loops in fetchQuotes
     const quotesRef = useRef(quotes);
@@ -653,7 +732,11 @@ export function MarketOverviewPage() {
         try {
             const symList = Array.from(new Set([
                 ...items.map(i => i.symbol),
-                ...stocks.map(s => s.symbol)
+                ...stocks.map(s => s.symbol),
+                'NQ=F',
+                'ES=F',
+                'YM=F',
+                'GC=F'
             ]));
             const res = await fetch(`/api/yahoo-quote?symbol=${symList.join(',')}&_=${Date.now()}`);
             if (res.ok) {
@@ -793,10 +876,10 @@ export function MarketOverviewPage() {
         });
     }, [filteredItems, sortBy, quotes, stocks, portfolioStocks]);
 
-    // Number format helper (German/Swiss style: 14.368,78)
+    // Number format helper (Swiss style: 14'368.78)
     const formatNumber = (num: number | undefined, decimals = 2) => {
         if (num === undefined || isNaN(num)) return '-';
-        return num.toLocaleString('de-DE', {
+        return num.toLocaleString('de-CH', {
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals
         });
@@ -1143,6 +1226,211 @@ export function MarketOverviewPage() {
 
             {/* Container for Grid and Content */}
             <div className="space-y-4 iphone-landscape-no-px market-content-wrap">
+                {/* Wochenstart- & Nacht-Radar (US-Futures & Wochenende) */}
+                {(activeFilter === 'all' || activeFilter === 'indices') && (
+                    <div className="bg-card/75 border border-border/80 rounded-2xl p-3 sm:p-4 shadow-xs backdrop-blur-sm transition-all">
+                        <div 
+                            className="flex items-center justify-between gap-2 cursor-pointer select-none"
+                            onClick={toggleRadarCollapsed}
+                        >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="size-7 sm:size-8 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/25 shadow-2xs">
+                                    <Zap className="size-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight leading-tight">
+                                            Wochenstart- & Nacht-Radar
+                                        </h2>
+                                        <span className={cn("text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full border leading-none inline-flex items-center gap-1", marketPhase.badgeClass)}>
+                                            <span className="size-1.5 rounded-full bg-current animate-pulse" />
+                                            {marketPhase.label}
+                                        </span>
+                                        <InfoHelp
+                                            title="Wochenstart- & Nacht-Radar"
+                                            items={[
+                                                {
+                                                    term: "Was zeigt dieses Radar?",
+                                                    text: "Das Radar analysiert die globalen Märkte vor und ausserhalb der regulären Börsenzeiten – insbesondere am Wochenende und nachts, bevor die europäischen und US-Hauptbörsen öffnen."
+                                                },
+                                                {
+                                                    term: "Wann handeln die US-Futures?",
+                                                    text: "Die US-Index-Futures (Nasdaq 100, S&P 500, Dow Jones) starten am Sonntag um 24:00 Uhr MEZ (18:00 Uhr New York) in die neue Handelswoche und handeln dann 23 Stunden täglich durchgehend. Hier sieht man die allererste Reaktion der Märkte auf Nachrichten vom Wochenende."
+                                                },
+                                                {
+                                                    term: "Tendenz-Indikator",
+                                                    text: "Berechnet den gewichteten Durchschnitt der US-Leit-Futures. Eine grüne Tendenz signalisiert eine freundliche vorbörsliche Erwartung, eine rote Tendenz deutet auf Kursdruck zum Handelsstart hin."
+                                                },
+                                                {
+                                                    term: "Bitcoin 24/7 • Krypto-Risikobarometer",
+                                                    text: "Kryptowährungen handeln rund um die Uhr ohne Wochenendpause. Starke Wochenendbewegungen bei Bitcoin dienen oft als Frühwarnsystem für die allgemeine Risikobereitschaft der Anleger."
+                                                },
+                                                {
+                                                    term: "Goldpreis Spot • Sicherheit & Geopolitik",
+                                                    text: "Gold reagiert besonders sensibel auf geopolitische Krisen oder makroökonomische Schocks am Wochenende und fungiert als Fluchtwährung."
+                                                },
+                                                {
+                                                    term: "Vorteil für europäische Anleger",
+                                                    text: "Ab Sonntag 24:00 Uhr siehst du die US-Futures, ab Montag 08:00 Uhr die ersten europäischen Handelskursen auf Tradegate – Stunden vor der US-Börseneröffnung um 15:30 Uhr MEZ."
+                                                }
+                                            ]}
+                                        />
+                                    </div>
+                                    <p className="text-[11px] text-muted-foreground truncate hidden sm:block mt-0.5">
+                                        {marketPhase.hint} • US-Futures & Sentiment
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                                {/* Overall Sentiment Badge */}
+                                <div className={cn(
+                                    "px-2.5 py-1 rounded-xl text-xs font-bold border flex items-center gap-1.5 leading-none shadow-2xs",
+                                    avgFuturesChange >= 0
+                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                                )}>
+                                    {avgFuturesChange >= 0 ? <TrendingUp className="size-3.5 stroke-[2.5]" /> : <TrendingDown className="size-3.5 stroke-[2.5]" />}
+                                    <span>Tendenz {avgFuturesChange >= 0 ? '+' : ''}{formatNumber(avgFuturesChange, 2)}%</span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); toggleRadarCollapsed(); }}
+                                    className="p-1 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+                                    aria-label={isRadarCollapsed ? "Radar ausklappen" : "Radar einklappen"}
+                                >
+                                    {isRadarCollapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {!isRadarCollapsed && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-3 pt-3 border-t border-border/50">
+                                {/* 1. Nasdaq 100 Future */}
+                                <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0">
+                                    <div className="flex items-center justify-between gap-1">
+                                        <span className="text-sm text-muted-foreground font-medium truncate">Nasdaq 100 Future</span>
+                                        <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">USD</span>
+                                    </div>
+                                    <div className="text-xl lg:text-2xl font-bold tracking-tight text-foreground tabular-nums my-1">
+                                        {formatNumber(nqQuote?.price, 2)}
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className={cn(
+                                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs sm:text-sm font-semibold tabular-nums leading-none",
+                                            (nqQuote?.changePercent ?? 0) >= 0
+                                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                                : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                        )}>
+                                            {(nqQuote?.changePercent ?? 0) >= 0 ? '+' : ''}{formatNumber(nqQuote?.changePercent, 2)}%
+                                        </span>
+                                        <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
+                                            {(nqQuote?.changeAmount ?? 0) >= 0 ? '+' : ''}{formatNumber(nqQuote?.changeAmount, 1)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* 2. S&P 500 Future */}
+                                <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0">
+                                    <div className="flex items-center justify-between gap-1">
+                                        <span className="text-sm text-muted-foreground font-medium truncate">S&P 500 Future</span>
+                                        <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">USD</span>
+                                    </div>
+                                    <div className="text-xl lg:text-2xl font-bold tracking-tight text-foreground tabular-nums my-1">
+                                        {formatNumber(esQuote?.price, 2)}
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className={cn(
+                                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs sm:text-sm font-semibold tabular-nums leading-none",
+                                            (esQuote?.changePercent ?? 0) >= 0
+                                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                                : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                        )}>
+                                            {(esQuote?.changePercent ?? 0) >= 0 ? '+' : ''}{formatNumber(esQuote?.changePercent, 2)}%
+                                        </span>
+                                        <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
+                                            {(esQuote?.changeAmount ?? 0) >= 0 ? '+' : ''}{formatNumber(esQuote?.changeAmount, 1)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* 3. Dow Jones Future */}
+                                <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0">
+                                    <div className="flex items-center justify-between gap-1">
+                                        <span className="text-sm text-muted-foreground font-medium truncate">Dow Jones Future</span>
+                                        <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">USD</span>
+                                    </div>
+                                    <div className="text-xl lg:text-2xl font-bold tracking-tight text-foreground tabular-nums my-1">
+                                        {formatNumber(ymQuote?.price, 0)}
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className={cn(
+                                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs sm:text-sm font-semibold tabular-nums leading-none",
+                                            (ymQuote?.changePercent ?? 0) >= 0
+                                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                                : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                        )}>
+                                            {(ymQuote?.changePercent ?? 0) >= 0 ? '+' : ''}{formatNumber(ymQuote?.changePercent, 2)}%
+                                        </span>
+                                        <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
+                                            {(ymQuote?.changeAmount ?? 0) >= 0 ? '+' : ''}{formatNumber(ymQuote?.changeAmount, 0)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* 4. Bitcoin 24/7 Sentiment */}
+                                <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0">
+                                    <div className="flex items-center justify-between gap-1">
+                                        <span className="text-sm text-muted-foreground font-medium truncate">Bitcoin 24/7</span>
+                                        <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">CHF</span>
+                                    </div>
+                                    <div className="text-xl lg:text-2xl font-bold tracking-tight text-foreground tabular-nums my-1">
+                                        {formatNumber(btcQuote?.price, 0)}
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className={cn(
+                                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs sm:text-sm font-semibold tabular-nums leading-none",
+                                            (btcQuote?.changePercent ?? 0) >= 0
+                                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                                : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                        )}>
+                                            {(btcQuote?.changePercent ?? 0) >= 0 ? '+' : ''}{formatNumber(btcQuote?.changePercent, 2)}%
+                                        </span>
+                                        <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
+                                            {(btcQuote?.changeAmount ?? 0) >= 0 ? '+' : ''}{formatNumber(btcQuote?.changeAmount, 0)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* 5. Gold Spot */}
+                                <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0 col-span-2 sm:col-span-1">
+                                    <div className="flex items-center justify-between gap-1">
+                                        <span className="text-sm text-muted-foreground font-medium truncate">Gold Spot</span>
+                                        <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">USD</span>
+                                    </div>
+                                    <div className="text-xl lg:text-2xl font-bold tracking-tight text-foreground tabular-nums my-1">
+                                        {formatNumber(goldQuote?.price, 2)}
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className={cn(
+                                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs sm:text-sm font-semibold tabular-nums leading-none",
+                                            (goldQuote?.changePercent ?? 0) >= 0
+                                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                                : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                        )}>
+                                            {(goldQuote?.changePercent ?? 0) >= 0 ? '+' : ''}{formatNumber(goldQuote?.changePercent, 2)}%
+                                        </span>
+                                        <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
+                                            {(goldQuote?.changeAmount ?? 0) >= 0 ? '+' : ''}{formatNumber(goldQuote?.changeAmount, 1)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* The Market Tiles Grid (Optimized 2 columns on iPhone & mobile, 3 columns on tablet/desktop) */}
                 <div 
                     onDragOver={(e) => {
