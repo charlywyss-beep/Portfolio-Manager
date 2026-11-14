@@ -537,34 +537,6 @@ export function EditDividendPage() {
         }
     };
 
-    const renderFullSaveButton = (wrapperClassName = "") => (
-        <div className={wrapperClassName}>
-            <button
-                form="dividend-form"
-                type="submit"
-                className={cn(
-                    "w-full px-4 py-3.5 text-base sm:text-lg font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer",
-                    isSavedFeedback
-                        ? "bg-emerald-600 text-white ring-2 ring-emerald-400"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/25"
-                )}
-                title="Alles speichern [Strg + S]"
-            >
-                {isSavedFeedback ? (
-                    <>
-                        <Check className="size-5 stroke-[3]" />
-                        <span>Gespeichert!</span>
-                    </>
-                ) : (
-                    <>
-                        <Save className="size-5" />
-                        <span>{isDirty ? "Alle Änderungen speichern" : "Speichern"}</span>
-                    </>
-                )}
-            </button>
-        </div>
-    );
-
     return (
         <div className="bg-background pb-20">
             {/* Header */}
@@ -1695,11 +1667,35 @@ export function EditDividendPage() {
                                 )}
                             </div>
 
+                            <div className="pt-2">
+                                <button
+                                    form="dividend-form"
+                                    type="submit"
+                                    className={cn(
+                                        "w-full px-4 py-3.5 text-base sm:text-lg font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer",
+                                        isSavedFeedback
+                                            ? "bg-emerald-600 text-white ring-2 ring-emerald-400"
+                                            : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/25"
+                                    )}
+                                    title="Alles speichern [Strg + S]"
+                                >
+                                    {isSavedFeedback ? (
+                                        <>
+                                            <Check className="size-5 stroke-[3]" />
+                                            <span>Gespeichert!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="size-5" />
+                                            <span>{isDirty ? "Alle Änderungen speichern" : "Speichern"}</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
                             {/* Dates Section - Only show if frequency is not 'none' */}
                             {frequency !== 'none' && (
-                                <>
-                                    {renderFullSaveButton()}
-                                    <div id="section-termine" className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4 scroll-mt-20">
+                                <div id="section-termine" className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4 scroll-mt-20">
                                     <div className="flex flex-wrap justify-between items-center gap-2">
                                         <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Termine</h3>
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -1841,11 +1837,8 @@ export function EditDividendPage() {
                                             </div>
                                         </div>
                                     )}
-                                    </div>
-                                </>
+                                </div>
                             )}
-
-                            {renderFullSaveButton("pt-4 pb-8")}
                         </>
                     )}
                 </form>
