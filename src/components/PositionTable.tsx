@@ -121,8 +121,12 @@ export function PositionTable({
                                         text: "Deutsche Handelsplätze wie Tradegate und Xetra handeln US-Aktien bereits ab 08:00 Uhr morgens in Euro. Du siehst hier den echten Euro-Handelskurs und direkt daneben die prozentuale Abweichung zum US-Schlusskurs."
                                     },
                                     {
-                                        term: "Dein Vorteil (7,5 Stunden Zeitvorsprung)",
-                                        text: "Die Wall Street in New York öffnet erst um 15:30 Uhr MEZ. Über Tradegate siehst du montags schon ab 08:00 Uhr morgens beim Kaffee, wie der Markt auf News vom Wochenende reagiert und wo deine Aktien am Nachmittag voraussichtlich eröffnen werden."
+                                        term: "Börsenkette: Was ist mit Asien?",
+                                        text: "Asien (Tokio, Hongkong) öffnet nachts als Erstes. US-Aktien selbst werden dort aber kaum direkt gehandelt – dort bewegen sich vor allem die US-Futures. Die ersten echten Handelskursen für US-Aktien entstehen ab 08:00 Uhr in Europa."
+                                    },
+                                    {
+                                        term: "Dein konkreter Vorteil (7,5 Stunden Vorsprung)",
+                                        text: "Die Wall Street in New York öffnet erst um 15:30 Uhr MEZ. In diesen 7,5 Stunden kannst du schon morgens über Tradegate handeln oder deine US-Orders in Ruhe anpassen, bevor am Nachmittag das Hauptvolumen in Amerika startet."
                                     },
                                     {
                                         term: "Button 🇪🇺 Tradegate",

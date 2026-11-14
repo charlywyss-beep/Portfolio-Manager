@@ -946,15 +946,15 @@ export function StockDetail() {
                                                 items={[
                                                     {
                                                         term: "Warum vorne Euro und hinten Dollar?",
-                                                        text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deiner Aktie zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD)."
+                                                        text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deinem US-Bestand zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD). Die Prozentzahl zeigt den Unterschied zum letzten New Yorker Schlusskurs."
                                                     },
                                                     {
-                                                        term: "Was zeigt die Prozentzahl?",
-                                                        text: "Sie zeigt dir auf einen Blick, ob die Aktie in Europa gerade höher (grün) oder tiefer (rot) gehandelt wird als zum letzten offiziellen New Yorker Schlusskurs."
+                                                        term: "Börsenkette: Was ist mit Asien?",
+                                                        text: "Asien (Tokio, Hongkong) öffnet montags nachts als Erstes (ab 01:00 Uhr MEZ). US-Aktien selbst werden dort aber kaum direkt gehandelt – dort bewegen sich vor allem die US-Index-Futures (siehe Radar auf dem Dashboard). Die allerersten echten Handelskursen für US-Einzelaktien entstehen erst ab 08:00 Uhr in Europa!"
                                                     },
                                                     {
-                                                        term: "Dein Vorteil (7,5 Stunden Frühwarnsystem)",
-                                                        text: "Deutsche Börsen handeln US-Aktien montags bereits ab 08:00 Uhr morgens – die Wall Street in New York öffnet erst um 15:30 Uhr. Wenn am Wochenende wichtige Neuigkeiten zu einer Firma bekannt werden, siehst du hier schon morgens beim Kaffee, wie die Anleger reagieren und wohin die Reise geht – volle 7,5 Stunden bevor die US-Börsen überhaupt aufwachen."
+                                                        term: "Dein konkreter Vorteil (7,5 Stunden Handlungsspielraum)",
+                                                        text: "Europa handelt von 08:00 bis 15:30 Uhr MEZ – während Amerika noch schläft. Du kannst morgens über Tradegate bereits Aktien kaufen oder verkaufen (bevor um 15:30 Uhr die Masse an der Wall Street losstürmt) und hast den ganzen Vormittag Zeit, deine US-Orders und Limits in aller Ruhe anzupassen."
                                                     }
                                                 ]}
                                             />
@@ -1267,15 +1267,15 @@ export function StockDetail() {
                                     items={[
                                         {
                                             term: "Warum vorne Euro und hinten Dollar?",
-                                            text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deiner Aktie zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD)."
+                                            text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deinem US-Bestand zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD). Die Prozentzahl zeigt den Unterschied zum letzten New Yorker Schlusskurs."
                                         },
                                         {
-                                            term: "Was zeigt die Prozentzahl?",
-                                            text: "Sie zeigt dir auf einen Blick, ob die Aktie in Europa gerade höher (grün) oder tiefer (rot) gehandelt wird als zum letzten offiziellen New Yorker Schlusskurs."
+                                            term: "Börsenkette: Was ist mit Asien?",
+                                            text: "Asien (Tokio, Hongkong) öffnet montags nachts als Erstes (ab 01:00 Uhr MEZ). US-Aktien selbst werden dort aber kaum direkt gehandelt – dort bewegen sich vor allem die US-Index-Futures (siehe Radar auf dem Dashboard). Die allerersten echten Handelskursen für US-Einzelaktien entstehen erst ab 08:00 Uhr in Europa!"
                                         },
                                         {
-                                            term: "Dein Vorteil (7,5 Stunden Frühwarnsystem)",
-                                            text: "Deutsche Börsen handeln US-Aktien montags bereits ab 08:00 Uhr morgens – die Wall Street in New York öffnet erst um 15:30 Uhr. Wenn am Wochenende wichtige Neuigkeiten zu einer Firma bekannt werden, siehst du hier schon morgens beim Kaffee, wie die Anleger reagieren und wohin die Reise geht – volle 7,5 Stunden bevor die US-Börsen überhaupt aufwachen."
+                                            term: "Dein konkreter Vorteil (7,5 Stunden Handlungsspielraum)",
+                                            text: "Europa handelt von 08:00 bis 15:30 Uhr MEZ – während Amerika noch schläft. Du kannst morgens über Tradegate bereits Aktien kaufen oder verkaufen (bevor um 15:30 Uhr die Masse an der Wall Street losstürmt) und hast den ganzen Vormittag Zeit, deine US-Orders und Limits in aller Ruhe anzupassen."
                                         }
                                     ]}
                                 />
