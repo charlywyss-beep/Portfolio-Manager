@@ -160,68 +160,87 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
         )}>
             {/* Header */}
             <div 
-                className="flex items-center justify-between gap-3 cursor-pointer select-none"
+                className="flex items-start sm:items-center justify-between gap-2.5 sm:gap-3 cursor-pointer select-none"
                 onClick={toggleCollapsed}
             >
-                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <div className="size-8 sm:size-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/25 shadow-2xs">
+                <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div className="size-9 sm:size-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/25 shadow-2xs mt-0.5 sm:mt-0">
                         <Zap className="size-4 sm:size-5" />
                     </div>
-                    <div className="min-w-0 flex flex-col justify-center">
-                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                            <div className="flex items-center gap-1 shrink-0">
-                                <h2 className="text-sm sm:text-lg md:text-xl font-bold text-foreground tracking-tight whitespace-nowrap">
-                                    Wochenstart-Radar
-                                </h2>
-                                <InfoHelp
-                                    title="Wochenstart- & Nacht-Radar"
-                                    items={[
-                                        {
-                                            term: "Was zeigt dieses Radar?",
-                                            text: "Das Radar fasst die globale Marktstimmung vor Beginn der regulären Handelszeiten zusammen – nachts und an Wochenenden."
-                                        },
-                                        {
-                                            term: "US-Futures ab Sonntag 24:00 Uhr MEZ",
-                                            text: "Die US-Index-Futures (Nasdaq 100 & S&P 500) starten am Sonntag um Mitternacht und handeln 23h täglich. Hier spiegelt sich die allererste Reaktion auf Wochenend-News wider."
-                                        },
-                                        {
-                                            term: "Depot-Frühtendenz",
-                                            text: "Schätzt basierend auf den US-Futures und deinem Aktienbestand die voraussichtliche Eröffnungstendenz deines Portfolios in Franken ab."
-                                        },
-                                        {
-                                            term: "Tradegate-Frühstart ab Montag 08:00 Uhr",
-                                            text: "Europäische Handelsplätze wie Tradegate und Xetra handeln US-Aktien bereits ab 08:00 Uhr morgens in Euro – Stunden vor dem offiziellen US-Pre-Market."
-                                        }
-                                    ]}
-                                />
-                            </div>
-                            <span className={cn("text-[11px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 rounded-full border leading-none inline-flex items-center gap-1 shrink-0", marketPhase.badgeClass)}>
+                    <div className="min-w-0 flex flex-col justify-center gap-1 sm:gap-0.5">
+                        {/* Title Row */}
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                            <h2 className="text-sm sm:text-lg md:text-xl font-bold text-foreground tracking-tight whitespace-nowrap">
+                                Wochenstart-Radar
+                            </h2>
+                            <InfoHelp
+                                title="Wochenstart- & Nacht-Radar"
+                                items={[
+                                    {
+                                        term: "Was zeigt dieses Radar?",
+                                        text: "Das Radar fasst die globale Marktstimmung vor Beginn der regulären Handelszeiten zusammen – nachts und an Wochenenden."
+                                    },
+                                    {
+                                        term: "US-Futures ab Sonntag 24:00 Uhr MEZ",
+                                        text: "Die US-Index-Futures (Nasdaq 100 & S&P 500) starten am Sonntag um Mitternacht und handeln 23h täglich. Hier spiegelt sich die allererste Reaktion auf Wochenend-News wider."
+                                    },
+                                    {
+                                        term: "Depot-Frühtendenz",
+                                        text: "Schätzt basierend auf den US-Futures und deinem Aktienbestand die voraussichtliche Eröffnungstendenz deines Portfolios in Franken ab."
+                                    },
+                                    {
+                                        term: "Tradegate-Frühstart ab Montag 08:00 Uhr",
+                                        text: "Europäische Handelsplätze wie Tradegate und Xetra handeln US-Aktien bereits ab 08:00 Uhr morgens in Euro – Stunden vor dem offiziellen US-Pre-Market."
+                                    }
+                                ]}
+                            />
+                            {/* Status-Badge inline on desktop */}
+                            <span className={cn("hidden sm:inline-flex text-xs font-bold px-2.5 py-0.5 rounded-full border leading-none items-center gap-1.5 shrink-0", marketPhase.badgeClass)}>
                                 <span className="size-1.5 rounded-full bg-current animate-pulse" />
                                 {marketPhase.label}
                             </span>
                         </div>
+
+                        {/* Mobile Badges Row: Status + Tendenz */}
+                        <div className="flex items-center gap-2 flex-wrap sm:hidden pt-0.5">
+                            <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-full border leading-none inline-flex items-center gap-1 shrink-0", marketPhase.badgeClass)}>
+                                <span className="size-1.5 rounded-full bg-current animate-pulse" />
+                                {marketPhase.label}
+                            </span>
+                            <div className={cn(
+                                "h-6 px-2 rounded-md text-[11px] font-bold border inline-flex items-center justify-center gap-1 leading-none shadow-2xs whitespace-nowrap",
+                                avgFuturesChange >= 0
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                            )}>
+                                {avgFuturesChange >= 0 ? <TrendingUp className="size-3 stroke-[2.5]" /> : <TrendingDown className="size-3 stroke-[2.5]" />}
+                                <span>Tendenz {avgFuturesChange >= 0 ? '+' : ''}{formatNum(avgFuturesChange, 2)}%</span>
+                            </div>
+                        </div>
+
+                        {/* Desktop Hint */}
                         <p className="text-xs text-muted-foreground truncate hidden sm:block mt-0.5">
                             {marketPhase.hint} • US-Futures & Markt-Sentiment
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                    {/* Overall Tendenz Badge */}
+                <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 self-center">
+                    {/* Desktop Tendenz Badge */}
                     <div className={cn(
-                        "h-7 px-2 sm:px-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold border inline-flex items-center justify-center gap-1 sm:gap-1.5 leading-none shadow-2xs whitespace-nowrap",
+                        "hidden sm:inline-flex h-7 px-3 rounded-xl text-xs sm:text-sm font-bold border items-center justify-center gap-1.5 leading-none shadow-2xs whitespace-nowrap",
                         avgFuturesChange >= 0
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
                             : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
                     )}>
-                        {avgFuturesChange >= 0 ? <TrendingUp className="size-3.5 sm:size-4 stroke-[2.5]" /> : <TrendingDown className="size-3.5 sm:size-4 stroke-[2.5]" />}
+                        {avgFuturesChange >= 0 ? <TrendingUp className="size-4 stroke-[2.5]" /> : <TrendingDown className="size-4 stroke-[2.5]" />}
                         <span>Tendenz {avgFuturesChange >= 0 ? '+' : ''}{formatNum(avgFuturesChange, 2)}%</span>
                     </div>
 
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); toggleCollapsed(); }}
-                        className="size-7 rounded-lg hover:bg-muted text-muted-foreground flex items-center justify-center shrink-0 transition-colors"
+                        className="size-7 sm:size-8 rounded-lg hover:bg-muted text-muted-foreground flex items-center justify-center shrink-0 transition-colors"
                         aria-label={isCollapsed ? "Radar ausklappen" : "Radar einklappen"}
                     >
                         {isCollapsed ? <ChevronDown className="size-4 sm:size-5" /> : <ChevronUp className="size-4 sm:size-5" />}
