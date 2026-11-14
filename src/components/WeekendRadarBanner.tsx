@@ -195,25 +195,25 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                                 ]}
                             />
                             {/* Status-Badge inline on desktop */}
-                            <span className={cn("hidden sm:inline-flex text-xs font-bold px-2.5 py-0.5 rounded-full border leading-none items-center gap-1.5 shrink-0", marketPhase.badgeClass)}>
+                            <span className={cn("hidden sm:inline-flex h-7 px-3 rounded-full border leading-none items-center justify-center gap-1.5 shrink-0 text-xs font-bold", marketPhase.badgeClass)}>
                                 <span className="size-1.5 rounded-full bg-current animate-pulse" />
                                 {marketPhase.label}
                             </span>
                         </div>
 
-                        {/* Mobile Badges Row: Status + Tendenz */}
+                        {/* Mobile Badges Row: Status + Tendenz - identical shape, height and style */}
                         <div className="flex items-center gap-2 flex-wrap sm:hidden pt-0.5">
-                            <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-full border leading-none inline-flex items-center gap-1 shrink-0", marketPhase.badgeClass)}>
+                            <span className={cn("h-6 px-2.5 rounded-full border leading-none inline-flex items-center justify-center gap-1.5 shrink-0 text-[11px] font-bold", marketPhase.badgeClass)}>
                                 <span className="size-1.5 rounded-full bg-current animate-pulse" />
                                 {marketPhase.label}
                             </span>
                             <div className={cn(
-                                "h-6 px-2 rounded-md text-[11px] font-bold border inline-flex items-center justify-center gap-1 leading-none shadow-2xs whitespace-nowrap",
+                                "h-6 px-2.5 rounded-full border leading-none inline-flex items-center justify-center gap-1.5 shrink-0 text-[11px] font-bold shadow-2xs whitespace-nowrap",
                                 avgFuturesChange >= 0
                                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
                                     : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
                             )}>
-                                {avgFuturesChange >= 0 ? <TrendingUp className="size-3 stroke-[2.5]" /> : <TrendingDown className="size-3 stroke-[2.5]" />}
+                                {avgFuturesChange >= 0 ? <TrendingUp className="size-3.5 stroke-[2.5]" /> : <TrendingDown className="size-3.5 stroke-[2.5]" />}
                                 <span>Tendenz {avgFuturesChange >= 0 ? '+' : ''}{formatNum(avgFuturesChange, 2)}%</span>
                             </div>
                         </div>
@@ -228,12 +228,12 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                 <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 self-center">
                     {/* Desktop Tendenz Badge */}
                     <div className={cn(
-                        "hidden sm:inline-flex h-7 px-3 rounded-xl text-xs sm:text-sm font-bold border items-center justify-center gap-1.5 leading-none shadow-2xs whitespace-nowrap",
+                        "hidden sm:inline-flex h-7 px-3 rounded-full border items-center justify-center gap-1.5 leading-none shadow-2xs whitespace-nowrap text-xs font-bold",
                         avgFuturesChange >= 0
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
                             : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
                     )}>
-                        {avgFuturesChange >= 0 ? <TrendingUp className="size-4 stroke-[2.5]" /> : <TrendingDown className="size-4 stroke-[2.5]" />}
+                        {avgFuturesChange >= 0 ? <TrendingUp className="size-3.5 stroke-[2.5]" /> : <TrendingDown className="size-3.5 stroke-[2.5]" />}
                         <span>Tendenz {avgFuturesChange >= 0 ? '+' : ''}{formatNum(avgFuturesChange, 2)}%</span>
                     </div>
 
