@@ -327,10 +327,10 @@ export async function fetchStockPricePrecise(symbol: string): Promise<{
         if (history.data && history.data.length > 0) {
             const lastPoint = history.data[history.data.length - 1];
             return {
-                price: lastPoint.value,
+                price: history.regularMarketPrice ?? lastPoint.value,
                 previousClose: history.previousClose || null,
                 open: history.open || history.data[0].value || null,
-                marketTime: new Date(lastPoint.date),
+                marketTime: history.regularMarketTime ?? new Date(lastPoint.date),
                 currency: history.currency || null
             };
         }

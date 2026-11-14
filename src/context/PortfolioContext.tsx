@@ -17,7 +17,7 @@ interface PortfolioContextType {
     updatePosition: (id: string, updates: Partial<Position>) => void;
     addStock: (stock: Omit<Stock, 'id'>) => string;
     updateStock: (id: string, updates: Partial<Stock>) => void;
-    updateStockPrice: (stockId: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => void;
+    updateStockPrice: (stockId: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string, force?: boolean) => void;
     updateStockDividendYield: (stockId: string, dividendYield: number) => void;
     updateStockDividend: (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendDates' | 'dividendFrequency' | 'withholdingTaxRate'>>) => void;
     addFixedDeposit: (deposit: Omit<import('../types').FixedDeposit, 'id'>) => void;
@@ -579,7 +579,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => {
+    const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string, force: boolean = false) => {
         setStocks(prev => {
             const trimmedId = String(id).trim();
             const upperId = trimmedId.toUpperCase();
@@ -592,8 +592,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
             const s = prev[index];
 
-            // PROTECTION: If new data is older than existing data, skip update.
-            if (s.lastQuoteDate && lastQuoteDate) {
+            // PROTECTION: If new data is older than existing data, skip update (unless forced by authoritative regular-session sync).
+            if (!force && s.lastQuoteDate && lastQuoteDate) {
                 const existingDate = new Date(s.lastQuoteDate);
                 const newDate = new Date(lastQuoteDate);
                 if (newDate.getTime() < existingDate.getTime() - 60000) {
@@ -638,12 +638,14 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             const update = upperUpdates[s.symbol.toUpperCase()];
 
             if (update) {
-                // PROTECTION: If we already have a newer quote (e.g. from Realtime Chart), DO NOT overwrite with older batch data.
+                // PROTECTION: If we already have a newer quote (e.g. from Realtime Chart), DO NOT overwrite with older batch data
+                // unless the stored quote was previously poisoned by a Pre/Post-Market price.
                 if (s.lastQuoteDate && update.marketTime) {
                     const existingDate = new Date(s.lastQuoteDate);
                     const newDate = new Date(update.marketTime);
-                    // RELAXED PROTECTION (v3.12.68): Only skip if data is strictly older. 
-                    if (newDate.getTime() < existingDate.getTime()) {
+                    const isPoisonedByExtended = (s.postMarketPrice && Math.abs(s.currentPrice - s.postMarketPrice) < 0.01 && Math.abs(update.price - s.postMarketPrice) > 0.01)
+                        || (s.preMarketPrice && Math.abs(s.currentPrice - s.preMarketPrice) < 0.01 && Math.abs(update.price - s.preMarketPrice) > 0.01);
+                    if (!isPoisonedByExtended && newDate.getTime() < existingDate.getTime()) {
                         return s;
                     }
                 }

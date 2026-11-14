@@ -58,9 +58,9 @@ function getExtendedHoursInfo(stock: ExtendedHoursSource | null | undefined) {
     const isPre = st === 'PRE' || st === 'PREPRE';
     const isPost = st === 'POST' || st === 'POSTPOST' || st === 'CLOSED';
     const ext = isPre
-        ? { label: 'Vorbörse', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
+        ? { isPre: true, label: 'Vorbörse', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
         : isPost
-            ? { label: 'Nachbörse', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
+            ? { isPre: false, label: 'Nachbörse', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
             : null;
     if (!ext || !ext.price) return null;
     const timeText = ext.time ? (() => {
@@ -392,7 +392,7 @@ export function StockDetail() {
                 const regDateStr = (response.regularMarketTime || (lastRegularPoint ? new Date(lastRegularPoint.date) : undefined))?.toISOString();
                 if (regPrice && regPrice > 0) {
                     if (stockFromContext) {
-                        updateStockPrice(currentStock.id, regPrice, undefined, regDateStr);
+                        updateStockPrice(currentStock.id, regPrice, undefined, regDateStr, true);
                     } else if (!currentStock.currentPrice || Math.abs(currentStock.currentPrice - regPrice) > 0.001) {
                         setVirtualStock((prev: any) => ({ ...prev, currentPrice: regPrice, ...(regDateStr ? { lastQuoteDate: regDateStr } : {}) }));
                     }
@@ -521,7 +521,7 @@ export function StockDetail() {
             const lastRegularPoint = [...chartData].reverse().find(p => !p.session || p.session === 'regular');
             if (lastRegularPoint && lastRegularPoint.value) {
                 if (stockFromContext) {
-                    updateStockPrice(stock.id, lastRegularPoint.value, undefined, lastRegularPoint.date);
+                    updateStockPrice(stock.id, lastRegularPoint.value, undefined, lastRegularPoint.date, true);
                 } else if (!virtualStock?.currentPrice || Math.abs(virtualStock.currentPrice - lastRegularPoint.value) > 0.001) {
                     setVirtualStock((prev: any) => ({ ...prev, currentPrice: lastRegularPoint.value }));
                 }
@@ -828,8 +828,13 @@ export function StockDetail() {
                                         if (!ext) return null;
                                         const pct = ext.pct ?? 0;
                                         return (
-                                            <div className="mt-1.5 inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-xs font-semibold tabular-nums whitespace-nowrap">
-                                                <span className="text-indigo-400">
+                                            <div className={cn(
+                                                "mt-1.5 inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border text-xs font-semibold tabular-nums whitespace-nowrap",
+                                                ext.isPre
+                                                    ? "bg-amber-500/15 border-amber-500/35"
+                                                    : "bg-indigo-500/10 border-indigo-500/30"
+                                            )}>
+                                                <span className={ext.isPre ? "text-amber-600 dark:text-amber-400" : "text-indigo-500 dark:text-indigo-400"}>
                                                     {ext.label}{ext.timeText ? ` · ${ext.timeText}` : ''}
                                                 </span>
                                                 <span className="font-bold text-foreground">
@@ -1083,17 +1088,21 @@ export function StockDetail() {
                         return (
                             <div className={cn(
                                 "flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] transition-colors",
-                                showPrePost && "bg-indigo-500/10 -mx-2 px-2 rounded-md border-indigo-500/30"
+                                showPrePost && (ext.isPre
+                                    ? "bg-amber-500/15 -mx-2 px-2 rounded-md border-amber-500/35"
+                                    : "bg-indigo-500/10 -mx-2 px-2 rounded-md border-indigo-500/30")
                             )}>
                                 <span className={cn(
                                     "inline-flex items-center gap-1.5",
-                                    showPrePost ? "text-indigo-600 dark:text-indigo-400 font-semibold" : "text-muted-foreground"
+                                    showPrePost
+                                        ? (ext.isPre ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-indigo-600 dark:text-indigo-400 font-semibold")
+                                        : "text-muted-foreground"
                                 )}>
-                                    {showPrePost && <span className="size-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 shrink-0" />}
+                                    {showPrePost && <span className={cn("size-1.5 rounded-full shrink-0", ext.isPre ? "bg-amber-500 dark:bg-amber-400" : "bg-indigo-500 dark:bg-indigo-400")} />}
                                     <span>{ext.label}{ext.timeText ? ` · ${ext.timeText}` : ''}</span>
                                 </span>
                                 <span className="font-medium tabular-nums text-right">
-                                    <span className={showPrePost ? "font-bold text-indigo-700 dark:text-indigo-300" : ""}>
+                                    <span className={showPrePost ? (ext.isPre ? "font-bold text-amber-700 dark:text-amber-300" : "font-bold text-indigo-700 dark:text-indigo-300") : ""}>
                                         {formatCurrency(ext.price!, stock.currency, false)}
                                     </span>
                                     {ext.pct !== null && ext.pct !== undefined && (
