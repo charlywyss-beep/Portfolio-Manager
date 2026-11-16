@@ -217,11 +217,11 @@ export function FairValueCalculator() {
         if (newLimit) {
             if (explicitSource && explicitSource !== 'manual') {
                 resolvedType = explicitSource;
-            } else if (currentStock?.targetPrice && Math.abs(newLimit - currentStock.targetPrice) < 0.01 && currentStock.targetPriceType) {
+            } else if (currentStock?.targetPrice && Math.abs(newLimit - currentStock.targetPrice) <= 0.05 && currentStock.targetPriceType) {
                 resolvedType = currentStock.targetPriceType;
-            } else if (Math.abs(newLimit - calculation.buyPrice) < 0.01) {
+            } else if (Math.abs(newLimit - calculation.buyPrice) <= 0.05) {
                 resolvedType = valuationProfile;
-            } else if (Math.abs(newLimit - calculation.fairValue) < 0.01) {
+            } else if (Math.abs(newLimit - calculation.fairValue) <= 0.05) {
                 resolvedType = 'fairValue';
             } else {
                 resolvedType = 'manual';
@@ -2872,8 +2872,8 @@ export function FairValueCalculator() {
                                                     const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
                                                         ? currentStock.targetPrice
                                                         : calculation.buyPrice;
-                                                    const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) < 0.01;
-                                                    const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) < 0.01;
+                                                    const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) <= 0.05;
+                                                    const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) <= 0.05;
 
                                                     const savedType = currentStock?.targetPriceType;
                                                     let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
@@ -2924,8 +2924,8 @@ export function FairValueCalculator() {
                                                     );
                                                 })() : currentStock?.targetPrice ? (() => {
                                                     const savedType = currentStock?.targetPriceType;
-                                                    const isMatchingBuyPrice = Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01;
-                                                    const isMatchingFairValue = Math.abs(currentStock.targetPrice - calculation.fairValue) < 0.01;
+                                                    const isMatchingBuyPrice = Math.abs(currentStock.targetPrice - calculation.buyPrice) <= 0.05;
+                                                    const isMatchingFairValue = Math.abs(currentStock.targetPrice - calculation.fairValue) <= 0.05;
 
                                                     let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
                                                     if (savedType) {

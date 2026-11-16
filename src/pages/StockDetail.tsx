@@ -443,7 +443,9 @@ export function StockDetail() {
 
         const savedTargetPriceType = (stock as any).targetPriceType;
         let resolvedTargetType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
-        if (savedTargetPriceType) {
+        if (currentMode !== 'manual') {
+            resolvedTargetType = currentMode;
+        } else if (savedTargetPriceType) {
             resolvedTargetType = savedTargetPriceType;
         } else if (stock.targetPrice) {
             if (Math.abs(stock.targetPrice - dcfRisk.buyPrice) < 0.05) {
@@ -513,10 +515,19 @@ export function StockDetail() {
             const newFv = (existingBackup.manualFairValue && Number(existingBackup.manualFairValue) > 0)
                 ? Number(existingBackup.manualFairValue)
                 : (dcfManual ? dcfManual.fairValue : 0);
+            const manualBuyPrice = (existingBackup.manualTargetPrice && Number(existingBackup.manualTargetPrice) > 0)
+                ? Number(existingBackup.manualTargetPrice)
+                : (dcfManual?.buyPrice ? parseFloat(dcfManual.buyPrice.toFixed(2)) : (newFv > 0 ? parseFloat((newFv * 0.8).toFixed(2)) : undefined));
+
+            const stockUpdates: any = {
+                fairValueParams: nextEntry,
+                ...(newFv > 0 ? { fairValue: newFv } : {}),
+                ...(manualBuyPrice && manualBuyPrice > 0 ? { targetPrice: manualBuyPrice, targetPriceType: 'manual' } : {})
+            };
             if (stockFromContext && stock) {
-                updateStock(stock.id, { ...(newFv > 0 ? { fairValue: newFv } : {}), fairValueParams: nextEntry });
+                updateStock(stock.id, stockUpdates);
             } else {
-                setVirtualStock((prev: any) => ({ ...prev, ...(newFv > 0 ? { fairValue: newFv } : {}), fairValueParams: nextEntry }));
+                setVirtualStock((prev: any) => ({ ...prev, ...stockUpdates }));
             }
         } else {
             const targetSmartParams =
@@ -529,11 +540,14 @@ export function StockDetail() {
             const manualBackupToSave = mode === 'manual' ? {
                 ...(existingBackup || activeParams || smartAutoConservative),
                 ...(fairValue > 0 ? { manualFairValue: fairValue } : {}),
+                ...(stock?.targetPrice ? { manualTargetPrice: stock.targetPrice } : {}),
                 updatedAt: now
             } : existingBackup;
 
             const dcfNext = calculateDcfFairValue(targetSmartParams, effectivePrice);
             const newFv = parseFloat(dcfNext.fairValue.toFixed(2));
+            const newBuyPrice = parseFloat(dcfNext.buyPrice.toFixed(2));
+
             const nextEntry = {
                 ...targetSmartParams,
                 isCustom: false,
@@ -543,10 +557,17 @@ export function StockDetail() {
             };
             map[symKey] = nextEntry;
             try { localStorage.setItem('fair_value_params_map', JSON.stringify(map)); } catch {}
+
+            const stockUpdates: any = {
+                fairValueParams: nextEntry,
+                ...(newFv > 0 ? { fairValue: newFv } : {}),
+                ...(newBuyPrice > 0 ? { targetPrice: newBuyPrice, targetPriceType: nextMode } : {})
+            };
+
             if (stockFromContext && stock) {
-                updateStock(stock.id, { ...(newFv > 0 ? { fairValue: newFv } : {}), fairValueParams: nextEntry });
+                updateStock(stock.id, stockUpdates);
             } else {
-                setVirtualStock((prev: any) => ({ ...prev, ...(newFv > 0 ? { fairValue: newFv } : {}), fairValueParams: nextEntry }));
+                setVirtualStock((prev: any) => ({ ...prev, ...stockUpdates }));
             }
         }
         setFvModeTick(t => t + 1);
@@ -1276,7 +1297,7 @@ export function StockDetail() {
                         purchaseDate={buyDateRef}
                         purchases={position?.purchases}
                         sellLimit={stock.sellLimit}
-                        buyLimit={stock.targetPrice}
+                        buyLimit={valuationData.buyPrice || stock.targetPrice}
                         fairValue={valuationData.fairValue || stock.fairValue}
                         valuationMode={valuationData.mode}
                         buyLimitType={valuationData.resolvedTargetType}
@@ -1652,7 +1673,9 @@ export function StockDetail() {
 
                         const savedTargetPriceType = (stock as any).targetPriceType;
                         let resolvedTargetType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
-                        if (savedTargetPriceType) {
+                        if (currentMode !== 'manual') {
+                            resolvedTargetType = currentMode;
+                        } else if (savedTargetPriceType) {
                             resolvedTargetType = savedTargetPriceType;
                         } else if (stock.targetPrice && stock.targetPrice > 0) {
                             if (Math.abs(stock.targetPrice - dcfRisk.buyPrice) < 0.05) {
@@ -1668,6 +1691,10 @@ export function StockDetail() {
                             }
                         }
 
+                        const displayTargetPrice = currentMode !== 'manual'
+                            ? (calcBuyPrice ?? stock.targetPrice)
+                            : (stock.targetPrice ?? calcBuyPrice);
+
                         const handleToggleFvMode = (e: React.MouseEvent) => {
                             e.stopPropagation();
                             handleToggleValuationMode();
@@ -1678,7 +1705,7 @@ export function StockDetail() {
                                 <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                         <span className="text-muted-foreground">Kauflimit</span>
-                                        {stock.targetPrice ? (
+                                        {(displayTargetPrice || stock.targetPrice) ? (
                                             <span className={cn(
                                                 "inline-flex items-center text-[11px] sm:text-xs landscape:text-[10px] leading-4 font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border shadow-xs",
                                                 resolvedTargetType === 'risk'
@@ -1715,7 +1742,7 @@ export function StockDetail() {
                                                         ? "text-blue-700 dark:text-blue-400 font-semibold"
                                                         : "text-pink-700 dark:text-pink-400 font-semibold"
                                     )}>
-                                        {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
+                                        {displayTargetPrice ? formatCurrency(displayTargetPrice, stock.currency, false) : (stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-')}
                                     </span>
                                 </div>
                                 <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">

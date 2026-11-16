@@ -411,7 +411,8 @@ export function EditDividendPage() {
         if (targetPrice !== undefined && (!stock || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) !== stock.targetPrice)) {
             const parsedTp = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
             updates.targetPrice = parsedTp;
-            updates.targetPriceType = parsedTp ? 'manual' : undefined;
+            const isUnchangedType = stock?.targetPriceType && stock.targetPriceType !== 'manual' && stock.targetPrice && parsedTp && Math.abs(parsedTp - stock.targetPrice) <= 0.05;
+            updates.targetPriceType = parsedTp ? (isUnchangedType ? stock.targetPriceType : 'manual') : undefined;
         }
         if (sellLimit !== undefined && (!stock || (sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined) !== stock.sellLimit)) {
             updates.sellLimit = sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined;
@@ -1049,7 +1050,10 @@ export function EditDividendPage() {
 
                                         const parsedTarget = parseFloat((targetPrice || '').toString().replace(',', '.'));
                                         const hasCustomTarget = !isNaN(parsedTarget) && parsedTarget > 0;
-                                        const isModelBuyPriceActive = calcBuyPrice !== null && hasCustomTarget && Math.abs(parsedTarget - calcBuyPrice) < 0.01;
+                                        const savedTargetType = currentStockObj?.targetPriceType;
+                                        const isModelMatchByType = savedTargetType === (currentMode === 'risk' ? 'risk' : currentMode === 'quality' ? 'quality' : 'conservative');
+                                        const isModelMatchByPrice = calcBuyPrice !== null && hasCustomTarget && Math.abs(parsedTarget - calcBuyPrice) <= 0.05;
+                                        const isModelBuyPriceActive = (isModelMatchByType || isModelMatchByPrice) && currentMode !== 'manual';
 
                                         const handleToggleFvMode = () => {
                                             if (!symKey) return;
@@ -1064,9 +1068,11 @@ export function EditDividendPage() {
                                             const existingLocal = map[symKey] || {};
                                             const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
                                             const shouldAutoSyncLimit = calcBuyPrice !== null && (
-                                                parseFloat(targetPrice) === parseFloat(calcBuyPrice.toFixed(2)) ||
                                                 !targetPrice ||
-                                                parseFloat(targetPrice) === 0
+                                                parseFloat(targetPrice) === 0 ||
+                                                Math.abs(parsedTarget - calcBuyPrice) <= 0.05 ||
+                                                currentStockObj?.targetPriceType === currentMode ||
+                                                (currentStockObj?.targetPriceType && currentStockObj?.targetPriceType !== 'manual')
                                             );
 
                                             const nextMode: 'conservative' | 'quality' | 'risk' =
@@ -1189,7 +1195,7 @@ export function EditDividendPage() {
                                                                     modeMeta.badge
                                                                 )}>
                                                                     <Check className="size-3.5 shrink-0" />
-                                                                    <span>{calcBuyPrice.toFixed(2)} Aktiv ({modeMeta.shortLabel})</span>
+                                                                    <span>{(hasCustomTarget ? parsedTarget : calcBuyPrice).toFixed(2)} Aktiv ({modeMeta.shortLabel})</span>
                                                                 </div>
                                                             ) : (
                                                                 <button
@@ -1228,7 +1234,7 @@ export function EditDividendPage() {
                                                             if (!isNaN(val) && val > 0) {
                                                                 setTargetPrice(val.toFixed(2));
                                                                 if (currentStockObj) {
-                                                                    const isModelMatch = calcBuyPrice !== null && Math.abs(val - calcBuyPrice) < 0.01;
+                                                                    const isModelMatch = calcBuyPrice !== null && Math.abs(val - calcBuyPrice) <= 0.05;
                                                                     updateStock(currentStockObj.id, {
                                                                         targetPrice: val,
                                                                         targetPriceType: isModelMatch ? modeMeta.targetType : 'manual'
@@ -1242,7 +1248,7 @@ export function EditDividendPage() {
                                                                 if (!isNaN(val) && val > 0) {
                                                                     setTargetPrice(val.toFixed(2));
                                                                     if (currentStockObj) {
-                                                                        const isModelMatch = calcBuyPrice !== null && Math.abs(val - calcBuyPrice) < 0.01;
+                                                                        const isModelMatch = calcBuyPrice !== null && Math.abs(val - calcBuyPrice) <= 0.05;
                                                                         updateStock(currentStockObj.id, {
                                                                             targetPrice: val,
                                                                             targetPriceType: isModelMatch ? modeMeta.targetType : 'manual'
