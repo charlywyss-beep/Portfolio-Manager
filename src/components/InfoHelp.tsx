@@ -4,7 +4,38 @@ import { Info } from 'lucide-react';
 
 export interface InfoHelpItem {
     term: string;
-    text: string;
+    text: string | ReactNode;
+}
+
+function renderFormattedHelpText(rawText: string) {
+    if (!rawText) return null;
+    const parts = rawText.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, idx) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return (
+                <span key={idx} className="font-bold text-foreground dark:text-white">
+                    {part.slice(2, -2)}
+                </span>
+            );
+        }
+
+        // Also check if non-bold text contains "• Vorteil 1 ...:" patterns
+        const vorteilParts = part.split(/((?:^|\n)\s*•?\s*Vorteil\s*\d+[^:\n]*:?)/gi);
+        if (vorteilParts.length > 1) {
+            return vorteilParts.map((vp, vIdx) => {
+                if (/^\s*•?\s*Vorteil\s*\d+/i.test(vp.trim())) {
+                    return (
+                        <span key={vIdx} className="font-bold text-foreground dark:text-white">
+                            {vp}
+                        </span>
+                    );
+                }
+                return vp;
+            });
+        }
+
+        return part;
+    });
 }
 
 interface InfoHelpProps {
@@ -59,7 +90,9 @@ export function InfoHelp({ title, items, footer }: InfoHelpProps) {
                             {items.map((it) => (
                                 <div key={it.term}>
                                     <dt className="font-semibold text-foreground">{it.term}</dt>
-                                    <dd className="text-muted-foreground whitespace-pre-line">{it.text}</dd>
+                                    <dd className="text-muted-foreground whitespace-pre-line">
+                                        {typeof it.text === 'string' ? renderFormattedHelpText(it.text) : it.text}
+                                    </dd>
                                 </div>
                             ))}
                         </dl>
