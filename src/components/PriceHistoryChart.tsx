@@ -48,6 +48,8 @@ interface PriceHistoryChartProps {
         price: number;
     }>;
     sellLimit?: number;
+    buyLimit?: number;
+    fairValue?: number;
     stockName?: string;
     stockSymbol?: string;
 }
@@ -69,6 +71,8 @@ export function PriceHistoryChart({
     purchaseDate,
     purchases,
     sellLimit,
+    buyLimit,
+    fairValue,
     stockName,
     stockSymbol
 }: PriceHistoryChartProps) {
@@ -249,6 +253,8 @@ export function PriceHistoryChart({
     const effectiveCurrentPrice = currentPrice * conversionRate;
     const effectivePreviousClose = previousClose ? previousClose * conversionRate : undefined;
     const effectivePurchasePrice = purchasePrice ? purchasePrice * conversionRate : undefined;
+    const effectiveBuyLimit = buyLimit && buyLimit > 0 ? buyLimit * conversionRate : undefined;
+    const effectiveFairValue = fairValue && fairValue > 0 ? fairValue * conversionRate : undefined;
     const effectiveSellLimit = sellLimit ? sellLimit * conversionRate : undefined;
 
 
@@ -306,10 +312,40 @@ export function PriceHistoryChart({
         }
     }
 
+    // Smart Domain Expansion for Strategy Lines (Ø Kauf, Kauflimit, Fairer Wert):
+    // If a strategic level is within 25% of the visible range, expand domain slightly so it renders cleanly
+    if (selectedRange !== '1D' && maxPrice > minPrice) {
+        const dataRange = maxPrice - minPrice;
+        const checkSmartExpand = (val?: number) => {
+            if (!val || val <= 0) return;
+            if (val > maxPrice && (val - maxPrice) / dataRange <= 0.25) {
+                calcMax = Math.max(calcMax, val);
+            }
+            if (val < minPrice && (minPrice - val) / dataRange <= 0.25) {
+                calcMin = Math.min(calcMin, val);
+            }
+        };
+        checkSmartExpand(effectivePurchasePrice);
+        checkSmartExpand(effectiveBuyLimit);
+        checkSmartExpand(effectiveFairValue);
+    }
+
     const range = calcMax - calcMin;
     const padding = range === 0 ? calcMax * 0.05 : range * 0.05;
     const domainMin = Math.max(0, calcMin - padding);
     const domainMax = calcMax + padding;
+
+    // Helper: Offset Y for right-side labels so they never collide if two lines are very close
+    const getRightLabelYOffset = (val: number, otherVals: (number | undefined)[]) => {
+        const chartSpan = domainMax - domainMin;
+        if (chartSpan <= 0) return -4;
+        for (const other of otherVals) {
+            if (other && Math.abs(val - other) / chartSpan < 0.038) {
+                return val < other ? 11 : -5;
+            }
+        }
+        return -4;
+    };
 
     // SMA calculation logic
     const sma200Data = useMemo(() => {
@@ -1626,17 +1662,107 @@ export function PriceHistoryChart({
                                     </>
                                 );
                             })()}
-                            {effectivePurchasePrice && (
+                            {/* 1. Kaufpreis (Ø Kauf) - Prominent hervorgehoben */}
+                            {effectivePurchasePrice && effectivePurchasePrice >= domainMin && effectivePurchasePrice <= domainMax && (
                                 <ReferenceLine
                                     y={effectivePurchasePrice}
                                     stroke="#3b82f6"
-                                    strokeDasharray="3 3"
-                                    label={{
-                                        position: 'insideTopRight',
-                                        value: 'Ø Kauf',
-                                        fill: '#3b82f6',
-                                        fontSize: 11,
-                                        fontWeight: 700
+                                    strokeWidth={2}
+                                    strokeDasharray="6 4"
+                                    strokeOpacity={0.95}
+                                    label={(props: any) => {
+                                        const { viewBox } = props || {};
+                                        if (!viewBox) return <g />;
+                                        const { x, y, width } = viewBox;
+                                        const rightEdge = x + width - 6;
+                                        const yOffset = getRightLabelYOffset(effectivePurchasePrice, [effectiveBuyLimit, effectiveFairValue]);
+                                        return (
+                                            <g className="select-none pointer-events-none">
+                                                <text
+                                                    x={rightEdge}
+                                                    y={y + yOffset}
+                                                    textAnchor="end"
+                                                    fill="#60a5fa"
+                                                    stroke="#0f172a"
+                                                    strokeWidth={2.5}
+                                                    paintOrder="stroke fill"
+                                                    fontSize={isFullscreen ? 11 : 9.5}
+                                                    fontWeight={700}
+                                                >
+                                                    Ø Kauf · {formatCurrency(effectivePurchasePrice, displayCurrency, false)}
+                                                </text>
+                                            </g>
+                                        );
+                                    }}
+                                />
+                            )}
+
+                            {/* 2. Kauflimit (Buy Limit) */}
+                            {effectiveBuyLimit && effectiveBuyLimit >= domainMin && effectiveBuyLimit <= domainMax && (
+                                <ReferenceLine
+                                    y={effectiveBuyLimit}
+                                    stroke="#10b981"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 3"
+                                    strokeOpacity={0.95}
+                                    label={(props: any) => {
+                                        const { viewBox } = props || {};
+                                        if (!viewBox) return <g />;
+                                        const { x, y, width } = viewBox;
+                                        const rightEdge = x + width - 6;
+                                        const yOffset = getRightLabelYOffset(effectiveBuyLimit, [effectivePurchasePrice, effectiveFairValue]);
+                                        return (
+                                            <g className="select-none pointer-events-none">
+                                                <text
+                                                    x={rightEdge}
+                                                    y={y + yOffset}
+                                                    textAnchor="end"
+                                                    fill="#34d399"
+                                                    stroke="#0f172a"
+                                                    strokeWidth={2.5}
+                                                    paintOrder="stroke fill"
+                                                    fontSize={isFullscreen ? 11 : 9.5}
+                                                    fontWeight={700}
+                                                >
+                                                    Kauflimit · {formatCurrency(effectiveBuyLimit, displayCurrency, false)}
+                                                </text>
+                                            </g>
+                                        );
+                                    }}
+                                />
+                            )}
+
+                            {/* 3. Fairer Wert (Fair Value) */}
+                            {effectiveFairValue && effectiveFairValue >= domainMin && effectiveFairValue <= domainMax && (
+                                <ReferenceLine
+                                    y={effectiveFairValue}
+                                    stroke="#d946ef"
+                                    strokeWidth={1.8}
+                                    strokeDasharray="4 4"
+                                    strokeOpacity={0.95}
+                                    label={(props: any) => {
+                                        const { viewBox } = props || {};
+                                        if (!viewBox) return <g />;
+                                        const { x, y, width } = viewBox;
+                                        const rightEdge = x + width - 6;
+                                        const yOffset = getRightLabelYOffset(effectiveFairValue, [effectivePurchasePrice, effectiveBuyLimit]);
+                                        return (
+                                            <g className="select-none pointer-events-none">
+                                                <text
+                                                    x={rightEdge}
+                                                    y={y + yOffset}
+                                                    textAnchor="end"
+                                                    fill="#f0abfc"
+                                                    stroke="#0f172a"
+                                                    strokeWidth={2.5}
+                                                    paintOrder="stroke fill"
+                                                    fontSize={isFullscreen ? 11 : 9.5}
+                                                    fontWeight={700}
+                                                >
+                                                    Fairer Wert · {formatCurrency(effectiveFairValue, displayCurrency, false)}
+                                                </text>
+                                            </g>
+                                        );
                                     }}
                                 />
                             )}

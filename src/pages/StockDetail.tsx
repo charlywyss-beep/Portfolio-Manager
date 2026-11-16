@@ -328,6 +328,78 @@ export function StockDetail() {
         return position?.buyDate;
     })();
 
+    // Memoized computed fair value for chart and metrics
+    const computedFairValue = useMemo(() => {
+        void fvModeTick;
+        if (!stock) return 0;
+        const symKey = (stock.symbol || '').toUpperCase();
+        let localParams: any = null;
+        try {
+            const mapRaw = localStorage.getItem('fair_value_params_map');
+            if (symKey && mapRaw) {
+                const map = JSON.parse(mapRaw);
+                if (map[symKey]) localParams = map[symKey];
+            }
+        } catch {
+            // ignore
+        }
+        const stockParams = stock.fairValueParams;
+        let activeParams = stockParams || localParams;
+        if (localParams && stockParams) {
+            const localTime = localParams.updatedAt ? new Date(localParams.updatedAt).getTime() : 0;
+            const stockTime = stockParams.updatedAt ? new Date(stockParams.updatedAt).getTime() : 0;
+            activeParams = localTime >= stockTime ? localParams : stockParams;
+        }
+
+        const effectivePrice = stock.currentPrice || 1;
+        const smartAutoConservative = computeSmartAutoParams(
+            { price: effectivePrice, dividendYield: stock.dividendYield },
+            null,
+            stock,
+            symKey,
+            'conservative'
+        );
+        const smartAutoQuality = computeSmartAutoParams(
+            { price: effectivePrice, dividendYield: stock.dividendYield },
+            null,
+            stock,
+            symKey,
+            'quality'
+        );
+        const smartAutoRisk = {
+            ...smartAutoConservative,
+            growthRate: Math.max(3, parseFloat((smartAutoConservative.growthRate * 0.75).toFixed(1))),
+            pe: Math.min(20, Math.max(8, parseFloat((smartAutoConservative.pe * 0.8).toFixed(1)))),
+            mos: Math.max(25, Math.min(50, smartAutoConservative.mos + 10))
+        };
+
+        const isManualFv = Boolean(activeParams?.isCustom);
+        const currentValuationMode = activeParams?.valuationMode === 'risk'
+            ? 'risk'
+            : activeParams?.valuationMode === 'quality'
+                ? 'quality'
+                : 'conservative';
+        const currentMode = isManualFv ? 'manual' : currentValuationMode;
+
+        if (currentMode === 'manual') {
+            const manualDcf = (activeParams && Number(activeParams.eps) > 0)
+                ? calculateDcfFairValue(activeParams, effectivePrice)
+                : null;
+            return (activeParams?.manualFairValue && Number(activeParams.manualFairValue) > 0)
+                ? Number(activeParams.manualFairValue)
+                : (manualDcf ? manualDcf.fairValue : (stock.fairValue || 0));
+        } else if (currentMode === 'quality') {
+            const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoQuality;
+            return calculateDcfFairValue(qParams, effectivePrice).fairValue;
+        } else if (currentMode === 'risk') {
+            const rParams = (activeParams?.valuationMode === 'risk' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoRisk;
+            return calculateDcfFairValue(rParams, effectivePrice).fairValue;
+        } else {
+            const cParams = (activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoConservative;
+            return calculateDcfFairValue(cParams, effectivePrice).fairValue;
+        }
+    }, [stock, fvModeTick]);
+
     const handleUpdatePosition = (posId: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[], newBroker?: string) => {
         const updates: any = { shares: newShares };
         if (newAvgPrice !== undefined) updates.buyPriceAvg = newAvgPrice;
@@ -1052,6 +1124,8 @@ export function StockDetail() {
                         purchaseDate={buyDateRef}
                         purchases={position?.purchases}
                         sellLimit={stock.sellLimit}
+                        buyLimit={stock.targetPrice}
+                        fairValue={computedFairValue || stock.fairValue}
                         stockName={stock.name}
                         stockSymbol={stock.symbol}
                     />
