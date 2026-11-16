@@ -234,3 +234,25 @@ export function useEuropeanQuotes(
 
     return { quotes, isLoading };
 }
+
+/**
+ * Standard-Erklärungen für die Europa-Frühstart & Tradegate Info-Boxen.
+ */
+export const EUROPEAN_MARKET_INFO_ITEMS = [
+    {
+        term: "Faustregel ab 10:00 Uhr • Gelbe US Vorbörse vs. Blaue Europa-Pille",
+        text: "• Gelbe Pille (US Vorbörse) ist BESSER als Blaue Pille (Europa): Die Amerikaner kaufen den Rücksetzer auf ➔ Der Euro-Kurs zieht ab ca. 10:20 Uhr nach oben!\n• Gelbe Pille (US Vorbörse) ist SCHLECHTER als Blaue Pille (Europa): Die Amerikaner drücken den Kurs weiter runter ➔ Vorsicht, mit Nachkäufen geduldig bis 15:30 / 16:00 Uhr warten!"
+    },
+    {
+        term: "Tradegate für US-Aktien nutzen • Die 3 konkreten Vorteile",
+        text: "Europa handelt von 08:00 bis 15:30 Uhr MEZ – während Amerika noch schläft. Wer US-Aktien hält oder handelt, hat 7,5 Stunden Handlungsspielraum:\n\n• Vorteil 1 – Kauflimits vor 15:30 Uhr anpassen (Fehlkäufe verhindern):\nFällt der Kurs morgens an Tradegate oder in der US Vorbörse (z. B. NVIDIA -1.77%), kannst du ein bestehendes US-Kauflimit (z. B. 162 USD) vor US-Start in aller Ruhe stornieren oder tiefer ansetzen (z. B. 159 USD). Du kaufst um 15:30 Uhr nicht ins fallende Messer, sondern sparst bares Geld.\n\n• Vorteil 2 – Verkaufslimits anheben (Höhere Gewinne sichern):\nSteigt die Aktie morgens an Tradegate kräftig an (z. B. General Mills +1.22% auf 34.74 USD statt Schlusskurs 34.32 USD), eröffnet die Wall Street um 15:30 Uhr mit sehr hoher Wahrscheinlichkeit ebenfalls mit einem Aufwärts-Sprung (Gap Up). Du kannst dein geplantes Verkaufslimit vor 15:30 Uhr rechtzeitig höher setzen (z. B. 34.90 USD), statt zu früh und zu billig abgefischt zu werden.\n\n• Vorteil 3 – Den 15:30-Uhr-Dip gezielt abfischen (Günstig einsteigen):\nIn den ersten 15–30 Minuten nach US-Eröffnung (15:30 bis 16:00 Uhr) kommt es durch riesige computergesteuerte Orders oft zu extremen Übertreibungen. Da du den fairen Kurs aus Europa und der US Vorbörse bereits kennst, kannst du Abfisch-Limits knapp unter das Vormittagsniveau platzieren und kurze Panik-Dips günstig einsammeln."
+    },
+    {
+        term: "Warum vorne Euro und hinten Dollar?",
+        text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deinem US-Bestand zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD). Die Prozentzahl zeigt den Unterschied zum letzten New Yorker Schlusskurs."
+    },
+    {
+        term: "Börsenkette: Was ist mit Asien?",
+        text: "Asien (Tokio, Hongkong, Taiwan) öffnet nachts als Erstes (ab 01:00 Uhr MEZ). Fällt dort Taiwan (Chip-Hersteller TSMC) stark, ist das ein Warnsignal für Tech-Werte wie NVIDIA & Alphabet. Die ersten echten Handelskursen für US-Einzelaktien entstehen ab 08:00 Uhr in Europa."
+    }
+];

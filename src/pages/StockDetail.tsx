@@ -16,7 +16,7 @@ import { cn } from '../utils';
 import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
 import { translateSector } from '../utils/sectorTranslation';
 import { useExchangeRates } from '../context/ExchangeRateContext';
-import { getEuropeanTicker, type EuropeanIndicationQuote } from '../utils/europeanMarket';
+import { getEuropeanTicker, EUROPEAN_MARKET_INFO_ITEMS, type EuropeanIndicationQuote } from '../utils/europeanMarket';
 import { Logo } from '../components/Logo';
 import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
 import { EditPositionModal } from '../components/EditPositionModal';
@@ -60,9 +60,9 @@ function getExtendedHoursInfo(stock: ExtendedHoursSource | null | undefined) {
     const isPre = st === 'PRE' || st === 'PREPRE';
     const isPost = st === 'POST' || st === 'POSTPOST' || st === 'CLOSED';
     const ext = isPre
-        ? { isPre: true, label: 'Vorbörse', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
+        ? { isPre: true, label: 'US Vorbörse', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
         : isPost
-            ? { isPre: false, label: 'Nachbörse', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
+            ? { isPre: false, label: 'US Nachbörse', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
             : null;
     if (!ext || !ext.price) return null;
     const timeText = ext.time ? (() => {
@@ -973,21 +973,8 @@ export function StockDetail() {
                                                 </span>
                                             )}
                                             <InfoHelp
-                                                title="Europa-Frühstart • Tradegate & Xetra"
-                                                items={[
-                                                    {
-                                                        term: "Warum vorne Euro und hinten Dollar?",
-                                                        text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deinem US-Bestand zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD). Die Prozentzahl zeigt den Unterschied zum letzten New Yorker Schlusskurs."
-                                                    },
-                                                    {
-                                                        term: "Börsenkette: Was ist mit Asien?",
-                                                        text: "Asien (Tokio, Hongkong) öffnet montags nachts als Erstes (ab 01:00 Uhr MEZ). US-Aktien selbst werden dort aber kaum direkt gehandelt – dort bewegen sich vor allem die US-Index-Futures (siehe Radar auf dem Dashboard). Die allerersten echten Handelskursen für US-Einzelaktien entstehen erst ab 08:00 Uhr in Europa!"
-                                                    },
-                                                    {
-                                                        term: "Dein konkreter Vorteil (7,5 Stunden Handlungsspielraum)",
-                                                        text: "Europa handelt von 08:00 bis 15:30 Uhr MEZ – während Amerika noch schläft. Du kannst morgens über Tradegate bereits Aktien kaufen oder verkaufen (bevor um 15:30 Uhr die Masse an der Wall Street losstürmt) und hast den ganzen Vormittag Zeit, deine US-Orders und Limits in aller Ruhe anzupassen."
-                                                    }
-                                                ]}
+                                                title="Europa-Frühstart & Faustregeln zur Kurs-Deutung"
+                                                items={EUROPEAN_MARKET_INFO_ITEMS}
                                             />
                                         </div>
                                     )}
@@ -1009,7 +996,10 @@ export function StockDetail() {
                         <TrendingUp className="size-5 text-blue-500 shrink-0" />
                         <h3 className="font-bold text-lg whitespace-nowrap"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
                         <InfoHelp title="Kursverlauf & Live-Daten Spickzettel" items={[
-                            { term: "Spickzettel • Wann kommen welche Live-Daten rein?", text: "1. Ab 00:00 Uhr: US-Futures (Nasdaq, S&P 500), Rohstoffe (Gold, Öl), Währungen & Asien (sofort).\n2. Ab 08:15 Uhr: Erste Früh-Indikation aus Frankfurt / Tradegate (*.F, da Handel ab 08:00 Uhr + 15 Min. Verzögerung).\n3. Ab 09:15 / 09:16 Uhr: Offizieller Handelsstart Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA) (09:00 Uhr + 15 Min. Verzögerung).\n4. Ab 10:00 Uhr: Offizielle US-Vorbörse (Pre-Market) ohne Verzögerung in Echtzeit!\n5. Ab 15:30 Uhr: Wall Street (New York) ohne Verzögerung in Echtzeit!" },
+                            { term: "Spickzettel • Wann kommen welche Live-Daten rein?", text: "1. Ab 00:00 Uhr: US-Futures (Nasdaq, S&P 500), Rohstoffe (Gold, Öl), Währungen & Asien (sofort).\n2. Ab 08:15 Uhr: Erste Früh-Indikation aus Frankfurt / Tradegate (*.F, da Handel ab 08:00 Uhr + 15 Min. Verzögerung).\n3. Ab 09:15 / 09:16 Uhr • Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA) (09:00 Uhr + 15 Min. Verzögerung).\n4. Ab 10:00 Uhr: Offizielle US Vorbörse (Pre-Market) ohne Verzögerung in Echtzeit!\n5. Ab 15:30 Uhr: Wall Street (New York) ohne Verzögerung in Echtzeit!" },
+                            { term: "Faustregel ab 10:00 Uhr • Gelbe US Vorbörse vs. Blaue Europa-Pille", text: "• Gelbe Pille (US Vorbörse) ist BESSER als Blaue Pille (Europa): Die Amerikaner kaufen den Rücksetzer auf ➔ Der Euro-Kurs zieht ab ca. 10:20 Uhr nach oben!\n• Gelbe Pille (US Vorbörse) ist SCHLECHTER als Blaue Pille (Europa): Die Amerikaner drücken den Kurs weiter runter ➔ Vorsicht, mit Nachkäufen geduldig bis 15:30 / 16:00 Uhr warten!" },
+                            { term: "Tradegate für US-Aktien nutzen • Die 3 konkreten Vorteile", text: "Europa handelt von 08:00 bis 15:30 Uhr MEZ – während Amerika noch schläft. Du hast 7,5 Stunden Zeitvorsprung:\n\n• Vorteil 1 – Kauflimits vor 15:30 Uhr anpassen (Fehlkäufe verhindern):\nFällt der Kurs morgens an Tradegate oder in der US Vorbörse (z. B. NVIDIA -1.77%), kannst du ein bestehendes US-Kauflimit (z. B. 162 USD) vor US-Start in aller Ruhe stornieren oder tiefer setzen (z. B. 159 USD). Du kaufst um 15:30 Uhr nicht ins fallende Messer, sondern sparst bares Geld.\n\n• Vorteil 2 – Verkaufslimits anheben (Höhere Gewinne mitnehmen):\nSteigt die Aktie morgens an Tradegate kräftig (z. B. General Mills +1.22% auf 34.74 USD statt Schlusskurs 34.32 USD), eröffnet die Wall Street um 15:30 Uhr mit hoher Wahrscheinlichkeit ebenfalls höher (Gap Up). Du kannst dein Verkaufslimit vor 15:30 Uhr rechtzeitig heraufsetzen, statt zu früh und zu billig abgefischt zu werden.\n\n• Vorteil 3 – Den 15:30-Uhr-Dip gezielt abfischen (Günstig einsteigen):\nIn den ersten 15–30 Minuten nach US-Eröffnung (15:30 bis 16:00 Uhr) kommt es durch riesige computergesteuerte Orders oft zu extremen Übertreibungen. Da du den fairen Preis aus Europa und der US Vorbörse bereits kennst, kannst du Abfisch-Limits knapp unter das Vormittagsniveau platzieren und kurze Panik-Dips günstig einsammeln." },
+                            { term: "Börsenkette vor 09:00 Uhr (Asien & Rohstoffe)", text: "• Asien (Tokio, Hongkong, Taiwan): Fällt dort Taiwan (Chip-Hersteller TSMC) stark, ist das ein klares Frühwarnsignal für Tech-Werte (NVIDIA, Alphabet).\n• Rohstoffe: Öl grün = Rückenwind für Energie-Aktien (TotalEnergies). Kupfer/Silber rot = Druck auf Minenwerte (Rio Tinto)." },
                             { term: "Warum 15 Minuten Verzögerung in Europa?", text: "Europäische Börsen (Zürich, Xetra, London, Paris) öffnen um 09:00 Uhr MEZ, liefern kostenlose Kurse an Yahoo Finance aber gesetzlich/lizenzrechtlich mit 15 Minuten Verzögerung aus. Deshalb springt der erste 09:00-Uhr-Kurs immer um 09:15 / 09:16 Uhr auf Live um." },
                             { term: "Zeiträume (1D bis 5J)", text: "Wählt die Zeitspanne des Charts. 1D ist der heutige Handelstag, 1W eine Woche, 1M ein Monat, 3M und 6M drei und sechs Monate, 1J, 3J und 5J ein, drei und fünf Jahre." },
                             { term: "Seit Kauf", text: "Zeigt den Verlauf ab etwa deinem Kaufdatum (mit kurzem Vorlauf). Erscheint nur, wenn du die Aktie besitzt." },
@@ -1304,21 +1294,8 @@ export function StockDetail() {
                                 <span className="text-blue-600 dark:text-blue-400 font-bold">🇪🇺 Europa / Tradegate</span>
                                 {europeanQuote.timeText && <span className="text-blue-600 dark:text-blue-400 font-bold">· {europeanQuote.timeText}</span>}
                                 <InfoHelp
-                                    title="Europa-Frühstart • Tradegate & Xetra"
-                                    items={[
-                                        {
-                                            term: "Warum vorne Euro und hinten Dollar?",
-                                            text: "Tradegate ist eine deutsche Börse, dort wird in Euro bezahlt (z. B. 31.02 EUR). Um den Kurs direkt mit deinem US-Bestand zu vergleichen, rechnet die App den Betrag über den aktuellen Wechselkurs automatisch in Dollar um (≈ 34.23 USD). Die Prozentzahl zeigt den Unterschied zum letzten New Yorker Schlusskurs."
-                                        },
-                                        {
-                                            term: "Börsenkette: Was ist mit Asien?",
-                                            text: "Asien (Tokio, Hongkong) öffnet montags nachts als Erstes (ab 01:00 Uhr MEZ). US-Aktien selbst werden dort aber kaum direkt gehandelt – dort bewegen sich vor allem die US-Index-Futures (siehe Radar auf dem Dashboard). Die allerersten echten Handelskursen für US-Einzelaktien entstehen erst ab 08:00 Uhr in Europa!"
-                                        },
-                                        {
-                                            term: "Dein konkreter Vorteil (7,5 Stunden Handlungsspielraum)",
-                                            text: "Europa handelt von 08:00 bis 15:30 Uhr MEZ – während Amerika noch schläft. Du kannst morgens über Tradegate bereits Aktien kaufen oder verkaufen (bevor um 15:30 Uhr die Masse an der Wall Street losstürmt) und hast den ganzen Vormittag Zeit, deine US-Orders und Limits in aller Ruhe anzupassen."
-                                        }
-                                    ]}
+                                    title="Europa-Frühstart & Faustregeln zur Kurs-Deutung"
+                                    items={EUROPEAN_MARKET_INFO_ITEMS}
                                 />
                             </span>
                             <span className="font-bold tabular-nums text-right">

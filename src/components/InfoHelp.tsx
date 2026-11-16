@@ -40,7 +40,7 @@ export function InfoHelp({ title, items, footer }: InfoHelpProps) {
                     onClick={(ev) => { ev.stopPropagation(); setOpen(false); }}
                 >
                     <div
-                        className="bg-card text-foreground border border-border rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5 cursor-default"
+                        className="bg-card text-foreground border border-border rounded-xl shadow-2xl w-full max-w-lg sm:max-w-xl md:max-w-2xl max-h-[85vh] overflow-y-auto p-5 cursor-default"
                         onClick={(ev) => ev.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-3">
@@ -59,7 +59,7 @@ export function InfoHelp({ title, items, footer }: InfoHelpProps) {
                             {items.map((it) => (
                                 <div key={it.term}>
                                     <dt className="font-semibold text-foreground">{it.term}</dt>
-                                    <dd className="text-muted-foreground">{it.text}</dd>
+                                    <dd className="text-muted-foreground whitespace-pre-line">{it.text}</dd>
                                 </div>
                             ))}
                         </dl>

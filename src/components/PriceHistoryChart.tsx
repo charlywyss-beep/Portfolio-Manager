@@ -746,14 +746,14 @@ export function PriceHistoryChart({
                                             },
                                             {
                                                 term: "2. Ab 08:15 Uhr • Erste Früh-Indikation aus Frankfurt (*.F)",
-                                                text: "Deutsche Parkett-/Tradegate-Börsen handeln US- und Europa-Aktien ab 08:00 Uhr MEZ. Durch die 15-minütige Börsenverzögerung treffen die ersten Morgenkurse ab 08:15 Uhr ein."
+                                                text: "Deutsche Parkett- und Tradegate-Börsen handeln US- und Europa-Aktien ab 08:00 Uhr MEZ. Durch die 15-minütige Börsenverzögerung treffen die ersten Morgenkurse ab 08:15 Uhr ein."
                                             },
                                             {
                                                 term: "3. Ab 09:15 / 09:16 Uhr • Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA)",
                                                 text: "Die europäischen Hauptbörsen öffnen um 09:00 Uhr MEZ. Da kostenlose Datenanbieter europäische Kurse gesetzlich mit 15 Minuten Verzögerung ausliefern, schaltet die Anzeige um 09:15 / 09:16 Uhr auf die neuen Tageskurse um."
                                             },
                                             {
-                                                term: "4. Ab 10:00 Uhr • Offizielle US-Vorbörse (Pre-Market)",
+                                                term: "4. Ab 10:00 Uhr • Offizielle US Vorbörse (Pre-Market)",
                                                 text: "Die US-Vorbörse an der Nasdaq und NYSE startet um 10:00 Uhr MEZ und wird ohne Verzögerung in Echtzeit übertragen."
                                             },
                                             {

@@ -178,7 +178,7 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                                 items={[
                                     {
                                         term: "Dein Spickzettel • Wann kommen welche Live-Daten rein?",
-                                        text: "1. Ab 00:00 Uhr: US-Futures (Nasdaq, S&P 500), Rohstoffe (Gold, Öl), Währungen & Asien (sofort).\n2. Ab 08:15 Uhr: Erste Früh-Indikation aus Frankfurt (*.F, da Handel ab 08:00 Uhr + 15 Min. Verzögerung).\n3. Ab 09:15 / 09:16 Uhr: Offizieller Handelsstart Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA) (09:00 Uhr + 15 Min. Verzögerung).\n4. Ab 10:00 Uhr: Offizielle US-Vorbörse (Pre-Market) ohne Verzögerung in Echtzeit!\n5. Ab 15:30 Uhr: Wall Street (New York) ohne Verzögerung in Echtzeit!"
+                                        text: "1. Ab 00:00 Uhr: US-Futures (Nasdaq, S&P 500), Rohstoffe (Gold, Öl), Währungen & Asien (sofort).\n2. Ab 08:15 Uhr: Erste Früh-Indikation aus Frankfurt / Tradegate (*.F, da Handel ab 08:00 Uhr + 15 Min. Verzögerung).\n3. Ab 09:15 / 09:16 Uhr • Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA) (09:00 Uhr + 15 Min. Verzögerung).\n4. Ab 10:00 Uhr: Offizielle US Vorbörse (Pre-Market) ohne Verzögerung in Echtzeit!\n5. Ab 15:30 Uhr: Wall Street (New York) ohne Verzögerung in Echtzeit!"
                                     },
                                     {
                                         term: "Was zeigt dieses Radar?",
