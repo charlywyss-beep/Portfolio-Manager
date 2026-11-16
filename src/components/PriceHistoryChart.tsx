@@ -1,9 +1,10 @@
 import { StockName } from './StockName';
 import { InfoHelp } from './InfoHelp';
 import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
-import { Ruler, X, ArrowLeftRight } from 'lucide-react';
+import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -85,10 +86,28 @@ export function PriceHistoryChart({
     }, []);
     const [isMeasureMode, setIsMeasureMode] = useState(false);
     const [showFibonacci, setShowFibonacci] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<MeasurePoint[]>([]);
     const lastMeasureClickRef = useRef(0);
     const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null; session?: 'pre' | 'regular' | 'post' } | null>(null);
     const [selectedExtremum, setSelectedExtremum] = useState<'high' | 'low' | null>(null);
+
+    // Lock body scrolling and listen for Escape key when in fullscreen
+    useEffect(() => {
+        if (!isFullscreen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsFullscreen(false);
+            }
+        };
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isFullscreen]);
 
     useEffect(() => {
         if (!selectedExtremum) return;
@@ -549,9 +568,12 @@ export function PriceHistoryChart({
 
     const chartContent = (
         <div className={cn(
-            "w-full flex flex-col relative transition-all duration-300 select-none min-h-[360px] landscape:min-h-0 h-auto flex-1 pb-2 landscape:pb-0"
+            "w-full flex flex-col relative transition-all duration-300 select-none",
+            isFullscreen
+                ? "fixed inset-0 z-[9999] bg-background/98 backdrop-blur-md p-3 sm:p-6 lg:p-8 flex flex-col w-screen h-screen overflow-hidden"
+                : "min-h-[340px] landscape:min-h-0 h-auto flex-1 pb-0 landscape:pb-0"
         )}>
-            <div className="flex flex-wrap items-center justify-between mb-2 md:mb-4 landscape:mb-1.5 gap-2 relative">
+            <div className="flex flex-wrap items-center justify-between mb-2 md:mb-3 landscape:mb-1.5 gap-2 relative">
                 <div className="flex flex-col gap-1 w-full sm:w-auto">
                     <div>
                         {stockName && (
@@ -566,7 +588,12 @@ export function PriceHistoryChart({
                                 )}
                             </div>
                         )}
-                        <p className="text-sm landscape:text-xs text-muted-foreground">Performance ({formatRangeLabel(selectedRange)})</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
+                            <span className="text-[10px] text-muted-foreground/50 italic select-none">
+                                · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
+                            </span>
+                        </div>
                         <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
                             <span className="text-xl landscape:text-xl">
                                 {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
@@ -680,6 +707,27 @@ export function PriceHistoryChart({
                                     )}
                                 </button>
                             </div>
+                            {/* Selected Extremum Date & Time Tag (relocated from bottom) */}
+                            {selectedExtremum && (selectedExtremum === 'high' ? maxPoint : minPoint) && (() => {
+                                const pt = (selectedExtremum === 'high' ? maxPoint : minPoint)!;
+                                const d = new Date(pt.date);
+                                const dateTimeStr = selectedRange === '1D'
+                                    ? `${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} • ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
+                                    : ['1W', '1M', '3M', '6M'].includes(selectedRange)
+                                        ? `${d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })} • ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
+                                        : d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+                                return (
+                                    <div className={cn(
+                                        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg border text-xs font-bold text-foreground shadow-sm animate-in fade-in duration-150 ml-1 select-none",
+                                        selectedExtremum === 'high'
+                                            ? "bg-emerald-500/15 border-emerald-500/70 text-emerald-600 dark:text-emerald-400"
+                                            : "bg-rose-500/15 border-rose-500/70 text-rose-600 dark:text-rose-400"
+                                    )}>
+                                        <span className={cn("size-2 rounded-full shrink-0", selectedExtremum === 'high' ? "bg-emerald-500" : "bg-rose-500")} />
+                                        <span>{dateTimeStr}</span>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         {/* Mobile-Only Hover Info (Directly over H/T, below Performance) */}
@@ -816,6 +864,24 @@ export function PriceHistoryChart({
                         })()}
                     </div>
                 )}
+                {isFullscreen && (
+                    <div className="flex items-center gap-2 shrink-0 ml-auto">
+                        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400 text-xs font-bold">
+                            <Maximize2 className="size-3.5" />
+                            Großansicht
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setIsFullscreen(false)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-bold transition-all shadow-sm cursor-pointer hover:border-foreground/30 active:scale-95"
+                            title="Großansicht schließen (Esc)"
+                        >
+                            <Minimize2 className="size-4 text-primary shrink-0" />
+                            <span>Verkleinern</span>
+                            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-muted rounded border border-border/80 text-muted-foreground">Esc</kbd>
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1.5 min-h-[38px]">
@@ -898,17 +964,46 @@ export function PriceHistoryChart({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setShowFibonacci(prev => !prev)}
+                                    onClick={() => {
+                                        setShowFibonacci(prev => {
+                                            const next = !prev;
+                                            if (next && !isFullscreen) setIsFullscreen(true);
+                                            return next;
+                                        });
+                                    }}
                                     className={cn(
                                         toolbarToggleClass,
                                         showFibonacci
                                             ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-700 ring-1 ring-purple-400/50"
                                             : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
                                     )}
-                                    title="Fibonacci-Retracements (0%, 23.6%, 38.2%, 50%, 61.8%, 78.6%, 100%) im Chart anzeigen"
+                                    title="Fibonacci-Retracements im Chart anzeigen (öffnet Großansicht)"
                                 >
                                     <span className="font-serif font-black text-xs leading-none">Φ</span>
                                     <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Fibonacci</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsFullscreen(prev => !prev)}
+                                    className={cn(
+                                        toolbarToggleClass,
+                                        isFullscreen
+                                            ? "bg-amber-600 hover:bg-amber-500 text-white border-amber-700 ring-1 ring-amber-400/50"
+                                            : "bg-background text-muted-foreground border-slate-300/80 dark:border-slate-500/50 hover:bg-amber-500/15 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-500/50"
+                                    )}
+                                    title={isFullscreen ? "Großansicht schließen (Esc)" : "Vollbild / Großansicht öffnen"}
+                                >
+                                    {isFullscreen ? (
+                                        <>
+                                            <Minimize2 className="size-3.5 shrink-0" />
+                                            <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Verkleinern</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Maximize2 className="size-3.5 shrink-0" />
+                                            <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Vollbild</span>
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -1127,7 +1222,11 @@ export function PriceHistoryChart({
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setShowFibonacci(prev => !prev);
+                                    setShowFibonacci(prev => {
+                                        const next = !prev;
+                                        if (next && !isFullscreen) setIsFullscreen(true);
+                                        return next;
+                                    });
                                 }}
                                 className={cn(
                                     "px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer",
@@ -1185,7 +1284,7 @@ export function PriceHistoryChart({
                             >
                                 <span className="opacity-75">{lvl.label}</span>
                                 <span>{lvl.formattedPrice}</span>
-                                {lvl.name && <span className="text-[9px] font-sans opacity-60 ml-0.5 hidden md:inline">({lvl.name})</span>}
+                                {lvl.name && <span className="text-[9px] font-sans opacity-60 ml-0.5 hidden md:inline">· {lvl.name}</span>}
                             </span>
                         ))}
                     </div>
@@ -1193,13 +1292,23 @@ export function PriceHistoryChart({
             )}
 
             <div className={cn(
-                "w-full min-w-0 transition-all h-[280px] sm:h-[300px] landscape:h-[180px] min-h-[160px]"
+                "w-full min-w-0 transition-all",
+                isFullscreen
+                    ? "flex-1 w-full min-h-0 min-w-0"
+                    : "h-[310px] sm:h-[350px] landscape:h-[180px] min-h-[160px]"
             )}>
                 {hasMounted && (
-                    <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
+                    <ResponsiveContainer
+                        key={isFullscreen ? 'fullscreen' : 'normal'}
+                        width="100%"
+                        height="100%"
+                        debounce={50}
+                        minWidth={1}
+                        minHeight={1}
+                    >
                         <AreaChart
                             data={displayData}
-                            margin={{ top: selectedRange === '1D' && showPrePost ? 26 : 14, right: 6, left: 0, bottom: 18 }}
+                            margin={{ top: selectedRange === '1D' && showPrePost ? 26 : 14, right: 6, left: 0, bottom: 4 }}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);
@@ -1272,6 +1381,7 @@ export function PriceHistoryChart({
                             <CartesianGrid strokeDasharray="3 3" vertical={true} opacity={0.1} />
                             <XAxis
                                 dataKey="date"
+                                height={20}
                                 hide={false}
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickLine={{ stroke: '#475569', strokeWidth: 1 }}
@@ -1695,7 +1805,7 @@ export function PriceHistoryChart({
                                                     stroke="#0f172a"
                                                     strokeWidth={2.5}
                                                     paintOrder="stroke fill"
-                                                    fontSize={9.5}
+                                                    fontSize={isFullscreen ? 11 : 9.5}
                                                     fontWeight={700}
                                                 >
                                                     Fibo {level.label}{level.name ? ` ${level.name}` : ''} · {level.formattedPrice}
@@ -1734,35 +1844,32 @@ export function PriceHistoryChart({
                     </ResponsiveContainer>
                 )}
             </div>
-
-            <div className="min-h-[28px] flex items-center justify-center mt-1.5 landscape:mt-0.5">
-                {selectedExtremum && (selectedExtremum === 'high' ? maxPoint : minPoint) ? (() => {
-                    const pt = (selectedExtremum === 'high' ? maxPoint : minPoint)!;
-                    const d = new Date(pt.date);
-                    const dateTimeStr = selectedRange === '1D'
-                        ? `${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} • ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`
-                        : ['1W', '1M', '3M', '6M'].includes(selectedRange)
-                            ? `${d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })} • ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`
-                            : d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
-                    return (
-                        <div className={cn(
-                            "inline-flex items-center gap-2 px-3.5 py-1 rounded-lg border text-sm font-bold text-foreground shadow-sm animate-in fade-in duration-150",
-                            selectedExtremum === 'high'
-                                ? "bg-emerald-500/15 border-emerald-500/70"
-                                : "bg-rose-500/15 border-rose-500/70"
-                        )}>
-                            <span className={cn("size-2.5 rounded-full shrink-0", selectedExtremum === 'high' ? "bg-emerald-500" : "bg-rose-500")} />
-                            <span>{dateTimeStr}</span>
-                        </div>
-                    );
-                })() : (
-                    <p className="text-[10px] text-muted-foreground text-center italic leading-tight">
-                        {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}
-                    </p>
-                )}
-            </div>
         </div>
     );
+
+    if (isFullscreen && typeof document !== 'undefined') {
+        return (
+            <>
+                <div className="w-full h-[280px] sm:h-[320px] border border-dashed border-border/60 rounded-xl flex flex-col items-center justify-center gap-2.5 text-muted-foreground bg-muted/10 p-4">
+                    <div className="flex items-center gap-2 text-primary">
+                        <Maximize2 className="size-5" />
+                        <span className="text-sm font-bold text-foreground">Chart in Großansicht geöffnet</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center max-w-sm">
+                        {showFibonacci ? 'Fibonacci-Retracements im Vollbild-Modus aktiv.' : 'Großansicht des Kursverlaufs aktiv.'}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setIsFullscreen(false)}
+                        className="px-3 py-1 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-sm cursor-pointer"
+                    >
+                        Großansicht verkleinern (Esc)
+                    </button>
+                </div>
+                {createPortal(chartContent, document.body)}
+            </>
+        );
+    }
 
     return chartContent;
 }
