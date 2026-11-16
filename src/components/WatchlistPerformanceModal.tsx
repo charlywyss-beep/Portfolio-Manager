@@ -78,12 +78,15 @@ export function WatchlistPerformanceModal({
                 .map(s => s.id);
         }
         if (currentWatchlistId === 'orders') {
-            const openOrderSymbols = new Set((orderBook || []).filter(o => o.status === 'open').map(o => o.stockSymbol.toLowerCase()));
+            const openOrdersList = (orderBook || []).filter(o => o.status === 'open');
+            const openOrderSymbols = new Set(openOrdersList.map(o => o.stockSymbol.toLowerCase()));
+            const openOrderIds = new Set(openOrdersList.filter(o => o.stockId).map(o => String(o.stockId)));
+            const openOrderIsins = new Set(openOrdersList.filter(o => o.stockIsin).map(o => o.stockIsin!.toLowerCase()));
             return stocks
                 .filter(s =>
                     openOrderSymbols.has(s.symbol.toLowerCase()) ||
-                    (typeof s.targetPrice === 'number' && s.targetPrice > 0) ||
-                    (typeof s.sellLimit === 'number' && s.sellLimit > 0)
+                    openOrderIds.has(String(s.id)) ||
+                    (s.isin && openOrderIsins.has(s.isin.toLowerCase()))
                 )
                 .map(s => s.id);
         }

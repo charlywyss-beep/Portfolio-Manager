@@ -49,6 +49,7 @@ export function Watchlist() {
     const [modalInitialPeriod, setModalInitialPeriod] = useState<WatchlistPeriod>('1D');
     const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
     const [isOrderBookModalOpen, setIsOrderBookModalOpen] = useState(false);
+    const [showAllLimits, setShowAllLimits] = useState(false);
     const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
     const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
 
@@ -93,12 +94,12 @@ export function Watchlist() {
         return (orderBook || []).filter(o => o.status === 'open');
     }, [orderBook]);
 
-    // Orders Stocks List: collects all stocks that have an active order in orderBook or a limit
+    // Orders Stocks List: collects ONLY stocks/ETFs that have an active open order in orderBook (or optionally all limits if toggled)
     const ordersStocksList = useMemo(() => {
         const list: Stock[] = [];
         const addedStockIds = new Set<string>();
 
-        // 1. Stocks matching open orders in orderBook
+        // 1. Stocks matching open orders in orderBook (strictly placed orders)
         openOrders.forEach(order => {
             const found = stocks.find(s =>
                 (order.stockId && s.id === order.stockId) ||
@@ -140,20 +141,22 @@ export function Watchlist() {
             }
         });
 
-        // 2. Stocks in stocks that have a targetPrice > 0 or sellLimit > 0
-        stocks.forEach(s => {
-            if (!addedStockIds.has(String(s.id))) {
-                const hasBuyLimit = typeof s.targetPrice === 'number' && s.targetPrice > 0;
-                const hasSellLimit = typeof s.sellLimit === 'number' && s.sellLimit > 0;
-                if (hasBuyLimit || hasSellLimit) {
-                    list.push(s);
-                    addedStockIds.add(String(s.id));
+        // 2. Only if showAllLimits is explicitly toggled: include watchlist stocks with targetPrice > 0 or sellLimit > 0
+        if (showAllLimits) {
+            stocks.forEach(s => {
+                if (!addedStockIds.has(String(s.id))) {
+                    const hasBuyLimit = typeof s.targetPrice === 'number' && s.targetPrice > 0;
+                    const hasSellLimit = typeof s.sellLimit === 'number' && s.sellLimit > 0;
+                    if (hasBuyLimit || hasSellLimit) {
+                        list.push(s);
+                        addedStockIds.add(String(s.id));
+                    }
                 }
-            }
-        });
+            });
+        }
 
         return list;
-    }, [stocks, openOrders]);
+    }, [stocks, openOrders, showAllLimits]);
 
     // All available tabs (system tabs + custom watchlists)
     const allTabs = useMemo<WatchlistTabItem[]>(() => {
@@ -699,15 +702,30 @@ export function Watchlist() {
                             <span>Rangliste (1W / 1M / 3M)</span>
                         </button>
                         {activeWatchlistId === 'orders' && (
-                            <button
-                                type="button"
-                                onClick={() => setIsOrderBookModalOpen(true)}
-                                className="ml-1 sm:ml-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/25 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs"
-                                title="Auftragsbuch mit allen Details und Limiten öffnen"
-                            >
-                                <ClipboardList className="size-3.5 text-amber-500 shrink-0" />
-                                <span>Auftragsbuch {openOrders.length > 0 && `(${openOrders.length})`}</span>
-                            </button>
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOrderBookModalOpen(true)}
+                                    className="ml-1 sm:ml-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/25 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs shrink-0"
+                                    title="Auftragsbuch mit allen Details und Limiten öffnen"
+                                >
+                                    <ClipboardList className="size-3.5 text-amber-500 shrink-0" />
+                                    <span>Auftragsbuch {openOrders.length > 0 && `(${openOrders.length})`}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAllLimits(prev => !prev)}
+                                    className={cn(
+                                        "ml-1 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border cursor-pointer shadow-2xs shrink-0",
+                                        showAllLimits
+                                            ? "bg-blue-600 text-white border-blue-700"
+                                            : "bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border-border"
+                                    )}
+                                    title={showAllLimits ? "Zurück zu nur echten Aufträgen aus dem Auftragsbuch" : "Auch reine Watchlist-Kursziele ohne platzierten Auftrag einblenden"}
+                                >
+                                    <span>{showAllLimits ? 'Alle Limiten' : 'Nur Auftragsbuch'}</span>
+                                </button>
+                            </>
                         )}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs font-medium text-muted-foreground bg-background/50 px-2.5 py-1 rounded-lg border border-border/50">
