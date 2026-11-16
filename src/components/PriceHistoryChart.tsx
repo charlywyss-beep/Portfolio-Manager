@@ -353,9 +353,9 @@ export function PriceHistoryChart({
 
     // SMA calculation logic
     const sma200Data = useMemo(() => {
-        // User rule: "also bei 3 Monaten gar keine 200 Tage Linie"
-        // Do not display 200-day line on intraday or short ranges (1D, 1W, 1M, 3M)
-        if (['1D', '1W', '1M', '3M'].includes(selectedRange)) return null;
+        // Do not display 200-day line on intraday or short ranges (1D, 1W, 1M)
+        // 3M, 6M, 1Y, 3Y, 5Y and BUY display the accurate 200-day moving average
+        if (['1D', '1W', '1M'].includes(selectedRange)) return null;
 
         if (!data || data.length === 0) return null;
 

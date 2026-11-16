@@ -21,7 +21,7 @@ const getYahooParams = (range: TimeRange): { period: string; interval: string } 
         case '1D': return { period: '1d', interval: '5m' };
         case '1W': return { period: '5d', interval: '15m' };
         case '1M': return { period: '1mo', interval: '15m' };
-        case '3M': return { period: '3mo', interval: '60m' };
+        case '3M': return { period: '2y', interval: '1d' };
         case '6M': return { period: '2y', interval: '1d' };
         case '1Y': return { period: '2y', interval: '1d' };
         case '3Y': return { period: '5y', interval: '1d' };
@@ -226,10 +226,12 @@ export async function fetchStockHistory(
 
         // Slice points to the exact requested range window (discarding the extra pre-history used for SMA 200)
         let finalPoints = points;
-        if (points.length > 0 && ['6M', '1Y', '3Y', '5Y'].includes(range)) {
+        if (points.length > 0 && ['3M', '6M', '1Y', '3Y', '5Y'].includes(range)) {
             const lastTime = new Date(points[points.length - 1].date).getTime();
             let cutoffTime = 0;
-            if (range === '6M') {
+            if (range === '3M') {
+                cutoffTime = lastTime - 92 * 24 * 3600 * 1000;
+            } else if (range === '6M') {
                 cutoffTime = lastTime - 183 * 24 * 3600 * 1000;
             } else if (range === '1Y') {
                 cutoffTime = lastTime - 365.25 * 24 * 3600 * 1000;
