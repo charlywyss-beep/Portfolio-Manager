@@ -423,21 +423,27 @@ export function PriceHistoryChart({
     }
 
     // Smart Domain Expansion for Strategy Lines (Ø Kauf, Kauflimit, Fairer Wert):
-    // If a strategic level is within 25% of the visible range, expand domain slightly so it renders cleanly
-    if (selectedRange !== '1D' && maxPrice > minPrice) {
-        const dataRange = maxPrice - minPrice;
-        const checkSmartExpand = (val?: number) => {
-            if (!val || val <= 0) return;
-            if (val > maxPrice && (val - maxPrice) / dataRange <= 0.25) {
-                calcMax = Math.max(calcMax, val);
+    // Always expand domain to accommodate active strategy lines (Kauflimit & Fairer Wert) so they are NEVER hidden on any timeframe!
+    if (effectiveBuyLimit && effectiveBuyLimit > 0) {
+        calcMin = Math.min(calcMin, effectiveBuyLimit);
+        calcMax = Math.max(calcMax, effectiveBuyLimit);
+    }
+    if (effectiveFairValue && effectiveFairValue > 0) {
+        calcMin = Math.min(calcMin, effectiveFairValue);
+        calcMax = Math.max(calcMax, effectiveFairValue);
+    }
+    if (effectivePurchasePrice && effectivePurchasePrice > 0) {
+        // Expand for purchase price if it's within a reasonable distance (so it doesn't compress intraday charts too much)
+        const activeSpan = calcMax - calcMin;
+        if (activeSpan > 0) {
+            if (effectivePurchasePrice >= calcMin - activeSpan * 0.8 && effectivePurchasePrice <= calcMax + activeSpan * 0.8) {
+                calcMin = Math.min(calcMin, effectivePurchasePrice);
+                calcMax = Math.max(calcMax, effectivePurchasePrice);
             }
-            if (val < minPrice && (minPrice - val) / dataRange <= 0.25) {
-                calcMin = Math.min(calcMin, val);
-            }
-        };
-        checkSmartExpand(effectivePurchasePrice);
-        checkSmartExpand(effectiveBuyLimit);
-        checkSmartExpand(effectiveFairValue);
+        } else {
+            calcMin = Math.min(calcMin, effectivePurchasePrice);
+            calcMax = Math.max(calcMax, effectivePurchasePrice);
+        }
     }
 
     const range = calcMax - calcMin;

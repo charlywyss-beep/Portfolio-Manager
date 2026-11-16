@@ -65,24 +65,28 @@ export interface Stock {
     targetPriceType?: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual'; // Origin of target buy limit
     fairValue?: number; // Calculated Intrinsic Value (without Margin of Safety)
     fairValueParams?: {
-        eps: number;
-        growthRate: number;
-        pe: number;
-        dividendYield: number;
-        discountRate: number;
-        mos: number;
+        eps?: number;
+        growthRate?: number;
+        pe?: number;
+        dividendYield?: number;
+        discountRate?: number;
+        mos?: number;
         isCustom?: boolean;
         updatedAt?: string;
-        valuationMode?: 'conservative' | 'quality' | 'risk';
+        valuationMode?: 'conservative' | 'quality' | 'risk' | 'manual';
+        manualFairValue?: number;
+        manualTargetPrice?: number;
         customBackup?: {
-            eps: number;
-            growthRate: number;
-            pe: number;
-            dividendYield: number;
-            discountRate: number;
-            mos: number;
+            eps?: number;
+            growthRate?: number;
+            pe?: number;
+            dividendYield?: number;
+            discountRate?: number;
+            mos?: number;
             updatedAt?: string;
-            valuationMode?: 'conservative' | 'quality' | 'risk';
+            valuationMode?: 'conservative' | 'quality' | 'risk' | 'manual';
+            manualFairValue?: number;
+            manualTargetPrice?: number;
         };
     };
     sellLimit?: number; // Desired sell price -> Sell Limit
