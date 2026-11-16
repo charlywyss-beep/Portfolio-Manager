@@ -775,7 +775,6 @@ export async function fetchSeasonalityData(
     try {
         const now = new Date();
         const currentYear = now.getUTCFullYear();
-        const currentMonth = now.getUTCMonth();
 
         // If specificYear is set, we need to fetch enough data to cover it
         let period = `${years}y`;
@@ -823,30 +822,66 @@ export async function fetchSeasonalityData(
             ...(result.indicators?.adjclose?.[0]?.adjclose || result.indicators?.quote?.[0]?.close)
         ];
 
-        // 1. Fetch and Append Live Price if needed
-        const lastBarDate = new Date(timestamps[timestamps.length - 1] * 1000);
+        const currency: string | null = result.meta?.currency || null;
 
-        // If the last monthly bar is older than today, append the current price as a "virtual" bar
-        if (lastBarDate.getUTCMonth() === currentMonth && lastBarDate.getUTCFullYear() === currentYear) {
-            // We already have a bar for the current month.
-            // Actually, Yahoo monthly bars are usually the 1st of the month.
+        // Helper to safely get the calendar year and month of a monthly bar:
+        // Yahoo Finance monthly bars are keyed to the 1st of each month at local exchange midnight.
+        // In timezones east of UTC (e.g. UK in BST: UTC+1, Central Europe in CEST: UTC+2),
+        // local midnight is 22:00 or 23:00 on the last day of the previous month in UTC.
+        // Adding 12 hours (43200 seconds) safely shifts any UTC offset (-12h to +14h)
+        // right onto the 1st day of the intended month in UTC!
+        const getMonthlyBarDate = (timestampSec: number) => {
+            const d = new Date((timestampSec + 43200) * 1000);
+            return {
+                year: d.getUTCFullYear(),
+                month: d.getUTCMonth() // 0 = Jan .. 11 = Dec
+            };
+        };
+
+        // Group raw bars by calendar month to eliminate duplicate intra-month bars
+        // (Yahoo often returns both the 1st-of-month bar and a live/latest bar for the current month)
+        const monthlyBarMap = new Map<string, { year: number; month: number; timestamp: number; close: number }>();
+
+        for (let i = 0; i < timestamps.length; i++) {
+            const rawClose = closes[i];
+            if (rawClose == null || rawClose === 0) continue;
+
+            const { year, month } = getMonthlyBarDate(timestamps[i]);
+            const key = `${year}-${String(month).padStart(2, '0')}`;
+            const normalizedClose = normalizeYahooPrice(rawClose, currency, symbol);
+
+            // Latest timestamp in that month wins
+            monthlyBarMap.set(key, {
+                year,
+                month,
+                timestamp: timestamps[i],
+                close: normalizedClose
+            });
         }
 
+        // Fetch precise live price to update the running current month if available
         try {
             const live = await fetchStockPricePrecise(symbol);
             if (live.price && live.marketTime) {
                 const liveTs = Math.floor(live.marketTime.getTime() / 1000);
-                // Only append if the live price is substantially newer than the last monthly bar
-                if (liveTs > timestamps[timestamps.length - 1] + 86400 * 2) {
-                    timestamps.push(liveTs);
-                    closes.push(live.price);
-                }
+                const { year, month } = getMonthlyBarDate(liveTs);
+                const key = `${year}-${String(month).padStart(2, '0')}`;
+                const normalizedLive = normalizeYahooPrice(live.price, currency, symbol);
+                monthlyBarMap.set(key, {
+                    year,
+                    month,
+                    timestamp: liveTs,
+                    close: normalizedLive
+                });
             }
         } catch (e) {
             console.warn("[Seasonality] Live price fetch failed, proceeding with history only.");
         }
 
-        const currency: string | null = result.meta?.currency || null;
+        // Sort chronologically
+        const sortedBars = Array.from(monthlyBarMap.values()).sort(
+            (a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month)
+        );
 
         // Build month → returns map
         const monthlyReturns: Map<number, number[]> = new Map();
@@ -864,25 +899,24 @@ export async function fetchSeasonalityData(
                 if (!div.date) return;
 
                 // Robust date parsing (handle number/seconds, number/ms, or ISO string)
-                let date: Date;
+                let tsSec: number;
                 if (typeof div.date === 'number') {
-                    // Yahoo timestamps are usually in seconds
-                    date = new Date(div.date * 1000);
-                    // If it's somehow already in ms (year > 2100), re-parse
-                    if (date.getFullYear() > 2100) date = new Date(div.date);
+                    tsSec = div.date > 2100000000 ? Math.floor(div.date / 1000) : div.date;
                 } else {
-                    date = new Date(div.date);
+                    tsSec = Math.floor(new Date(div.date).getTime() / 1000);
                 }
 
-                const year = date.getUTCFullYear();
-                const month = date.getUTCMonth();
+                if (isNaN(tsSec)) return;
+
+                const { year, month } = getMonthlyBarDate(tsSec);
 
                 // Filter dividends by year
                 if (specificYear && year !== specificYear) return;
                 if (!specificYear && year < startYearFilter) return;
 
+                const divDate = new Date((tsSec + 43200) * 1000);
                 monthlyDividends.get(month)!.push({
-                    date: date.toISOString(),
+                    date: divDate.toISOString(),
                     amount: div.amount || div.dividends || 0
                 });
             });
@@ -895,21 +929,20 @@ export async function fetchSeasonalityData(
             try {
                 const quote = await fetchStockQuote(symbol);
                 if (quote.exDividendDate) {
-                    const date = quote.exDividendDate;
-                    const year = date.getUTCFullYear();
-                    const month = date.getUTCMonth();
+                    const tsSec = Math.floor(quote.exDividendDate.getTime() / 1000);
+                    const { year, month } = getMonthlyBarDate(tsSec);
 
                     if (year === currentYear) {
-                        // Check if we already have this month's dividend from history
                         const hasThisMonth = monthlyDividends.get(month)?.some(d => {
                             const dDate = new Date(d.date);
-                            return dDate.getUTCFullYear() === year;
+                            const { year: dYear } = getMonthlyBarDate(Math.floor(dDate.getTime() / 1000));
+                            return dYear === year;
                         });
 
                         if (!hasThisMonth) {
                             monthlyDividends.get(month)?.push({
-                                date: date.toISOString(),
-                                amount: 0 // Amount might not be in quote easily
+                                date: quote.exDividendDate.toISOString(),
+                                amount: 0
                             });
                         }
                     }
@@ -922,16 +955,17 @@ export async function fetchSeasonalityData(
         let minYearFound = Infinity;
         let maxYearFound = -Infinity;
 
-        // Monthly interval: each timestamp is approx. start of a month. Compute month-over-month return.
-        for (let i = 1; i < timestamps.length; i++) {
-            const prev = closes[i - 1];
-            const curr = closes[i];
-            if (prev == null || curr == null || prev === 0) continue;
+        // Compute consecutive month-over-month return
+        for (let i = 1; i < sortedBars.length; i++) {
+            const prev = sortedBars[i - 1];
+            const curr = sortedBars[i];
 
-            // Get the month of the CURRENT bar (the month that just finished/is the current month)
-            const date = new Date(timestamps[i] * 1000);
-            const year = date.getUTCFullYear();
-            const month = date.getUTCMonth(); // 0 = Jan
+            // Verify they are consecutive months (diff in months === 1)
+            const monthDiff = (curr.year * 12 + curr.month) - (prev.year * 12 + prev.month);
+            if (monthDiff !== 1) continue;
+
+            const year = curr.year;
+            const month = curr.month; // 0 = Jan .. 11 = Dec
 
             // Filter logic
             if (specificYear) {
@@ -940,10 +974,7 @@ export async function fetchSeasonalityData(
                 if (year < startYearFilter) continue;
             }
 
-            const normalizedCurr = normalizeYahooPrice(curr, currency, symbol);
-            const normalizedPrev = normalizeYahooPrice(prev, currency, symbol);
-            const monthReturn = ((normalizedCurr - normalizedPrev) / normalizedPrev) * 100;
-
+            const monthReturn = ((curr.close - prev.close) / prev.close) * 100;
             monthlyReturns.get(month)!.push(monthReturn);
 
             if (year < minYearFound) minYearFound = year;

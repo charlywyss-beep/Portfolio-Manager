@@ -1839,7 +1839,7 @@ export function StockDetail() {
                         <div>
                             <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Div. Frequenz</span>
-                                <span className="font-medium text-xs sm:text-sm md:text-base capitalize text-foreground">
+                                <span className="font-medium capitalize text-foreground">
                                     {stock.dividendFrequency ? (
                                         stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
                                             stock.dividendFrequency === 'monthly' ? 'Monatlich' :
@@ -1873,10 +1873,10 @@ export function StockDetail() {
                                         if (yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01) {
                                             return (
                                                 <div className="flex flex-col items-end leading-tight gap-0.5">
-                                                    <span className="font-medium text-xs sm:text-sm md:text-base text-foreground/80 tabular-nums">{marketYield.toFixed(2)}% Kurs</span>
-                                                    <span className="font-bold text-xs sm:text-sm md:text-base text-green-600 dark:text-green-400 tabular-nums">{yieldCost.toFixed(2)}% Käufe</span>
+                                                    <span className="font-medium text-foreground/80 tabular-nums">{marketYield.toFixed(2)}% Kurs</span>
+                                                    <span className="font-bold text-green-600 dark:text-green-400 tabular-nums">{yieldCost.toFixed(2)}% Käufe</span>
                                                     {annualDividendCHF > 0 && (
-                                                        <span className="font-bold text-xs sm:text-sm md:text-base text-green-600 dark:text-green-400 tabular-nums" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                        <span className="font-bold text-green-600 dark:text-green-400 tabular-nums" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
                                                             {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                         </span>
                                                     )}
@@ -1886,9 +1886,9 @@ export function StockDetail() {
 
                                         return (
                                             <div className="flex flex-col items-end leading-tight gap-0.5">
-                                                <span className="font-medium text-xs sm:text-sm md:text-base text-foreground/80 tabular-nums">{(marketYield ?? yieldCost)?.toFixed(2)}% Kurs</span>
+                                                <span className="font-medium text-foreground/80 tabular-nums">{(marketYield ?? yieldCost)?.toFixed(2)}% Kurs</span>
                                                 {annualDividendCHF > 0 && (
-                                                    <span className="font-bold text-xs sm:text-sm md:text-base text-green-600 dark:text-green-400 tabular-nums" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                    <span className="font-bold text-green-600 dark:text-green-400 tabular-nums" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
                                                         {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                     </span>
                                                 )}
@@ -1897,13 +1897,13 @@ export function StockDetail() {
                                     })()}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center py-1.5 md:py-2.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                <span className="text-muted-foreground font-medium text-xs sm:text-sm md:text-base">Nächster Ex-Tag</span>
-                                <span className="font-bold text-base sm:text-lg md:text-xl text-foreground dark:text-white tabular-nums tracking-wide">{upcomingDividendDates.exDate}</span>
+                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                <span className="text-muted-foreground">Nächster Ex-Tag</span>
+                                <span className="font-medium text-foreground dark:text-white tabular-nums">{upcomingDividendDates.exDate}</span>
                             </div>
-                            <div className="flex justify-between items-center py-1.5 md:py-2.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
-                                <span className="text-muted-foreground font-medium text-xs sm:text-sm md:text-base">Nächster Zahltag</span>
-                                <span className="font-bold text-base sm:text-lg md:text-xl text-emerald-500 dark:text-emerald-400 tabular-nums tracking-wide">{upcomingDividendDates.payDate}</span>
+                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
+                                <span className="text-muted-foreground">Nächster Zahltag</span>
+                                <span className="font-medium text-foreground dark:text-white tabular-nums">{upcomingDividendDates.payDate}</span>
                             </div>
                         </div>
                     </div>
