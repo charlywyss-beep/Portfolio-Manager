@@ -246,19 +246,10 @@ export function FairValueCalculator() {
                 targetPrice: newLimit,
                 targetPriceType: newLimit ? resolvedType : undefined,
                 fairValue: calculation.fairValue,
-                ...(resolvedType === 'manual' ? {
+                ...(currentStock?.fairValueParams ? {
                     fairValueParams: {
-                        eps: currentStock?.fairValueParams?.eps ?? (typeof eps === 'string' ? parseFloat(eps) || 0 : eps) ?? 0,
-                        growthRate: currentStock?.fairValueParams?.growthRate ?? (typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate) ?? 0,
-                        pe: currentStock?.fairValueParams?.pe ?? (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) ?? 0,
-                        dividendYield: currentStock?.fairValueParams?.dividendYield ?? (typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield) ?? 0,
-                        discountRate: currentStock?.fairValueParams?.discountRate ?? (typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate) ?? 0,
-                        mos: currentStock?.fairValueParams?.mos ?? (typeof mos === 'string' ? parseFloat(mos) || 0 : mos) ?? 20,
-                        ...(currentStock?.fairValueParams || {}),
-                        isCustom: true,
-                        valuationMode: 'manual',
-                        manualTargetPrice: newLimit,
-                        manualFairValue: calculation.fairValue
+                        ...currentStock.fairValueParams,
+                        ...(resolvedType === 'manual' ? { manualTargetPrice: newLimit } : {})
                     }
                 } : {})
             });
@@ -274,12 +265,7 @@ export function FairValueCalculator() {
                     targetPrice: newLimit,
                     targetPriceType: newLimit ? resolvedType : undefined,
                     fairValue: calculation.fairValue,
-                    ...(resolvedType === 'manual' ? {
-                        isCustom: true,
-                        valuationMode: 'manual',
-                        manualTargetPrice: newLimit,
-                        manualFairValue: calculation.fairValue
-                    } : {})
+                    ...(resolvedType === 'manual' ? { manualTargetPrice: newLimit } : {})
                 };
                 localStorage.setItem('fair_value_params_map', JSON.stringify(map));
             } catch {}

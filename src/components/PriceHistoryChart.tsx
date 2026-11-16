@@ -741,7 +741,7 @@ export function PriceHistoryChart({
         <div className={cn(
             "w-full flex flex-col relative transition-all duration-300 select-none",
             isFullscreen
-                ? "fixed inset-0 z-[9999] bg-background/98 backdrop-blur-md p-3 sm:p-6 lg:p-8 flex flex-col w-screen h-screen overflow-hidden"
+                ? "fixed inset-0 z-[9999] bg-background dark:bg-[#080d1a] p-3 sm:p-6 lg:p-8 flex flex-col w-screen h-screen overflow-hidden"
                 : "min-h-[340px] landscape:min-h-0 h-auto flex-1 pb-0 landscape:pb-0"
         )}>
             <div className="flex flex-wrap items-center justify-between mb-2 md:mb-3 landscape:mb-1.5 gap-2 relative">
@@ -765,11 +765,16 @@ export function PriceHistoryChart({
                                 · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
                             </span>
                         </div>
-                        <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
-                            <span className="text-xl landscape:text-xl">
-                                {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
-                                <span className="ml-2 opacity-90 text-lg landscape:text-lg">{diffNativeFormatted}</span>
-                            </span>
+                        <div className="flex items-baseline gap-2.5 flex-wrap my-0.5">
+                            {(effectiveCurrentPrice > 0 || endPrice > 0) && (
+                                <span className="text-xl sm:text-2xl landscape:text-lg font-black tabular-nums text-foreground tracking-tight">
+                                    {formatCurrency(effectiveCurrentPrice > 0 ? effectiveCurrentPrice : endPrice, displayCurrency, false)}
+                                </span>
+                            )}
+                            <div className={cn("font-bold flex items-baseline gap-1 text-base sm:text-xl landscape:text-base tabular-nums", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
+                                <span>{performance > 0 ? '+' : ''}{performance.toFixed(2)}%</span>
+                                <span className="ml-1.5 opacity-90 text-sm sm:text-lg landscape:text-xs">{diffNativeFormatted}</span>
+                            </div>
                         </div>
                     </div>
                     {/* High/Low Indicators + Mobile Hover Overlay */}
