@@ -66,11 +66,13 @@ function getExtendedHoursInfo(stock: ExtendedHoursSource | null | undefined) {
             : null;
     if (!ext || !ext.price) return null;
     const timeText = ext.time ? (() => {
-        const d = new Date(ext.time * 1000);
+        const d = typeof ext.time === 'number' ? new Date(ext.time > 1e12 ? ext.time : ext.time * 1000) : new Date(ext.time);
+        if (isNaN(d.getTime())) return '';
         const hm = d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+        const dateStr = d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
         return d.toDateString() === new Date().toDateString()
-            ? hm
-            : `${d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} ${hm}`;
+            ? `Heute ${dateStr} ${hm}`
+            : `${dateStr} ${hm}`;
     })() : '';
     return { ...ext, timeText };
 }
@@ -177,11 +179,13 @@ export function StockDetail() {
                     const time = result.regularMarketTime;
 
                     const timeText = time ? (() => {
-                        const d = new Date(time * 1000);
+                        const d = typeof time === 'number' ? new Date(time > 1e12 ? time : time * 1000) : new Date(time);
+                        if (isNaN(d.getTime())) return undefined;
                         const hm = d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+                        const dateStr = d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
                         return d.toDateString() === new Date().toDateString()
-                            ? hm
-                            : `${d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} ${hm}`;
+                            ? `Heute ${dateStr} ${hm}`
+                            : `${dateStr} ${hm}`;
                     })() : undefined;
 
                     let impliedTargetPrice: number | undefined;
@@ -928,12 +932,12 @@ export function StockDetail() {
                                         const pct = ext.pct ?? 0;
                                         return (
                                             <div className={cn(
-                                                "mt-1.5 inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border text-xs font-semibold tabular-nums whitespace-nowrap",
+                                                "mt-1.5 inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full border text-xs font-bold tabular-nums whitespace-nowrap",
                                                 ext.isPre
                                                     ? "bg-amber-500/15 border-amber-500/35"
                                                     : "bg-indigo-500/10 border-indigo-500/30"
                                             )}>
-                                                <span className={ext.isPre ? "text-amber-600 dark:text-amber-400" : "text-indigo-500 dark:text-indigo-400"}>
+                                                <span className={ext.isPre ? "text-amber-600 dark:text-amber-300 font-bold" : "text-indigo-600 dark:text-indigo-300 font-bold"}>
                                                     {ext.label}{ext.timeText ? ` · ${ext.timeText}` : ''}
                                                 </span>
                                                 <span className="font-bold text-foreground">
@@ -950,16 +954,16 @@ export function StockDetail() {
 
                                     {/* Row 5: European Pre-Trading Indication (Tradegate / Xetra in EUR) */}
                                     {europeanQuote && (
-                                        <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-blue-500/35 bg-blue-500/10 text-xs font-semibold tabular-nums whitespace-nowrap">
+                                        <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-blue-500/35 bg-blue-500/10 text-xs font-bold tabular-nums whitespace-nowrap">
                                             <span className="text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
                                                 <span>🇪🇺 Europa / Tradegate</span>
-                                                {europeanQuote.timeText && <span className="opacity-80 font-normal">· {europeanQuote.timeText}</span>}
+                                                {europeanQuote.timeText && <span>· {europeanQuote.timeText}</span>}
                                             </span>
                                             <span className="font-bold text-foreground">
                                                 {europeanQuote.priceEUR.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
                                             </span>
                                             {europeanQuote.impliedTargetPrice && (
-                                                <span className="text-muted-foreground text-[11px]">
+                                                <span className="font-bold text-blue-600 dark:text-blue-400">
                                                     ≈ {formatCurrency(europeanQuote.impliedTargetPrice, stock.currency, false)}
                                                 </span>
                                             )}
@@ -1296,9 +1300,9 @@ export function StockDetail() {
                     {/* Europa-Frühstart Indikation (Tradegate / Xetra in EUR) */}
                     {europeanQuote && (
                         <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] transition-colors">
-                            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                                <span className="text-blue-600 dark:text-blue-400 font-semibold">🇪🇺 Europa / Tradegate</span>
-                                {europeanQuote.timeText && <span className="text-[11px]">· {europeanQuote.timeText}</span>}
+                            <span className="inline-flex items-center gap-1.5">
+                                <span className="text-blue-600 dark:text-blue-400 font-bold">🇪🇺 Europa / Tradegate</span>
+                                {europeanQuote.timeText && <span className="text-blue-600 dark:text-blue-400 font-bold">· {europeanQuote.timeText}</span>}
                                 <InfoHelp
                                     title="Europa-Frühstart • Tradegate & Xetra"
                                     items={[
@@ -1317,12 +1321,12 @@ export function StockDetail() {
                                     ]}
                                 />
                             </span>
-                            <span className="font-medium tabular-nums text-right">
+                            <span className="font-bold tabular-nums text-right">
                                 <span className="font-bold text-foreground">
                                     {europeanQuote.priceEUR.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR
                                 </span>
                                 {europeanQuote.impliedTargetPrice && (
-                                    <span className="text-muted-foreground text-xs ml-1.5">
+                                    <span className="text-blue-600 dark:text-blue-400 font-bold ml-1.5">
                                         ≈ {formatCurrency(europeanQuote.impliedTargetPrice, stock.currency, false)}
                                     </span>
                                 )}

@@ -151,11 +151,13 @@ export async function fetchEuropeanQuotesBulk(
             const time = r.regularMarketTime;
 
             const timeText = time ? (() => {
-                const d = new Date(time * 1000);
+                const d = typeof time === 'number' ? new Date(time > 1e12 ? time : time * 1000) : new Date(time);
+                if (isNaN(d.getTime())) return undefined;
                 const hm = d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
                 return d.toDateString() === new Date().toDateString()
-                    ? hm
-                    : `${d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} ${hm}`;
+                    ? `Heute ${dateStr} ${hm}`
+                    : `${dateStr} ${hm}`;
             })() : undefined;
 
             let impliedTargetPrice: number | undefined;
