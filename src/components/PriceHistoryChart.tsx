@@ -353,32 +353,46 @@ export function PriceHistoryChart({
 
     // SMA calculation logic
     const sma200Data = useMemo(() => {
-        // Do not display an invalid 200-period candle average on short/intraday ranges
+        // User rule: "also bei 3 Monaten gar keine 200 Tage Linie"
+        // Do not display 200-day line on intraday or short ranges (1D, 1W, 1M, 3M)
         if (['1D', '1W', '1M', '3M'].includes(selectedRange)) return null;
+
+        if (!data || data.length === 0) return null;
 
         // 1. If data already has precomputed 200-day moving average from yahoo-finance service, use it!
         const hasPrecomputed = data.some(d => d.sma200 !== undefined && d.sma200 !== null);
         if (hasPrecomputed) {
+            // Find the first valid calculated SMA value to backfill any leading nulls
+            // so the line starts at Day 1 (index 0) and spans 100% of the visible chart (all 365 days / 3 years / 5 years)
+            const firstValidSma = data.find(d => typeof d.sma200 === 'number' && !isNaN(d.sma200))?.sma200 ?? null;
             return data.map(d => ({
                 date: d.date,
-                value: (d.sma200 !== undefined && d.sma200 !== null) ? d.sma200 : null
+                value: (d.sma200 !== undefined && d.sma200 !== null) ? d.sma200 : firstValidSma
             }));
         }
 
         // 2. Fallback for mock/demo data:
         // For weekly data (5Y, BUY), 200 trading days is 40 weeks (40 * 5 = 200):
         const windowSize = (selectedRange === '5Y' || selectedRange === 'BUY') ? 40 : 200;
-        if (data.length < windowSize) return null;
 
+        // Compute rolling SMA, backfilling initial points so the line spans across the ENTIRE chart from day 1
         const smaPoints: { date: string; value: number | null }[] = [];
+        let firstCalculatedSma: number | null = null;
+        if (data.length >= windowSize) {
+            const initialSlice = data.slice(0, windowSize);
+            firstCalculatedSma = initialSlice.reduce((acc, curr) => acc + curr.value, 0) / windowSize;
+        } else {
+            firstCalculatedSma = data.reduce((acc, curr) => acc + curr.value, 0) / data.length;
+        }
+
         for (let i = 0; i < data.length; i++) {
-            if (i < windowSize - 1) {
-                smaPoints.push({ date: data[i].date, value: null });
-                continue;
+            if (i >= windowSize - 1) {
+                const slice = data.slice(i - windowSize + 1, i + 1);
+                const sum = slice.reduce((acc, curr) => acc + curr.value, 0);
+                smaPoints.push({ date: data[i].date, value: sum / windowSize });
+            } else {
+                smaPoints.push({ date: data[i].date, value: firstCalculatedSma });
             }
-            const slice = data.slice(i - windowSize + 1, i + 1);
-            const sum = slice.reduce((acc, curr) => acc + curr.value, 0);
-            smaPoints.push({ date: data[i].date, value: sum / windowSize });
         }
         return smaPoints;
     }, [data, selectedRange]);
@@ -387,15 +401,13 @@ export function PriceHistoryChart({
     const displayData = useMemo(() => {
         let displayPoints = [...data];
 
-        // The API already provides the correct range based on selectedRange
-        // No need to slice - just merge SMA data
-
         // Merge SMA
         if (sma200Data) {
-            return displayPoints.map(p => {
-                const sma = sma200Data.find(s => s.date === p.date);
-                return { ...p, sma200: sma ? sma.value : null };
-            });
+            const smaMap = new Map(sma200Data.map(s => [s.date, s.value]));
+            return displayPoints.map(p => ({
+                ...p,
+                sma200: smaMap.has(p.date) ? (smaMap.get(p.date) ?? null) : null
+            }));
         }
         return displayPoints;
     }, [data, selectedRange, sma200Data]);

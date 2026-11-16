@@ -213,6 +213,15 @@ export async function fetchStockHistory(
                     points[i].sma200 = null;
                 }
             }
+            // Backfill any initial points (i < smaWindow - 1) with the first valid calculated SMA
+            // so if a dataset has fewer than 200 prior days, the SMA line still starts from day 1!
+            const firstValidIdx = points.findIndex(p => p.sma200 !== null && p.sma200 !== undefined);
+            if (firstValidIdx > 0) {
+                const fillVal = points[firstValidIdx].sma200;
+                for (let i = 0; i < firstValidIdx; i++) {
+                    points[i].sma200 = fillVal;
+                }
+            }
         }
 
         // Slice points to the exact requested range window (discarding the extra pre-history used for SMA 200)
@@ -233,6 +242,17 @@ export async function fetchStockHistory(
                 const filtered = points.filter(p => new Date(p.date).getTime() >= cutoffTime);
                 if (filtered.length > 0) {
                     finalPoints = filtered;
+                }
+            }
+        }
+
+        // Final guarantee: Ensure every point in finalPoints has a non-null sma200 if any point has it
+        // so the 200-day line spans 100% of the visible chart from day 1 to the end without gaps
+        const firstSma = finalPoints.find(p => p.sma200 !== null && p.sma200 !== undefined)?.sma200;
+        if (firstSma !== undefined && firstSma !== null) {
+            for (let i = 0; i < finalPoints.length; i++) {
+                if (finalPoints[i].sma200 === null || finalPoints[i].sma200 === undefined) {
+                    finalPoints[i].sma200 = firstSma;
                 }
             }
         }
