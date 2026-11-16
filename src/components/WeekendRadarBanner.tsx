@@ -174,8 +174,12 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                                 Wochenstart-Radar
                             </h2>
                             <InfoHelp
-                                title="Wochenstart- & Nacht-Radar"
+                                title="Wochenstart- & Nacht-Radar • Live-Daten Spickzettel"
                                 items={[
+                                    {
+                                        term: "Dein Spickzettel • Wann kommen welche Live-Daten rein?",
+                                        text: "1. Ab 00:00 Uhr: US-Futures (Nasdaq, S&P 500), Rohstoffe (Gold, Öl), Währungen & Asien (sofort).\n2. Ab 08:15 Uhr: Erste Früh-Indikation aus Frankfurt (*.F, da Handel ab 08:00 Uhr + 15 Min. Verzögerung).\n3. Ab 09:15 / 09:16 Uhr: Offizieller Handelsstart Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA) (09:00 Uhr + 15 Min. Verzögerung).\n4. Ab 10:00 Uhr: Offizielle US-Vorbörse (Pre-Market) ohne Verzögerung in Echtzeit!\n5. Ab 15:30 Uhr: Wall Street (New York) ohne Verzögerung in Echtzeit!"
+                                    },
                                     {
                                         term: "Was zeigt dieses Radar?",
                                         text: "Das Radar fasst die globale Marktstimmung vor Beginn der regulären Handelszeiten zusammen – nachts und an Wochenenden."
@@ -376,6 +380,7 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                     {/* Frühstart-Abgleich: Frühtendenz vs. Wahre Tagesperformance */}
                     {portfolioEstimate && totals.dailyGain !== undefined && (() => {
                         const isWeekend = marketPhase.status === 'weekend';
+                        const isWaitingForOpen = !isWeekend && !totals.isAnyMarketActiveToday;
                         const diffCHF = totals.dailyGain - portfolioEstimate.gainCHF;
                         const isBetter = diffCHF >= 0;
 
@@ -393,55 +398,98 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                             <div className="bg-card/70 dark:bg-[#131d31] border border-border dark:border-slate-700/70 rounded-xl p-2.5 sm:p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
                                 <div className="flex items-center gap-2 flex-wrap min-w-0">
                                     <span className="font-semibold text-foreground flex items-center gap-1.5 shrink-0">
-                                        <span className={cn("size-2 rounded-full", isWeekend ? "bg-amber-500" : "bg-emerald-500 animate-pulse")} />
-                                        {isWeekend ? `Rückblick Freitag ${shortDateLabel}:` : 'Live-Abgleich Wochenstart:'}
+                                        <span className={cn(
+                                            "size-2 rounded-full",
+                                            isWeekend ? "bg-amber-500" : isWaitingForOpen ? "bg-amber-500 animate-pulse" : "bg-emerald-500 animate-pulse"
+                                        )} />
+                                        {isWeekend
+                                            ? `Rückblick Freitag ${shortDateLabel}:`
+                                            : isWaitingForOpen
+                                                ? 'Vor Börsenstart:'
+                                                : 'Live-Abgleich Wochenstart:'}
                                     </span>
                                     <span className="text-muted-foreground whitespace-nowrap">
-                                        Frühtendenz:{' '}
+                                        {isWaitingForOpen ? 'Frühtendenz heute:' : 'Frühtendenz:'}{' '}
                                         <strong className={portfolioEstimate.gainCHF >= 0 ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>
                                             {portfolioEstimate.gainCHF >= 0 ? '+' : ''}{formatNum(portfolioEstimate.gainCHF, 0)} CHF · {portfolioEstimate.pct >= 0 ? '+' : ''}{formatNum(portfolioEstimate.pct, 2)}%
                                         </strong>
                                     </span>
                                     <span className="text-muted-foreground/40 hidden md:inline">•</span>
                                     <span className="text-muted-foreground whitespace-nowrap">
-                                        {isWeekend ? `Schlusskurs ${shortDateLabel}:` : 'Wahre Performance:'}{' '}
+                                        {(isWeekend || isWaitingForOpen) ? `Schlusskurs ${shortDateLabel}:` : 'Wahre Performance:'}{' '}
                                         <strong className={totals.dailyGain >= 0 ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>
                                             {totals.dailyGain >= 0 ? '+' : ''}{formatNum(totals.dailyGain, 0)} CHF · {totals.dailyGainPercent >= 0 ? '+' : ''}{formatNum(totals.dailyGainPercent, 2)}%
                                         </strong>
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto pt-1 sm:pt-0">
-                                    <span className="text-muted-foreground text-[11px]">
-                                        {isBetter ? 'Besser als Tendenz:' : 'Schwächer als Tendenz:'}
-                                    </span>
-                                    <span className={cn(
-                                        "font-bold px-2 py-0.5 rounded text-xs tabular-nums border",
-                                        isBetter 
-                                            ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" 
-                                            : "bg-rose-500/15 text-rose-500 border-rose-500/30"
-                                    )}>
-                                        {isBetter ? '+' : ''}{formatNum(diffCHF, 0)} CHF
-                                    </span>
+                                    {isWaitingForOpen ? (
+                                        <>
+                                            <span className="text-muted-foreground text-[11px]">
+                                                Live-Abgleich:
+                                            </span>
+                                            <span className="font-bold px-2 py-0.5 rounded text-xs tabular-nums border bg-amber-500/15 text-amber-500 border-amber-500/30">
+                                                Ab 09:00 Uhr
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-muted-foreground text-[11px]">
+                                                {isBetter ? 'Besser als Tendenz:' : 'Schwächer als Tendenz:'}
+                                            </span>
+                                            <span className={cn(
+                                                "font-bold px-2 py-0.5 rounded text-xs tabular-nums border",
+                                                isBetter 
+                                                    ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" 
+                                                    : "bg-rose-500/15 text-rose-500 border-rose-500/30"
+                                            )}>
+                                                {isBetter ? '+' : ''}{formatNum(diffCHF, 0)} CHF
+                                            </span>
+                                        </>
+                                    )}
                                     <InfoHelp
-                                        title={isWeekend ? `Rückblick Freitag ${shortDateLabel} • Tendenz vs. Ergebnis` : "Live-Abgleich • Tendenz vs. Wahre Performance"}
-                                        items={[
-                                            {
-                                                term: isWeekend ? "Warum steht hier Rückblick Freitag?" : "Was vergleicht diese Leiste?",
-                                                text: isWeekend
-                                                    ? "Am Wochenende ruht der reguläre Börsenhandel. Dieser Abgleich zeigt den Stand vom letzten Handelstag (Freitagsschluss). Die neuen US-Futures für die kommende Woche öffnen erst am Sonntag um 24:00 Uhr MEZ."
-                                                    : "Hier wird die Depot-Frühtendenz (die am Wochenende oder vor 15:30 Uhr MEZ auf Basis der US-Futures ermittelt wurde) mit der tatsächlich gemessenen Tagesperformance deines Portfolios abgeglichen."
-                                            },
-                                            {
-                                                term: isBetter ? "Besser als Tendenz" : "Schwächer als Tendenz",
-                                                text: isBetter
-                                                    ? "Dein Depot hat um den angezeigten Betrag besser abgeschnitten als die reinen US-Futures vor Börsenstart vermuten ließen (z. B. durch defensive Schweizer Dividendentitel oder starke Einzeltitel)."
-                                                    : "Dein Depot blieb hinter den US-Futures-Vorgaben zurück."
-                                            },
-                                            {
-                                                term: "Wann startet der neue Wochen-Abgleich?",
-                                                text: "Sonntag ab 24:00 Uhr MEZ laufen die ersten neuen US-Futures ein. Ab Montag 09:00 Uhr (Schweiz) und 15:30 Uhr (Wall Street) vergleicht die Leiste dann live die neuen Kurse der Woche."
-                                            }
-                                        ]}
+                                        title={
+                                            isWeekend
+                                                ? `Rückblick Freitag ${shortDateLabel} • Tendenz vs. Ergebnis`
+                                                : isWaitingForOpen
+                                                    ? "Vor Börsenstart • Heutige Tendenz vs. Vortag"
+                                                    : "Live-Abgleich • Tendenz vs. Wahre Performance"
+                                        }
+                                        items={
+                                            isWaitingForOpen
+                                                ? [
+                                                    {
+                                                        term: "Warum noch kein Live-Abgleich?",
+                                                        text: `Die US-Futures zeigen bereits die neue Frühtendenz für heute (${portfolioEstimate.gainCHF >= 0 ? '+' : ''}${formatNum(portfolioEstimate.gainCHF, 0)} CHF), während deine Depotwerte vor 09:00 Uhr noch auf dem Schlusskurs vom letzten Handelstag (${shortDateLabel}) stehen. Ein direkter Abgleich vor Börseneröffnung würde den alten Schlusskurs mit der neuen Tagestendenz vermischen.`
+                                                    },
+                                                    {
+                                                        term: "Wann startet der Live-Abgleich?",
+                                                        text: "Pünktlich um 09:00 Uhr MEZ mit Eröffnung der europäischen Börsen (Zürich, Xetra, London) schaltet diese Leiste automatisch auf den Live-Abgleich um und misst, ob sich dein Depot besser oder schwächer als die Frühtendenz schlägt."
+                                                    },
+                                                    {
+                                                        term: "Vorab-Indikation ab 08:00 Uhr",
+                                                        text: "Auf Tradegate werden US-Aktien bereits ab 08:00 Uhr MEZ in Euro gehandelt – diese ersten Kurse siehst du direkt in deiner Positionsliste und den Aktiendetails."
+                                                    }
+                                                ]
+                                                : [
+                                                    {
+                                                        term: isWeekend ? "Warum steht hier Rückblick Freitag?" : "Was vergleicht diese Leiste?",
+                                                        text: isWeekend
+                                                            ? "Am Wochenende ruht der reguläre Börsenhandel. Dieser Abgleich zeigt den Stand vom letzten Handelstag (Freitagsschluss). Die neuen US-Futures für die kommende Woche öffnen erst am Sonntag um 24:00 Uhr MEZ."
+                                                            : "Hier wird die Depot-Frühtendenz (die am Wochenende oder vor 15:30 Uhr MEZ auf Basis der US-Futures ermittelt wurde) mit der tatsächlich gemessenen Tagesperformance deines Portfolios abgeglichen."
+                                                    },
+                                                    {
+                                                        term: isBetter ? "Besser als Tendenz" : "Schwächer als Tendenz",
+                                                        text: isBetter
+                                                            ? "Dein Depot hat um den angezeigten Betrag besser abgeschnitten als die reinen US-Futures vor Börsenstart vermuten ließen (z. B. durch defensive Schweizer Dividendentitel oder starke Einzeltitel)."
+                                                            : "Dein Depot blieb hinter den US-Futures-Vorgaben zurück."
+                                                    },
+                                                    {
+                                                        term: "Wann startet der neue Wochen-Abgleich?",
+                                                        text: "Sonntag ab 24:00 Uhr MEZ laufen die ersten neuen US-Futures ein. Ab Montag 09:00 Uhr (Schweiz) und 15:30 Uhr (Wall Street) vergleicht die Leiste dann live die neuen Kurse der Woche."
+                                                    }
+                                                ]
+                                        }
                                     />
                                 </div>
                             </div>

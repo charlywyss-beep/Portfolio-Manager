@@ -1,4 +1,5 @@
 import { StockName } from './StockName';
+import { InfoHelp } from './InfoHelp';
 import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -690,7 +691,12 @@ export function PriceHistoryChart({
                 {selectedRange === '1D' && historyData && historyData.length > 0 && (
                     <div className="mt-2 text-xs">
                         {(() => {
-                            const displayDate = quoteDate || (data.length > 0 ? new Date(data[data.length - 1].date) : null);
+                            const validQuoteDate = quoteDate && !isNaN(quoteDate.getTime()) ? quoteDate : null;
+                            const lastDataDate = data.length > 0 ? new Date(data[data.length - 1].date) : null;
+                            const validLastDataDate = lastDataDate && !isNaN(lastDataDate.getTime()) ? lastDataDate : null;
+                            const displayDate = (validQuoteDate && validLastDataDate)
+                                ? (validQuoteDate.getTime() >= validLastDataDate.getTime() ? validQuoteDate : validLastDataDate)
+                                : (validQuoteDate || validLastDataDate);
                             if (!displayDate) return null;
                             const today = new Date();
                             const isToday = displayDate.toDateString() === today.toDateString();
@@ -704,31 +710,58 @@ export function PriceHistoryChart({
                             }
 
                             return (
-                                <div className={cn(
-                                    "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
-                                    (isToday && isMarketOpen)
-                                        ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-950 dark:text-yellow-200" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
-                                        : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                                )}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        {(isToday && isMarketOpen && !isDelayed)
-                                            ? <polyline points="20 6 9 17 4 12"></polyline>
-                                            : (isDelayed
-                                                ? <circle cx="12" cy="12" r="10"></circle>
-                                                : <circle cx="12" cy="12" r="10"></circle>
-                                            )
-                                        }
-                                        {isDelayed && <path d="M12 6v6l4 2"></path>}
-                                    </svg>
-                                    <span>
-                                        {label} {displayDate.toLocaleDateString('de-DE', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })} Uhr
-                                    </span>
+                                <div className="inline-flex items-center gap-1.5">
+                                    <div className={cn(
+                                        "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
+                                        (isToday && isMarketOpen)
+                                            ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-950 dark:text-yellow-200" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
+                                            : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                                    )}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {(isToday && isMarketOpen && !isDelayed)
+                                                ? <polyline points="20 6 9 17 4 12"></polyline>
+                                                : (isDelayed
+                                                    ? <circle cx="12" cy="12" r="10"></circle>
+                                                    : <circle cx="12" cy="12" r="10"></circle>
+                                                )
+                                            }
+                                            {isDelayed && <path d="M12 6v6l4 2"></path>}
+                                        </svg>
+                                        <span>
+                                            {label} {displayDate.toLocaleDateString('de-DE', {
+                                                day: '2-digit',
+                                                month: '2-digit',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })} Uhr
+                                        </span>
+                                    </div>
+                                    <InfoHelp
+                                        title="Dein Spickzettel • Wann kommen welche Live-Daten rein?"
+                                        items={[
+                                            {
+                                                term: "1. Ab 00:00 Uhr • US-Futures, Rohstoffe, Währungen & Asien",
+                                                text: "Nasdaq 100 & S&P 500 Futures, Gold, Öl, Devisen sowie die asiatischen Börsen (Tokio, Hongkong, Shanghai) liefern ab Mitternacht sofort laufende Kurse."
+                                            },
+                                            {
+                                                term: "2. Ab 08:15 Uhr • Erste Früh-Indikation aus Frankfurt (*.F)",
+                                                text: "Deutsche Parkett-/Tradegate-Börsen handeln US- und Europa-Aktien ab 08:00 Uhr MEZ. Durch die 15-minütige Börsenverzögerung treffen die ersten Morgenkurse ab 08:15 Uhr ein."
+                                            },
+                                            {
+                                                term: "3. Ab 09:15 / 09:16 Uhr • Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA)",
+                                                text: "Die europäischen Hauptbörsen öffnen um 09:00 Uhr MEZ. Da kostenlose Datenanbieter europäische Kurse gesetzlich mit 15 Minuten Verzögerung ausliefern, schaltet die Anzeige um 09:15 / 09:16 Uhr auf die neuen Tageskurse um."
+                                            },
+                                            {
+                                                term: "4. Ab 10:00 Uhr • Offizielle US-Vorbörse (Pre-Market)",
+                                                text: "Die US-Vorbörse an der Nasdaq und NYSE startet um 10:00 Uhr MEZ und wird ohne Verzögerung in Echtzeit übertragen."
+                                            },
+                                            {
+                                                term: "5. Ab 15:30 Uhr • Wall Street (New York)",
+                                                text: "Der reguläre US-Börsenhandel läuft von 15:30 bis 22:00 Uhr MEZ komplett ohne Zeitverzögerung in Echtzeit."
+                                            }
+                                        ]}
+                                    />
                                 </div>
                             );
                         })()}

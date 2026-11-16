@@ -23,6 +23,7 @@ import { usePortfolioData } from '../hooks/usePortfolioData';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { estimateMarketState, isAnyStockMarketActiveToday } from '../utils/market';
+import { isLikelyEtf } from '../utils/stockMetadata';
 import { cn } from '../utils';
 import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
 import { InfoHelp } from '../components/InfoHelp';
@@ -65,9 +66,12 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 },
     { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 },
     { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 },
-    { id: '7', symbol: 'BZ=F', name: 'L&S Brent Oil', category: 'commodities', decimals: 2 },
     { id: '8', symbol: 'GC=F', name: 'Goldpreis (Spot)', category: 'commodities', decimals: 2 },
     { id: '9', symbol: 'SI=F', name: 'Silberpreis (Spot)', category: 'commodities', decimals: 2 },
+    { id: 'cmd-hg', symbol: 'HG=F', name: 'Kupfer (Copper)', category: 'commodities', decimals: 2 },
+    { id: 'cmd-ng', symbol: 'NG=F', name: 'Erdgas (Natural Gas)', category: 'commodities', decimals: 2 },
+    { id: '7', symbol: 'BZ=F', name: 'L&S Brent Oil', category: 'commodities', decimals: 2 },
+    { id: 'cmd-cl', symbol: 'CL=F', name: 'WTI Crude Oil', category: 'commodities', decimals: 2 },
     { id: '10', symbol: 'CHFGBP=X', name: 'CHF/GBP', category: 'forex', decimals: 4 },
     { id: '11', symbol: 'CHFEUR=X', name: 'CHF/EUR', category: 'forex', decimals: 4 },
     { id: '12', symbol: 'CHFUSD=X', name: 'CHF/USD', category: 'forex', decimals: 4 },
@@ -291,6 +295,108 @@ export function MarketOverviewPage() {
         }
     }, [searchParams, activeFilter, VALID_TABS]);
 
+    // Helper to enforce the true category of any symbol (prevents stocks like TotalEnergies from ending up in indices/commodities)
+    const resolveCanonicalCategory = useCallback((symbol: string, currentCategory?: MarketItem['category']): MarketItem['category'] => {
+        const sym = (symbol || '').trim().toUpperCase();
+        if (['GC=F', 'SI=F', 'BZ=F', 'CL=F', 'HG=F', 'NG=F', 'PL=F', 'PA=F'].includes(sym)) {
+            return 'commodities';
+        }
+        if (sym.startsWith('^') || ['NQ=F', 'ES=F', 'YM=F', 'RTY=F', '000001.SS', '000300.SS'].includes(sym)) {
+            return 'indices';
+        }
+        if (sym.endsWith('=X')) {
+            return 'forex';
+        }
+        if (sym.startsWith('BTC-') || sym.startsWith('ETH-') || sym.startsWith('SOL-') || sym === 'BTC' || sym === 'ETH' || sym === 'SOL') {
+            return 'crypto';
+        }
+        // Any stock/ETF in portfolio or general equities belongs in 'stocks'
+        if (!currentCategory || currentCategory === 'indices' || currentCategory === 'asia' || currentCategory === 'commodities' || currentCategory === 'portfolio') {
+            return 'stocks';
+        }
+        return currentCategory;
+    }, []);
+
+    const sanitizeMarketItems = useCallback((rawList: MarketItem[], ownedItems: MarketItem[]): MarketItem[] => {
+        const ownedById = new Map(ownedItems.map(p => [p.id, p]));
+        const ownedSymbols = new Set(ownedItems.map(p => p.symbol.toUpperCase()));
+        const ownedNames = new Map(ownedItems.map(p => [p.name.trim().toLowerCase(), p.symbol.toUpperCase()]));
+
+        const cleaned: MarketItem[] = [];
+        const seenSymbols = new Set<string>();
+        const seenIds = new Set<string>();
+
+        rawList.forEach((it, idx) => {
+            if (!it || !it.symbol) return;
+            let updated: MarketItem = { ...it };
+
+            // If this item tracks a portfolio position by id, sync its latest symbol/name/currency
+            if (updated.id && updated.id.startsWith('portfolio-')) {
+                const currentOwned = ownedById.get(updated.id);
+                if (currentOwned) {
+                    updated.symbol = currentOwned.symbol;
+                    updated.name = currentOwned.name;
+                    updated.currency = currentOwned.currency;
+                    updated.category = 'stocks';
+                } else if (seenIds.has(updated.id)) {
+                    // Stale duplicate portfolio-... entry from a previous symbol rename (e.g. TotalEnergies TTE -> TTE.PA)
+                    return;
+                }
+            }
+
+            updated.symbol = updated.symbol.trim();
+            updated.name = (updated.name || updated.symbol).trim();
+            updated.category = resolveCanonicalCategory(updated.symbol, updated.category);
+
+            // Write out full names if previously truncated with "..."
+            if (updated.symbol === '^SSMI' && (updated.name === 'Swiss Market In...' || updated.name.startsWith('Swiss Market In'))) {
+                updated.name = 'Swiss Market Index';
+            }
+            if (updated.symbol === '^NDX' && (updated.name === 'Nasdaq-100 Ind...' || updated.name.startsWith('Nasdaq-100 Ind'))) {
+                updated.name = 'Nasdaq-100 Index';
+            }
+            if (updated.symbol === '^DJI' && (updated.name === 'Dow Jones Ind...' || updated.name.startsWith('Dow Jones Ind'))) {
+                updated.name = 'Dow Jones Industrial';
+            }
+            if (updated.symbol === 'ZURN.SW' && updated.name === 'ZURICH INSURA...') {
+                updated.name = 'Zurich Insurance';
+            }
+            if (updated.symbol === 'VWCE.DE' && updated.name === 'Vanguard FTSE...') {
+                updated.name = 'Vanguard FTSE All-World';
+            }
+
+            const symUpper = updated.symbol.toUpperCase();
+            const nameLower = updated.name.toLowerCase();
+
+            // Drop stale duplicate stock tickers of an already-owned company (e.g. old TTE / TOTB.DE when user owns TTE.PA TotalEnergies)
+            if (updated.category === 'stocks' && !ownedSymbols.has(symUpper)) {
+                const ownedSymForSameName = ownedNames.get(nameLower);
+                if (ownedSymForSameName && ownedSymForSameName !== symUpper) {
+                    return;
+                }
+                if ((nameLower.includes('totalenergies') || nameLower.includes('total energies') || ['TTE', 'TOTB.DE', 'TOTBD.XD'].includes(symUpper)) && ownedNames.has('totalenergies')) {
+                    return;
+                }
+            }
+
+            // Deduplicate by symbol
+            if (seenSymbols.has(symUpper)) {
+                return;
+            }
+            seenSymbols.add(symUpper);
+
+            // Guarantee 100% unique ID so React never keeps zombie DOM nodes on tab switch
+            if (!updated.id || seenIds.has(updated.id)) {
+                updated.id = `item-${symUpper}-${idx}`;
+            }
+            seenIds.add(updated.id);
+
+            cleaned.push(updated);
+        });
+
+        return cleaned;
+    }, [resolveCanonicalCategory]);
+
     // Stored items
     const [items, setItems] = useState<MarketItem[]>(() => {
         try {
@@ -298,30 +404,7 @@ export function MarketOverviewPage() {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    // Automatically migrate Asian indices into 'indices' category & write out full names
-                    let migrated: MarketItem[] = parsed.map((it: MarketItem) => {
-                        let updated = { ...it };
-                        if (updated.category === 'asia' || updated.symbol === '^N225' || updated.symbol === '^HSI' || updated.symbol === '000001.SS') {
-                            updated.category = 'indices';
-                        }
-                        // Write out full names if previously truncated with "..."
-                        if (updated.symbol === '^SSMI' && (updated.name === 'Swiss Market In...' || updated.name.startsWith('Swiss Market In'))) {
-                            updated.name = 'Swiss Market Index';
-                        }
-                        if (updated.symbol === '^NDX' && (updated.name === 'Nasdaq-100 Ind...' || updated.name.startsWith('Nasdaq-100 Ind'))) {
-                            updated.name = 'Nasdaq-100 Index';
-                        }
-                        if (updated.symbol === '^DJI' && (updated.name === 'Dow Jones Ind...' || updated.name.startsWith('Dow Jones Ind'))) {
-                            updated.name = 'Dow Jones Industrial';
-                        }
-                        if (updated.symbol === 'ZURN.SW' && updated.name === 'ZURICH INSURA...') {
-                            updated.name = 'Zurich Insurance';
-                        }
-                        if (updated.symbol === 'VWCE.DE' && updated.name === 'Vanguard FTSE...') {
-                            updated.name = 'Vanguard FTSE All-World';
-                        }
-                        return updated;
-                    });
+                    let migrated = sanitizeMarketItems(parsed, portfolioMarketItems);
                     const hasN225 = migrated.some((it: MarketItem) => it.symbol === '^N225');
                     const hasHSI = migrated.some((it: MarketItem) => it.symbol === '^HSI');
                     const hasSSE = migrated.some((it: MarketItem) => it.symbol === '000001.SS');
@@ -338,8 +421,36 @@ export function MarketOverviewPage() {
                     if (!hasNQ) toAdd.push({ id: 'fut-nq', symbol: 'NQ=F', name: 'Nasdaq 100 Future', category: 'indices', decimals: 2 });
                     if (!hasES) toAdd.push({ id: 'fut-es', symbol: 'ES=F', name: 'S&P 500 Future', category: 'indices', decimals: 2 });
                     if (toAdd.length > 0) {
-                        migrated = [...migrated, ...toAdd];
+                        migrated = sanitizeMarketItems([...migrated, ...toAdd], portfolioMarketItems);
                     }
+
+                    // One-time migration: arrange commodities in user's preferred 2-row layout:
+                    // Row 1: Gold (GC=F) - Silber (SI=F) - Kupfer (HG=F)
+                    // Row 2: Erdgas (NG=F) - Brent Oil (BZ=F) - WTI Oil (CL=F)
+                    if (localStorage.getItem('portfolio_market_commodities_order_v1') !== 'true') {
+                        const COMMODITY_ORDER: Record<string, number> = {
+                            'GC=F': 1,
+                            'SI=F': 2,
+                            'HG=F': 3,
+                            'NG=F': 4,
+                            'BZ=F': 5,
+                            'CL=F': 6,
+                            'PL=F': 7
+                        };
+                        const commodityItems = migrated
+                            .filter(it => it.category === 'commodities')
+                            .sort((a, b) => (COMMODITY_ORDER[a.symbol.toUpperCase()] ?? 99) - (COMMODITY_ORDER[b.symbol.toUpperCase()] ?? 99));
+                        let cmdIdx = 0;
+                        migrated = migrated.map(it => {
+                            if (it.category === 'commodities') {
+                                return commodityItems[cmdIdx++];
+                            }
+                            return it;
+                        });
+                        localStorage.setItem('portfolio_market_commodities_order_v1', 'true');
+                        localStorage.setItem('portfolio_market_overview_sort', 'default');
+                    }
+
                     localStorage.setItem('portfolio_market_overview_items', JSON.stringify(migrated));
                     return migrated;
                 }
@@ -411,20 +522,25 @@ export function MarketOverviewPage() {
         }
     }, [items]);
 
-    // Automatically synchronize any missing portfolio stocks into items so they can be reordered and moved freely
+    // Automatically synchronize any missing portfolio stocks into items and clean up stale/duplicate IDs
     useEffect(() => {
-        if (portfolioMarketItems.length === 0) return;
         setItems(prevItems => {
-            const existingSymbols = new Set(prevItems.map(i => i.symbol.toUpperCase()));
-            const missing = portfolioMarketItems.filter(p => !existingSymbols.has(p.symbol.toUpperCase()));
-            if (missing.length === 0) return prevItems;
-            const updated = [...prevItems, ...missing];
+            const sanitized = sanitizeMarketItems(prevItems, portfolioMarketItems);
+            const existingSymbols = new Set(sanitized.map(i => i.symbol.toUpperCase()));
+            const existingIds = new Set(sanitized.map(i => i.id));
+            const missing = portfolioMarketItems.filter(
+                p => !existingSymbols.has(p.symbol.toUpperCase()) && !existingIds.has(p.id)
+            );
+            const updated = missing.length > 0 ? sanitizeMarketItems([...sanitized, ...missing], portfolioMarketItems) : sanitized;
+            if (JSON.stringify(updated) === JSON.stringify(prevItems)) {
+                return prevItems;
+            }
             try {
                 localStorage.setItem('portfolio_market_overview_items', JSON.stringify(updated));
             } catch {}
             return updated;
         });
-    }, [portfolioMarketItems]);
+    }, [portfolioMarketItems, sanitizeMarketItems]);
 
     // Save quotes to localStorage
     useEffect(() => {
@@ -810,39 +926,112 @@ export function MarketOverviewPage() {
         if (activeFilter === 'all') {
             const existingSymbols = new Set(items.map(i => i.symbol.toUpperCase()));
             const missingPortfolioItems = portfolioMarketItems.filter(p => !existingSymbols.has(p.symbol.toUpperCase()));
-            return [...items, ...missingPortfolioItems];
+            return sanitizeMarketItems([...items, ...missingPortfolioItems], portfolioMarketItems);
         }
         if (activeFilter === 'indices') {
-            return items.filter(it => it.category === 'indices' || it.category === 'asia');
+            return items.filter(it => resolveCanonicalCategory(it.symbol, it.category) === 'indices');
         }
         if (activeFilter === 'stocks') {
-            const existingSymbols = new Set(items.map(i => i.symbol.toUpperCase()));
+            const stockItemsOnly = items.filter(it => resolveCanonicalCategory(it.symbol, it.category) === 'stocks');
+            const existingSymbols = new Set(stockItemsOnly.map(i => i.symbol.toUpperCase()));
             const missingPortfolioItems = portfolioMarketItems.filter(p => !existingSymbols.has(p.symbol.toUpperCase()));
-            return [...items.filter(it => it.category === 'stocks'), ...missingPortfolioItems];
+            return sanitizeMarketItems([...stockItemsOnly, ...missingPortfolioItems], portfolioMarketItems);
         }
-        return items.filter(it => it.category === activeFilter);
-    }, [items, activeFilter, portfolioMarketItems]);
+        return items.filter(it => resolveCanonicalCategory(it.symbol, it.category) === activeFilter);
+    }, [items, activeFilter, portfolioMarketItems, resolveCanonicalCategory, sanitizeMarketItems]);
 
-    // Sort items based on selected sort option
+    // Helper for market open state matching the tile green/red logic
+    const isItemMarketOpen = useCallback((item: MarketItem) => {
+        const q = quotes[item.symbol];
+        const matchedStock = portfolioStocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase()) ||
+                             stocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase());
+        let rawCurrency = matchedStock?.currency || item.currency || q?.currency || (
+            item.symbol.endsWith('.SW') ? 'CHF' :
+            item.symbol.endsWith('.DE') ? 'EUR' :
+            item.symbol.includes('CHF') ? 'CHF' :
+            item.symbol === '^N225' ? 'JPY' :
+            item.symbol === '^HSI' ? 'HKD' :
+            item.symbol === '^FTSE' ? 'GBP' :
+            item.symbol.endsWith('.SS') || item.symbol.endsWith('.SZ') ? 'CNY' :
+            item.symbol === '^KS11' ? 'KRW' :
+            item.symbol === '^TWII' ? 'TWD' :
+            item.symbol === '^NSEI' || item.symbol === '^BSESN' ? 'INR' :
+            item.symbol === '^AXJO' ? 'AUD' :
+            item.category === 'commodities' ? 'USD' :
+            (item.symbol.startsWith('^NDX') || item.symbol.startsWith('^GSPC') || item.symbol.startsWith('^DJI')) ? 'USD' : ''
+        );
+        if (rawCurrency === 'GBp') rawCurrency = 'GBP';
+        return estimateMarketState(item.symbol, rawCurrency || 'USD') === 'REGULAR';
+    }, [quotes, portfolioStocks, stocks]);
+
+    // Sort items:
+    // 1. Geöffnete Börsen immer zuerst (Grün), danach geschlossene Börsen (Rot)
+    // 2. Bei "Alle": Reihenfolge Währungen -> Rohstoffe -> Indizes -> Aktien -> ETF (-> Krypto)
+    // 3. Innerhalb der Gruppen nach gewähltem Kriterium (Standard: A -> Z)
     const sortedItems = useMemo(() => {
         const list = [...filteredItems];
-        if (sortBy === 'default') return list;
+        if (isEditMode && sortBy === 'default') return list;
+
+        const getCategoryOrder = (item: MarketItem, etfsFirst = false) => {
+            const cat = resolveCanonicalCategory(item.symbol, item.category);
+            if (cat === 'forex') return 1;        // 1. Währungen
+            if (cat === 'commodities') return 2;  // 2. Rohstoffe
+            if (cat === 'indices') return 3;      // 3. Indizes
+            const stock = portfolioStocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase()) ||
+                          stocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase());
+            const isEtf = stock?.type === 'etf' || isLikelyEtf({
+                symbol: item.symbol,
+                name: item.name,
+                type: stock?.type,
+                isin: stock?.isin
+            });
+            if (cat === 'stocks') {
+                if (etfsFirst) return isEtf ? 4 : 5;
+                return isEtf ? 5 : 4;             // 4. Aktien, 5. ETF
+            }
+            if (cat === 'crypto') return 6;       // 6. Krypto
+            return 7;
+        };
 
         return list.sort((a, b) => {
+            // 1. Regel (überall): Zuerst geöffnete Börsen (Grün), danach geschlossene (Rot)
+            const isOpenA = isItemMarketOpen(a);
+            const isOpenB = isItemMarketOpen(b);
+            if (isOpenA !== isOpenB) return isOpenA ? -1 : 1;
+
             const qa = quotes[a.symbol];
             const qb = quotes[b.symbol];
-            const stockA = stocks.find(s => s.symbol.toUpperCase() === a.symbol.toUpperCase());
-            const stockB = stocks.find(s => s.symbol.toUpperCase() === b.symbol.toUpperCase());
-            const isEtfA = stockA?.type === 'etf';
-            const isEtfB = stockB?.type === 'etf';
+            const stockA = portfolioStocks.find(s => s.symbol.toUpperCase() === a.symbol.toUpperCase()) ||
+                           stocks.find(s => s.symbol.toUpperCase() === a.symbol.toUpperCase());
+            const stockB = portfolioStocks.find(s => s.symbol.toUpperCase() === b.symbol.toUpperCase()) ||
+                           stocks.find(s => s.symbol.toUpperCase() === b.symbol.toUpperCase());
+            const isEtfA = stockA?.type === 'etf' || isLikelyEtf({ symbol: a.symbol, name: a.name, type: stockA?.type, isin: stockA?.isin });
+            const isEtfB = stockB?.type === 'etf' || isLikelyEtf({ symbol: b.symbol, name: b.name, type: stockB?.type, isin: stockB?.isin });
 
-            if (sortBy === 'name-asc' || sortBy === 'open-first') {
-                const stateA = estimateMarketState(a.symbol, stockA?.currency || a.currency || qa?.currency || 'USD');
-                const stateB = estimateMarketState(b.symbol, stockB?.currency || b.currency || qb?.currency || 'USD');
-                const isOpenA = stateA === 'REGULAR';
-                const isOpenB = stateB === 'REGULAR';
-                if (isOpenA !== isOpenB) return isOpenA ? -1 : 1;
+            // 2. Regel: Im Reiter "Alle" immer die feste Reihenfolge Währungen -> Rohstoffe -> Indizes -> Aktien -> ETF
+            if (activeFilter === 'all' && ['default', 'name-asc', 'open-first', 'type-stocks', 'type-etfs'].includes(sortBy)) {
+                const rankA = getCategoryOrder(a, sortBy === 'type-etfs');
+                const rankB = getCategoryOrder(b, sortBy === 'type-etfs');
+                if (rankA !== rankB) return rankA - rankB;
+            } else if ((activeFilter === 'stocks' || activeFilter === 'portfolio') && ['default', 'name-asc', 'open-first', 'type-stocks'].includes(sortBy)) {
+                if (isEtfA !== isEtfB) return isEtfA ? 1 : -1;
+            } else if (sortBy === 'type-etfs') {
+                if (isEtfA !== isEtfB) return isEtfB ? 1 : -1;
+            } else if (sortBy === 'type-stocks') {
+                if (isEtfA !== isEtfB) return isEtfA ? 1 : -1;
+            }
+
+            // 3. Regel: Sortierung innerhalb der Gruppe nach gewählter Option
+            if (sortBy === 'default') {
+                // Bei "Meine Anordnung (Standard)": innerhalb der Kategorie die persönliche Kachel-Reihenfolge beibehalten!
+                const catA = resolveCanonicalCategory(a.symbol, a.category);
+                if (catA === 'commodities' || catA === 'forex' || catA === 'indices' || catA === 'crypto') {
+                    return 0;
+                }
                 return a.name.localeCompare(b.name, 'de', { sensitivity: 'base' });
+            }
+            if ((sortBy === 'type-stocks' || sortBy === 'type-etfs') && resolveCanonicalCategory(a.symbol, a.category) === 'commodities') {
+                return 0;
             }
             if (sortBy === 'name-desc') {
                 return b.name.localeCompare(a.name, 'de', { sensitivity: 'base' });
@@ -850,31 +1039,24 @@ export function MarketOverviewPage() {
             if (sortBy === 'gain-desc') {
                 const chgA = qa?.changePercent ?? -9999;
                 const chgB = qb?.changePercent ?? -9999;
-                return chgB - chgA;
+                if (chgB !== chgA) return chgB - chgA;
             }
             if (sortBy === 'gain-asc') {
                 const chgA = qa?.changePercent ?? 9999;
                 const chgB = qb?.changePercent ?? 9999;
-                return chgA - chgB;
-            }
-            if (sortBy === 'type-stocks') {
-                if (isEtfA !== isEtfB) return isEtfA ? 1 : -1;
-                return a.name.localeCompare(b.name, 'de');
-            }
-            if (sortBy === 'type-etfs') {
-                if (isEtfA !== isEtfB) return isEtfB ? 1 : -1;
-                return a.name.localeCompare(b.name, 'de');
+                if (chgA !== chgB) return chgA - chgB;
             }
             if (sortBy === 'value-desc') {
                 const sharesA = portfolioStocks.find(s => s.symbol.toUpperCase() === a.symbol.toUpperCase())?.shares || 0;
                 const sharesB = portfolioStocks.find(s => s.symbol.toUpperCase() === b.symbol.toUpperCase())?.shares || 0;
-                const valA = sharesA * (qa?.price || 0);
-                const valB = sharesB * (qb?.price || 0);
-                return valB - valA;
+                const valA = convertToCHF(sharesA * (qa?.price || 0), stockA?.currency || a.currency || qa?.currency || 'USD', rates);
+                const valB = convertToCHF(sharesB * (qb?.price || 0), stockB?.currency || b.currency || qb?.currency || 'USD', rates);
+                if (valB !== valA) return valB - valA;
             }
-            return 0;
+
+            return a.name.localeCompare(b.name, 'de', { sensitivity: 'base' });
         });
-    }, [filteredItems, sortBy, quotes, stocks, portfolioStocks]);
+    }, [filteredItems, isEditMode, sortBy, activeFilter, isItemMarketOpen, resolveCanonicalCategory, quotes, stocks, portfolioStocks, rates]);
 
     // Number format helper (Swiss style: 14'368.78)
     const formatNumber = (num: number | undefined, decimals = 2) => {
@@ -1533,7 +1715,8 @@ export function MarketOverviewPage() {
                         let displayPrevClose = q ? (q.previousClose || displayPrice) : 0;
                         let currency = rawCurrency;
 
-                        const isLondonPence = rawCurrency === 'GBp' || (rawCurrency === 'GBP' && displayPrice > 200) || (item.symbol.toUpperCase().endsWith('.L') && displayPrice > 200);
+                        const isIndexItem = item.symbol.startsWith('^') || item.category === 'indices' || item.category === 'asia';
+                        const isLondonPence = !isIndexItem && (rawCurrency === 'GBp' || (rawCurrency === 'GBP' && displayPrice > 200) || (item.symbol.toUpperCase().endsWith('.L') && displayPrice > 200));
                         if (isLondonPence) {
                             currency = 'GBP';
                             if (displayPrice > 200) {
@@ -1556,7 +1739,7 @@ export function MarketOverviewPage() {
 
                         return (
                             <div
-                                key={item.id}
+                                key={`${activeFilter}-${item.id}-${item.symbol}`}
                                 draggable={isEditMode && activeFilter !== 'portfolio'}
                                 onDragStart={(e) => handleDragStart(e, item.id)}
                                 onDragOver={(e) => handleDragOver(e, item.id)}

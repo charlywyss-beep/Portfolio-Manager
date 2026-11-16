@@ -281,7 +281,7 @@ export default defineConfig({
                 regularMarketPrice: finalMarketPrice,
                 currency: activePrice.currency || currency,
 
-                regularMarketTime: activePrice.regularMarketTime || price.regularMarketTime || (Math.floor(Date.now() / 1000)),
+                regularMarketTime: ((v: any) => v instanceof Date ? Math.floor(v.getTime() / 1000) : (typeof v === 'number' ? v : (typeof v === 'string' && !isNaN(Date.parse(v)) ? Math.floor(Date.parse(v) / 1000) : Math.floor(Date.now() / 1000))))(activePrice.regularMarketTime || price.regularMarketTime),
                 marketState: activePrice.marketState || price.marketState || null,
 
                 trailingPE: trailingPEVal,

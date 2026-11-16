@@ -86,7 +86,44 @@ export async function fetchStockHistory(
         if (!data) return { data: null, error: `Keine Daten verfügbar` };
         if (data.chart?.error) return { data: null, error: `Yahoo Finance: ${data.chart.error.description}` };
 
-        const result = data.chart?.result?.[0];
+        let result = data.chart?.result?.[0];
+
+        // For German Xetra (.DE) listings of international stocks (e.g. ABEA.DE):
+        // If 1D Xetra has no intraday candles for today yet while Börse Frankfurt (.F, trading from 08:00 CET) already has today's candles,
+        // seamlessly fall back to the .F intraday chart while preserving the .DE previousClose baseline.
+        if (range === '1D' && symbol.toUpperCase().endsWith('.DE')) {
+            const todayStr = new Date().toDateString();
+            const tsArr: number[] = result?.timestamp || [];
+            const lastTs = tsArr.length > 0 ? tsArr[tsArr.length - 1] : 0;
+            const hasTodayPoints = lastTs > 0 && new Date(lastTs * 1000).toDateString() === todayStr;
+
+            if (!hasTodayPoints) {
+                const frankfurtSymbol = symbol.replace(/\.DE$/i, '.F');
+                try {
+                    const fUrl = `/api/yahoo-finance?symbol=${frankfurtSymbol}&period=${period}&interval=${interval}${includePrePostParam}&_=${Date.now()}`;
+                    const fRes = await fetch(fUrl);
+                    if (fRes.ok) {
+                        const fData = await fRes.json();
+                        const fResult = fData?.chart?.result?.[0];
+                        const fTs: number[] = fResult?.timestamp || [];
+                        const fLastTs = fTs.length > 0 ? fTs[fTs.length - 1] : 0;
+                        if (fLastTs > 0 && new Date(fLastTs * 1000).toDateString() === todayStr) {
+                            const xetraPrevClose = result?.meta?.regularMarketPreviousClose || result?.meta?.chartPreviousClose || result?.meta?.previousClose;
+                            result = {
+                                ...fResult,
+                                meta: {
+                                    ...fResult.meta,
+                                    ...(xetraPrevClose ? { regularMarketPreviousClose: xetraPrevClose, chartPreviousClose: xetraPrevClose } : {})
+                                }
+                            };
+                        }
+                    }
+                } catch {
+                    // Ignore Frankfurt fallback errors
+                }
+            }
+        }
+
         if (!result || !result.timestamp || !result.indicators?.quote?.[0]?.close) {
             return { data: null, error: 'Keine Daten verfügbar' };
         }
@@ -127,13 +164,6 @@ export async function fetchStockHistory(
         const rawOpen = result.meta?.regularMarketOpen || firstValidOpen;
         let normalizedOpen = rawOpen ? normalizeYahooPrice(rawOpen, resultCurrency, symbol) : (firstRegularPoint ? firstRegularPoint.value : undefined);
 
-        // Smart Baseline Validation
-        if (range === '1D' && firstRegularPoint && normalizedPrevClose) {
-            const firstPoint = firstRegularPoint.value;
-            const deviation = Math.abs((normalizedPrevClose - firstPoint) / firstPoint);
-            if (deviation > 0.03) normalizedPrevClose = firstPoint;
-        }
-
         // Unit Mismatch Correction
         if (normalizedPrevClose && points.length > 0) {
             const lastPrice = points[points.length - 1].value;
@@ -150,6 +180,19 @@ export async function fetchStockHistory(
         const normalizedRegTime = (typeof regTimeSec === "number" && regTimeSec > 0)
             ? new Date(regTimeSec * 1000)
             : undefined;
+
+        // If regularMarketTime is from today and newer than the last 5m candle, append the live point
+        if (range === '1D' && normalizedRegPrice && normalizedRegTime && points.length > 0) {
+            const lastPointTime = new Date(points[points.length - 1].date).getTime();
+            const isSameDay = new Date(points[points.length - 1].date).toDateString() === normalizedRegTime.toDateString();
+            if (isSameDay && normalizedRegTime.getTime() > lastPointTime + 60 * 1000) {
+                points.push({
+                    date: normalizedRegTime.toISOString(),
+                    value: normalizedRegPrice,
+                    session: 'regular'
+                });
+            }
+        }
 
         return { data: points.length > 0 ? points : null, currency: resultCurrency, previousClose: normalizedPrevClose, open: normalizedOpen, regularMarketPrice: normalizedRegPrice, regularMarketTime: normalizedRegTime };
 
@@ -503,7 +546,16 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     currency: res.currency || null,
                     open,
                     previousClose,
-                    marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined,
+                    marketTime: (() => {
+                        const rt = res.regularMarketTime;
+                        if (!rt) return undefined;
+                        if (typeof rt === 'number') return new Date(rt > 1e12 ? rt : rt * 1000);
+                        if (typeof rt === 'string') {
+                            const d = new Date(rt);
+                            return !isNaN(d.getTime()) ? d : undefined;
+                        }
+                        return undefined;
+                    })(),
                     marketState: res.marketState || null,
                     preMarketPrice,
                     preMarketChangePercent: preMarketPrice ? extPct(res.preMarketChangePercent, preMarketPrice) : null,

@@ -401,10 +401,24 @@ export function StockDetail() {
             rangeToUse === '1D' ? { includePrePost: showPrePost } : undefined
         );
 
-        // FALLBACK: If 1D data is empty (common for EU stocks), try 1W
+        // FALLBACK: If 1D data is empty (common for EU stocks before first Xetra candle), try 1W and slice to the last trading day only
         if ((!response.data || response.data.length === 0) && rangeToUse === '1D') {
-            console.warn('[StockDetail] 1D data empty, trying fallback to 1W for', symbol);
-            response = await fetchStockHistory(symbol, '1W');
+            console.warn('[StockDetail] 1D data empty, trying fallback to last day of 1W for', symbol);
+            const wResp = await fetchStockHistory(symbol, '1W');
+            if (wResp.data && wResp.data.length > 0) {
+                const lastPtDateStr = new Date(wResp.data[wResp.data.length - 1].date).toDateString();
+                const singleDayPoints = wResp.data.filter(p => new Date(p.date).toDateString() === lastPtDateStr);
+                const priorDayPoints = wResp.data.filter(p => new Date(p.date).toDateString() !== lastPtDateStr);
+                const priorDayClose = priorDayPoints.length > 0 ? priorDayPoints[priorDayPoints.length - 1].value : wResp.previousClose;
+                response = {
+                    ...wResp,
+                    data: singleDayPoints.length > 0 ? singleDayPoints : wResp.data,
+                    open: singleDayPoints.length > 0 ? singleDayPoints[0].value : wResp.open,
+                    previousClose: priorDayClose
+                };
+            } else {
+                response = wResp;
+            }
         }
 
         // Filter for 'BUY' range (Seit Kauf)
@@ -449,6 +463,8 @@ export function StockDetail() {
 
 
 
+        let chartRegDate: Date | undefined;
+
         if (response.error) {
             console.warn('[StockDetail] Error from Yahoo:', response.error);
             setChartData(null);
@@ -461,7 +477,12 @@ export function StockDetail() {
                 const lastRegularPoint = [...response.data].reverse().find(p => p.session === 'regular')
                     || (!showPrePost ? response.data[response.data.length - 1] : undefined);
                 const regPrice = response.regularMarketPrice ?? lastRegularPoint?.value;
-                const regDateStr = (response.regularMarketTime || (lastRegularPoint ? new Date(lastRegularPoint.date) : undefined))?.toISOString();
+                const candDate = response.regularMarketTime || (lastRegularPoint ? new Date(lastRegularPoint.date) : undefined);
+                if (candDate && !isNaN(candDate.getTime())) {
+                    chartRegDate = candDate;
+                    setQuoteDate(candDate);
+                }
+                const regDateStr = chartRegDate?.toISOString();
                 if (regPrice && regPrice > 0) {
                     if (stockFromContext) {
                         updateStockPrice(currentStock.id, regPrice, undefined, regDateStr, true);
@@ -493,8 +514,10 @@ export function StockDetail() {
         if (timeRange !== 'BUY') {
             const quoteResponse = await fetchStockQuote(symbol);
             if (quoteResponse.price) {
-                if (quoteResponse.marketTime) {
-                    setQuoteDate(quoteResponse.marketTime);
+                if (quoteResponse.marketTime && !isNaN(quoteResponse.marketTime.getTime())) {
+                    if (!chartRegDate || quoteResponse.marketTime.getTime() >= chartRegDate.getTime()) {
+                        setQuoteDate(quoteResponse.marketTime);
+                    }
                 }
 
                 // Removed: Logic that updated price from Quote or merged Chart/Quote.
@@ -507,7 +530,7 @@ export function StockDetail() {
                     updates.open = quoteResponse.open;
                     hasUpdates = true;
                 }
-                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null && rangeToUse !== '1D' && Math.abs((currentStock.previousClose || 0) - quoteResponse.previousClose) > 0.01) {
+                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null && Math.abs((currentStock.previousClose || 0) - quoteResponse.previousClose) > 0.01) {
                     updates.previousClose = quoteResponse.previousClose;
                     hasUpdates = true;
                 }
@@ -592,10 +615,14 @@ export function StockDetail() {
         if (timeRange === '1D' && !showPrePost && chartData && chartData.length > 0 && stock) {
             const lastRegularPoint = [...chartData].reverse().find(p => !p.session || p.session === 'regular');
             if (lastRegularPoint && lastRegularPoint.value) {
-                if (stockFromContext) {
-                    updateStockPrice(stock.id, lastRegularPoint.value, undefined, lastRegularPoint.date, true);
-                } else if (!virtualStock?.currentPrice || Math.abs(virtualStock.currentPrice - lastRegularPoint.value) > 0.001) {
-                    setVirtualStock((prev: any) => ({ ...prev, currentPrice: lastRegularPoint.value }));
+                const ptTime = new Date(lastRegularPoint.date).getTime();
+                const existingTime = stock.lastQuoteDate ? new Date(stock.lastQuoteDate).getTime() : 0;
+                if (!isNaN(ptTime) && ptTime >= existingTime) {
+                    if (stockFromContext) {
+                        updateStockPrice(stock.id, lastRegularPoint.value, undefined, lastRegularPoint.date, true);
+                    } else if (!virtualStock?.currentPrice || Math.abs(virtualStock.currentPrice - lastRegularPoint.value) > 0.001) {
+                        setVirtualStock((prev: any) => ({ ...prev, currentPrice: lastRegularPoint.value }));
+                    }
                 }
             }
         }
@@ -977,7 +1004,17 @@ export function StockDetail() {
                     <div className="flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500 shrink-0" />
                         <h3 className="font-bold text-lg whitespace-nowrap"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
-                        <InfoHelp title="Kursverlauf" items={[{ term: "Zeiträume (1D bis 5J)", text: "Wählt die Zeitspanne des Charts. 1D ist der heutige Handelstag, 1W eine Woche, 1M ein Monat, 3M und 6M drei und sechs Monate, 1J, 3J und 5J ein, drei und fünf Jahre." }, { term: "Seit Kauf", text: "Zeigt den Verlauf ab etwa deinem Kaufdatum (mit kurzem Vorlauf). Erscheint nur, wenn du die Aktie besitzt." }, { term: "Performance", text: "Veränderung im gewählten Zeitraum in Prozent und als Betrag. Bei 1D wird gegen den Schlusskurs des Vortages gerechnet." }, { term: "H und T", text: "Höchster (H) und tiefster (T) Kurs im gewählten Zeitraum." }, { term: "CHF", text: "Rechnet die Kurse in Schweizer Franken um. Der Schalter erscheint nur bei Aktien in Fremdwährung." }, { term: "Messen", text: "Messmodus: Klicke zwei Punkte im Chart an oder wähle Hoch (H) oder Tief (T). Die App zeigt dann die Veränderung dazwischen. Mit dem Pfeil kannst du Start und Ziel vertauschen." }, { term: "Hinweis zur Datenaktualität", text: "Das Schild oben rechts im Chart zeigt, wie aktuell die Daten sind: Live-Kurs, Verzögerte Daten (die Börse liefert den Kurs mit Verspätung) oder Schlusskurs mit Datum und Uhrzeit, wenn die Börse geschlossen ist." }]} />
+                        <InfoHelp title="Kursverlauf & Live-Daten Spickzettel" items={[
+                            { term: "Spickzettel • Wann kommen welche Live-Daten rein?", text: "1. Ab 00:00 Uhr: US-Futures (Nasdaq, S&P 500), Rohstoffe (Gold, Öl), Währungen & Asien (sofort).\n2. Ab 08:15 Uhr: Erste Früh-Indikation aus Frankfurt / Tradegate (*.F, da Handel ab 08:00 Uhr + 15 Min. Verzögerung).\n3. Ab 09:15 / 09:16 Uhr: Offizieller Handelsstart Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA) (09:00 Uhr + 15 Min. Verzögerung).\n4. Ab 10:00 Uhr: Offizielle US-Vorbörse (Pre-Market) ohne Verzögerung in Echtzeit!\n5. Ab 15:30 Uhr: Wall Street (New York) ohne Verzögerung in Echtzeit!" },
+                            { term: "Warum 15 Minuten Verzögerung in Europa?", text: "Europäische Börsen (Zürich, Xetra, London, Paris) öffnen um 09:00 Uhr MEZ, liefern kostenlose Kurse an Yahoo Finance aber gesetzlich/lizenzrechtlich mit 15 Minuten Verzögerung aus. Deshalb springt der erste 09:00-Uhr-Kurs immer um 09:15 / 09:16 Uhr auf Live um." },
+                            { term: "Zeiträume (1D bis 5J)", text: "Wählt die Zeitspanne des Charts. 1D ist der heutige Handelstag, 1W eine Woche, 1M ein Monat, 3M und 6M drei und sechs Monate, 1J, 3J und 5J ein, drei und fünf Jahre." },
+                            { term: "Seit Kauf", text: "Zeigt den Verlauf ab etwa deinem Kaufdatum (mit kurzem Vorlauf). Erscheint nur, wenn du die Aktie besitzt." },
+                            { term: "Performance", text: "Veränderung im gewählten Zeitraum in Prozent und als Betrag. Bei 1D wird gegen den Schlusskurs des Vortages gerechnet." },
+                            { term: "H und T", text: "Höchster (H) und tiefster (T) Kurs im gewählten Zeitraum." },
+                            { term: "CHF", text: "Rechnet die Kurse in Schweizer Franken um. Der Schalter erscheint nur bei Aktien in Fremdwährung." },
+                            { term: "Messen", text: "Messmodus: Klicke zwei Punkte im Chart an oder wähle Hoch (H) oder Tief (T). Die App zeigt dann die Veränderung dazwischen. Mit dem Pfeil kannst du Start und Ziel vertauschen." },
+                            { term: "Hinweis zur Datenaktualität", text: "Das Schild oben rechts im Chart zeigt, wie aktuell die Daten sind: Live-Kurs, Verzögerte Daten (die Börse liefert den Kurs mit Verspätung) oder Schlusskurs mit Datum und Uhrzeit, wenn die Börse geschlossen ist." }
+                        ]} />
                     </div>
 
                     {/* Right: Action Buttons (Performance Details & Position bearbeiten) */}
