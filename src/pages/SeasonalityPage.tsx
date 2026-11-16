@@ -40,7 +40,28 @@ export function SeasonalityPage() {
     const [isSavingNotes, setIsSavingNotes] = useState(false);
     const [notesSavedFeedback, setNotesSavedFeedback] = useState(false);
     const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+    const [isNotesOpen, setIsNotesOpen] = useState<boolean>(() => {
+        try {
+            const saved = localStorage.getItem('seasonality_notes_open');
+            return saved !== null ? saved === 'true' : true;
+        } catch {
+            return true;
+        }
+    });
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const toggleNotesOpen = (value?: boolean) => {
+        setIsNotesOpen(prev => {
+            const next = value !== undefined ? value : !prev;
+            try {
+                localStorage.setItem('seasonality_notes_open', String(next));
+            } catch {}
+            if (next) {
+                setTimeout(adjustTextareaHeight, 60);
+            }
+            return next;
+        });
+    };
 
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
@@ -52,12 +73,16 @@ export function SeasonalityPage() {
     useEffect(() => {
         setNotes(activeStock?.notes || '');
         setNotesSavedFeedback(false);
-        setTimeout(adjustTextareaHeight, 50);
+        if (isNotesOpen) {
+            setTimeout(adjustTextareaHeight, 50);
+        }
     }, [activeStock?.id]);
 
     useEffect(() => {
-        adjustTextareaHeight();
-    }, [notes]);
+        if (isNotesOpen) {
+            adjustTextareaHeight();
+        }
+    }, [notes, isNotesOpen]);
 
     const handleSaveNotes = async () => {
         if (!activeStock) return;
@@ -844,6 +869,24 @@ export function SeasonalityPage() {
                                         Persönliche Strategie &amp; Notizen zu {activeStock?.name || activeSymbol}
                                     </h3>
                                     <div className="flex items-center gap-2 flex-wrap">
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleNotesOpen()}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-muted/60 hover:bg-muted text-foreground transition-all cursor-pointer"
+                                            title={isNotesOpen ? "Notizfeld einklappen" : "Notizfeld aufklappen"}
+                                        >
+                                            {isNotesOpen ? (
+                                                <>
+                                                    <ChevronUp className="size-3.5 text-blue-500" />
+                                                    <span>Einklappen</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ChevronDown className="size-3.5 text-blue-500" />
+                                                    <span>Aufklappen</span>
+                                                </>
+                                            )}
+                                        </button>
                                         {seasonalStrategy && (
                                             <button
                                                 type="button"
@@ -854,6 +897,7 @@ export function SeasonalityPage() {
                                                         (seasonalStrategy.exMonthInfo ? `• Ex-Tag: ${seasonalStrategy.exMonthInfo.dateStr} (${seasonalStrategy.exMonthInfo.name} historisch ${seasonalStrategy.exMonthInfo.avgReturn >= 0 ? '+' : ''}${seasonalStrategy.exMonthInfo.avgReturn.toFixed(2)}%)\n` : '') +
                                                         `• Ziel / Limit:\n`;
                                                     setNotes(prev => prev ? `${prev.trim()}\n\n${template}` : template);
+                                                    if (!isNotesOpen) toggleNotesOpen(true);
                                                 }}
                                                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-border bg-muted/60 hover:bg-muted text-foreground transition-all"
                                                 title="Saisonale Kurz-Zusammenfassung als Vorlage in das Notizfeld einfügen"
@@ -900,42 +944,76 @@ export function SeasonalityPage() {
                                     </div>
                                 </div>
 
-                                <div className="relative">
-                                    <textarea
-                                        ref={textareaRef}
-                                        value={notes}
-                                        onChange={(e) => {
-                                            setNotes(e.target.value);
-                                            adjustTextareaHeight();
-                                        }}
-                                        onDoubleClick={() => setIsNotesModalOpen(true)}
-                                        placeholder={activeStock ? `Persönliche Notizen, Timing-Plan oder Limit-Ziele für ${activeStock.name || activeSymbol} festhalten (wird auch auf der Detailseite synchronisiert)...` : "Aktie auswählen..."}
-                                        disabled={!activeStock}
-                                        className="w-full bg-background border border-border rounded-lg p-3.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y min-h-[160px] leading-relaxed transition-all"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsNotesModalOpen(true)}
-                                        className="absolute top-2.5 right-2.5 p-1.5 rounded-md bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-all border border-border/50 shadow-sm cursor-pointer"
-                                        title="In Großansicht öffnen"
+                                {!isNotesOpen ? (
+                                    <div
+                                        onClick={() => toggleNotesOpen(true)}
+                                        className="p-3.5 bg-background/50 hover:bg-background/80 border border-border/80 hover:border-border rounded-xl cursor-pointer transition-all group flex items-center justify-between gap-4"
                                     >
-                                        <Maximize2 className="size-3.5" />
-                                    </button>
-                                </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-sans">
+                                                {notes ? notes : <span className="italic">Keine Notizen erfasst. Klicken zum Aufklappen und Erfassen...</span>}
+                                            </p>
+                                            {notes && (
+                                                <p className="text-[11px] text-primary/80 mt-1 font-medium">
+                                                    {notes.split('\n').length} Zeilen eingeklappt • Klicken zum Aufklappen
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-xs font-semibold text-primary group-hover:text-primary/80 shrink-0 bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20">
+                                            <ChevronDown className="size-4" />
+                                            <span>Aufklappen</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="relative">
+                                            <textarea
+                                                ref={textareaRef}
+                                                value={notes}
+                                                onChange={(e) => {
+                                                    setNotes(e.target.value);
+                                                    adjustTextareaHeight();
+                                                }}
+                                                onDoubleClick={() => setIsNotesModalOpen(true)}
+                                                placeholder={activeStock ? `Persönliche Notizen, Timing-Plan oder Limit-Ziele für ${activeStock.name || activeSymbol} festhalten (wird auch auf der Detailseite synchronisiert)...` : "Aktie auswählen..."}
+                                                disabled={!activeStock}
+                                                className="w-full bg-background border border-border rounded-lg p-3.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y min-h-[160px] leading-relaxed transition-all"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsNotesModalOpen(true)}
+                                                className="absolute top-2.5 right-2.5 p-1.5 rounded-md bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-all border border-border/50 shadow-sm cursor-pointer"
+                                                title="In Großansicht öffnen"
+                                            >
+                                                <Maximize2 className="size-3.5" />
+                                            </button>
+                                        </div>
 
-                                <div className="flex items-center justify-between text-[11px] text-muted-foreground flex-wrap gap-2">
-                                    <p>
-                                        💡 Notizen werden automatisch mit der Aktiendetailseite synchronisiert und dauerhaft im Portfolio gespeichert.
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsNotesModalOpen(true)}
-                                        className="text-primary hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
-                                    >
-                                        <Maximize2 className="size-3" />
-                                        <span>Notizfeld im großen Vollfenster öffnen (oder Doppelklick)</span>
-                                    </button>
-                                </div>
+                                        <div className="flex items-center justify-between text-[11px] text-muted-foreground flex-wrap gap-2 pt-1">
+                                            <p>
+                                                💡 Notizen werden automatisch mit der Aktiendetailseite synchronisiert und dauerhaft im Portfolio gespeichert.
+                                            </p>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleNotesOpen(false)}
+                                                    className="text-muted-foreground hover:text-foreground font-medium inline-flex items-center gap-1 cursor-pointer hover:underline"
+                                                >
+                                                    <ChevronUp className="size-3.5 text-blue-500" />
+                                                    <span>Notizfeld einklappen</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsNotesModalOpen(true)}
+                                                    className="text-primary hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <Maximize2 className="size-3" />
+                                                    <span>Großansicht (Vollbild)</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </>
                     )}
