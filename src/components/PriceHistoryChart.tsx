@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
-import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2, HelpCircle } from 'lucide-react';
+import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2, HelpCircle, ShieldCheck, Sparkles, TriangleAlert, Sliders } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -73,6 +73,9 @@ interface PriceHistoryChartProps {
     sellLimit?: number;
     buyLimit?: number;
     fairValue?: number;
+    valuationMode?: 'conservative' | 'quality' | 'risk' | 'manual';
+    buyLimitType?: 'conservative' | 'quality' | 'risk' | 'manual' | 'fairValue';
+    onToggleValuationMode?: () => void;
     stockName?: string;
     stockSymbol?: string;
 }
@@ -96,6 +99,9 @@ export function PriceHistoryChart({
     sellLimit,
     buyLimit,
     fairValue,
+    valuationMode,
+    buyLimitType,
+    onToggleValuationMode,
     stockName,
     stockSymbol
 }: PriceHistoryChartProps) {
@@ -283,6 +289,83 @@ export function PriceHistoryChart({
     const effectiveBuyLimit = buyLimit && buyLimit > 0 ? buyLimit * conversionRate : undefined;
     const effectiveFairValue = fairValue && fairValue > 0 ? fairValue * conversionRate : undefined;
     const effectiveSellLimit = sellLimit ? sellLimit * conversionRate : undefined;
+
+    // Strategy line themes based on valuationMode
+    const fvTheme = useMemo(() => {
+        switch (valuationMode) {
+            case 'quality':
+                return {
+                    stroke: '#a855f7', // Purple-500
+                    fill: '#d8b4fe',   // Purple-300
+                    badge: 'B',
+                    labelPrefix: 'Fairer Wert B'
+                };
+            case 'risk':
+                return {
+                    stroke: '#f59e0b', // Amber-500
+                    fill: '#fde047',   // Amber-300
+                    badge: 'C',
+                    labelPrefix: 'Fairer Wert C'
+                };
+            case 'manual':
+                return {
+                    stroke: '#ec4899', // Pink-500
+                    fill: '#f472b6',   // Pink-400
+                    badge: 'Manuell',
+                    labelPrefix: 'Fairer Wert Manuell'
+                };
+            case 'conservative':
+            default:
+                return {
+                    stroke: '#3b82f6', // Blue-500
+                    fill: '#93c5fd',   // Blue-300
+                    badge: 'A',
+                    labelPrefix: 'Fairer Wert A'
+                };
+        }
+    }, [valuationMode]);
+
+    const buyLimitTheme = useMemo(() => {
+        const mode = buyLimitType || valuationMode;
+        switch (mode) {
+            case 'quality':
+                return {
+                    stroke: '#a855f7',
+                    fill: '#d8b4fe',
+                    labelPrefix: 'Kauflimit B'
+                };
+            case 'risk':
+                return {
+                    stroke: '#f59e0b',
+                    fill: '#fde047',
+                    labelPrefix: 'Kauflimit C'
+                };
+            case 'manual':
+                return {
+                    stroke: '#ec4899',
+                    fill: '#f472b6',
+                    labelPrefix: 'Kauflimit Manuell'
+                };
+            case 'conservative':
+                return {
+                    stroke: '#3b82f6',
+                    fill: '#93c5fd',
+                    labelPrefix: 'Kauflimit A'
+                };
+            case 'fairValue':
+                return {
+                    stroke: fvTheme.stroke,
+                    fill: fvTheme.fill,
+                    labelPrefix: 'Kauflimit Fairer Wert'
+                };
+            default:
+                return {
+                    stroke: '#3b82f6',
+                    fill: '#93c5fd',
+                    labelPrefix: 'Kauflimit'
+                };
+        }
+    }, [buyLimitType, valuationMode, fvTheme]);
 
 
     // Calculate performance for the selected range
@@ -1085,6 +1168,48 @@ export function PriceHistoryChart({
                                         </div>
                                     }
                                 />
+                                {onToggleValuationMode && valuationMode && (
+                                    <button
+                                        type="button"
+                                        onClick={onToggleValuationMode}
+                                        className={cn(
+                                            toolbarToggleClass,
+                                            valuationMode === 'conservative'
+                                                ? "bg-blue-50 dark:bg-blue-900/15 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-500/40 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                                                : valuationMode === 'quality'
+                                                    ? "bg-purple-50 dark:bg-purple-900/15 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                                                    : valuationMode === 'risk'
+                                                        ? "bg-amber-50 dark:bg-amber-900/15 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-500/40 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                                                        : "bg-pink-50 dark:bg-pink-900/15 text-pink-600 dark:text-pink-400 border-pink-300 dark:border-pink-500/40 hover:bg-pink-100 dark:hover:bg-pink-900/30"
+                                        )}
+                                        title={
+                                            valuationMode === 'conservative'
+                                                ? "Sichtweise Sicherheit A: Klick wechselt zu Qualität B"
+                                                : valuationMode === 'quality'
+                                                    ? "Sichtweise Qualität B: Klick wechselt zu Risiko C"
+                                                    : valuationMode === 'risk'
+                                                        ? "Sichtweise Risiko C: Klick wechselt zu Manuell bzw. Sicherheit A"
+                                                        : "Sichtweise Manuell: Klick wechselt zu Sicherheit A"
+                                        }
+                                    >
+                                        {valuationMode === 'conservative' && <ShieldCheck className="size-3.5 shrink-0 text-blue-500" />}
+                                        {valuationMode === 'quality' && <Sparkles className="size-3.5 shrink-0 text-purple-500" />}
+                                        {valuationMode === 'risk' && <TriangleAlert className="size-3.5 shrink-0 text-amber-500" />}
+                                        {valuationMode === 'manual' && <Sliders className="size-3.5 shrink-0 text-pink-500" />}
+                                        <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">
+                                            {valuationMode === 'conservative'
+                                                ? 'Sicherheit A'
+                                                : valuationMode === 'quality'
+                                                    ? 'Qualität B'
+                                                    : valuationMode === 'risk'
+                                                        ? 'Risiko C'
+                                                        : 'Manuell'}
+                                        </span>
+                                        <span className="text-[10px] font-bold leading-none sm:hidden">
+                                            {valuationMode === 'conservative' ? 'A' : valuationMode === 'quality' ? 'B' : valuationMode === 'risk' ? 'C' : 'Manuell'}
+                                        </span>
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => setIsFullscreen(prev => !prev)}
@@ -1752,11 +1877,11 @@ export function PriceHistoryChart({
                                     </>
                                 );
                             })()}
-                            {/* 1. Kaufpreis (Ø Kauf) - Prominent hervorgehoben */}
+                            {/* 1. Kaufpreis (Ø Kauf) - Prominent in Weiß (neutral & unabhängig von Bewertung) */}
                             {effectivePurchasePrice && effectivePurchasePrice >= domainMin && effectivePurchasePrice <= domainMax && (
                                 <ReferenceLine
                                     y={effectivePurchasePrice}
-                                    stroke="#3b82f6"
+                                    stroke="#ffffff"
                                     strokeWidth={2}
                                     strokeDasharray="6 4"
                                     strokeOpacity={0.95}
@@ -1772,7 +1897,7 @@ export function PriceHistoryChart({
                                                     x={rightEdge}
                                                     y={y + yOffset}
                                                     textAnchor="end"
-                                                    fill="#60a5fa"
+                                                    fill="#ffffff"
                                                     stroke="#0f172a"
                                                     strokeWidth={2.5}
                                                     paintOrder="stroke fill"
@@ -1787,11 +1912,11 @@ export function PriceHistoryChart({
                                 />
                             )}
 
-                            {/* 2. Kauflimit (Buy Limit) */}
+                            {/* 2. Kauflimit (Buy Limit) - Passt sich dynamisch der gewählten Sichtweise an */}
                             {effectiveBuyLimit && effectiveBuyLimit >= domainMin && effectiveBuyLimit <= domainMax && (
                                 <ReferenceLine
                                     y={effectiveBuyLimit}
-                                    stroke="#10b981"
+                                    stroke={buyLimitTheme.stroke}
                                     strokeWidth={2}
                                     strokeDasharray="5 3"
                                     strokeOpacity={0.95}
@@ -1807,14 +1932,14 @@ export function PriceHistoryChart({
                                                     x={rightEdge}
                                                     y={y + yOffset}
                                                     textAnchor="end"
-                                                    fill="#34d399"
+                                                    fill={buyLimitTheme.fill}
                                                     stroke="#0f172a"
                                                     strokeWidth={2.5}
                                                     paintOrder="stroke fill"
                                                     fontSize={isFullscreen ? 11 : 9.5}
                                                     fontWeight={700}
                                                 >
-                                                    Kauflimit · {formatCurrency(effectiveBuyLimit, displayCurrency, false)}
+                                                    {buyLimitTheme.labelPrefix} · {formatCurrency(effectiveBuyLimit, displayCurrency, false)}
                                                 </text>
                                             </g>
                                         );
@@ -1822,11 +1947,11 @@ export function PriceHistoryChart({
                                 />
                             )}
 
-                            {/* 3. Fairer Wert (Fair Value) */}
+                            {/* 3. Fairer Wert (Fair Value) - Passt sich dynamisch der gewählten Sichtweise an */}
                             {effectiveFairValue && effectiveFairValue >= domainMin && effectiveFairValue <= domainMax && (
                                 <ReferenceLine
                                     y={effectiveFairValue}
-                                    stroke="#d946ef"
+                                    stroke={fvTheme.stroke}
                                     strokeWidth={1.8}
                                     strokeDasharray="4 4"
                                     strokeOpacity={0.95}
@@ -1842,14 +1967,14 @@ export function PriceHistoryChart({
                                                     x={rightEdge}
                                                     y={y + yOffset}
                                                     textAnchor="end"
-                                                    fill="#f0abfc"
+                                                    fill={fvTheme.fill}
                                                     stroke="#0f172a"
                                                     strokeWidth={2.5}
                                                     paintOrder="stroke fill"
                                                     fontSize={isFullscreen ? 11 : 9.5}
                                                     fontWeight={700}
                                                 >
-                                                    Fairer Wert · {formatCurrency(effectiveFairValue, displayCurrency, false)}
+                                                    {fvTheme.labelPrefix} · {formatCurrency(effectiveFairValue, displayCurrency, false)}
                                                 </text>
                                             </g>
                                         );

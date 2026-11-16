@@ -328,10 +328,25 @@ export function StockDetail() {
         return position?.buyDate;
     })();
 
-    // Memoized computed fair value for chart and metrics
-    const computedFairValue = useMemo(() => {
+    // Memoized computed fair value and valuation mode for chart and metrics
+    const valuationData = useMemo(() => {
         void fvModeTick;
-        if (!stock) return 0;
+        if (!stock) {
+            return {
+                mode: 'conservative' as const,
+                fairValue: 0,
+                buyPrice: null,
+                futurePrice: null,
+                mos: 20,
+                resolvedTargetType: 'conservative' as const,
+                smartAutoConservative: null as any,
+                smartAutoQuality: null as any,
+                smartAutoRisk: null as any,
+                activeParams: null as any,
+                symKey: '',
+                effectivePrice: 1
+            };
+        }
         const symKey = (stock.symbol || '').toUpperCase();
         let localParams: any = null;
         try {
@@ -379,26 +394,163 @@ export function StockDetail() {
             : activeParams?.valuationMode === 'quality'
                 ? 'quality'
                 : 'conservative';
-        const currentMode = isManualFv ? 'manual' : currentValuationMode;
+        const currentMode: 'conservative' | 'quality' | 'risk' | 'manual' = isManualFv ? 'manual' : currentValuationMode;
+
+        let fairValue = 0;
+        let buyPrice: number | null = null;
+        let futurePrice: number | null = null;
+        let mos = 20;
 
         if (currentMode === 'manual') {
+            mos = activeParams?.mos ?? smartAutoConservative.mos ?? 20;
             const manualDcf = (activeParams && Number(activeParams.eps) > 0)
                 ? calculateDcfFairValue(activeParams, effectivePrice)
                 : null;
-            return (activeParams?.manualFairValue && Number(activeParams.manualFairValue) > 0)
+            fairValue = (activeParams?.manualFairValue && Number(activeParams.manualFairValue) > 0)
                 ? Number(activeParams.manualFairValue)
                 : (manualDcf ? manualDcf.fairValue : (stock.fairValue || 0));
+            buyPrice = (activeParams && activeParams.eps > 0 && manualDcf)
+                ? manualDcf.buyPrice
+                : (fairValue > 0 ? fairValue * (1 - (mos / 100)) : null);
+            futurePrice = manualDcf?.futurePrice ?? null;
         } else if (currentMode === 'quality') {
             const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoQuality;
-            return calculateDcfFairValue(qParams, effectivePrice).fairValue;
+            const dcf = calculateDcfFairValue(qParams, effectivePrice);
+            fairValue = dcf.fairValue;
+            buyPrice = dcf.buyPrice;
+            futurePrice = (dcf as any)?.futurePrice ?? null;
+            mos = dcf.mos;
         } else if (currentMode === 'risk') {
             const rParams = (activeParams?.valuationMode === 'risk' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoRisk;
-            return calculateDcfFairValue(rParams, effectivePrice).fairValue;
+            const dcf = calculateDcfFairValue(rParams, effectivePrice);
+            fairValue = dcf.fairValue;
+            buyPrice = dcf.buyPrice;
+            futurePrice = (dcf as any)?.futurePrice ?? null;
+            mos = dcf.mos;
         } else {
             const cParams = (activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoConservative;
-            return calculateDcfFairValue(cParams, effectivePrice).fairValue;
+            const dcf = calculateDcfFairValue(cParams, effectivePrice);
+            fairValue = dcf.fairValue;
+            buyPrice = dcf.buyPrice;
+            futurePrice = (dcf as any)?.futurePrice ?? null;
+            mos = dcf.mos;
         }
+
+        // Determine resolvedTargetType for buyLimit
+        const dcfRisk = calculateDcfFairValue(smartAutoRisk, effectivePrice);
+        const dcfQuality = calculateDcfFairValue(smartAutoQuality, effectivePrice);
+        const dcfCons = calculateDcfFairValue(smartAutoConservative, effectivePrice);
+
+        const savedTargetPriceType = (stock as any).targetPriceType;
+        let resolvedTargetType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+        if (savedTargetPriceType) {
+            resolvedTargetType = savedTargetPriceType;
+        } else if (stock.targetPrice) {
+            if (Math.abs(stock.targetPrice - dcfRisk.buyPrice) < 0.05) {
+                resolvedTargetType = 'risk';
+            } else if (Math.abs(stock.targetPrice - dcfQuality.buyPrice) < 0.05) {
+                resolvedTargetType = 'quality';
+            } else if (Math.abs(stock.targetPrice - dcfCons.buyPrice) < 0.05) {
+                resolvedTargetType = 'conservative';
+            } else if (fairValue > 0 && Math.abs(stock.targetPrice - fairValue) < 0.05) {
+                resolvedTargetType = 'fairValue';
+            } else {
+                resolvedTargetType = 'manual';
+            }
+        }
+
+        return {
+            mode: currentMode,
+            fairValue,
+            buyPrice,
+            futurePrice,
+            mos,
+            resolvedTargetType,
+            smartAutoConservative,
+            smartAutoQuality,
+            smartAutoRisk,
+            activeParams,
+            symKey,
+            effectivePrice
+        };
     }, [stock, fvModeTick]);
+
+    const handleToggleValuationMode = () => {
+        const { symKey, mode, smartAutoConservative, smartAutoQuality, smartAutoRisk, activeParams, fairValue, effectivePrice } = valuationData;
+        if (!symKey) return;
+        const now = new Date().toISOString();
+        let map: Record<string, any> = {};
+        try {
+            const mapRaw = localStorage.getItem('fair_value_params_map');
+            if (mapRaw) map = JSON.parse(mapRaw);
+        } catch {
+            // ignore
+        }
+        const existingLocal = map[symKey] || {};
+        const existingBackup = existingLocal.customBackup || stock?.fairValueParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
+
+        let nextMode: 'conservative' | 'quality' | 'risk' | 'manual' = 'conservative';
+        if (mode === 'conservative') {
+            nextMode = 'quality';
+        } else if (mode === 'quality') {
+            nextMode = 'risk';
+        } else if (mode === 'risk') {
+            nextMode = existingBackup ? 'manual' : 'conservative';
+        } else {
+            nextMode = 'conservative';
+        }
+
+        if (nextMode === 'manual' && existingBackup) {
+            const nextEntry = {
+                ...existingBackup,
+                isCustom: true,
+                customBackup: existingBackup,
+                updatedAt: now
+            };
+            map[symKey] = nextEntry;
+            try { localStorage.setItem('fair_value_params_map', JSON.stringify(map)); } catch {}
+            const dcfManual = (existingBackup.eps > 0) ? calculateDcfFairValue(existingBackup, effectivePrice) : null;
+            const newFv = (existingBackup.manualFairValue && Number(existingBackup.manualFairValue) > 0)
+                ? Number(existingBackup.manualFairValue)
+                : (dcfManual ? dcfManual.fairValue : 0);
+            if (stockFromContext && stock) {
+                updateStock(stock.id, { ...(newFv > 0 ? { fairValue: newFv } : {}), fairValueParams: nextEntry });
+            } else {
+                setVirtualStock((prev: any) => ({ ...prev, ...(newFv > 0 ? { fairValue: newFv } : {}), fairValueParams: nextEntry }));
+            }
+        } else {
+            const targetSmartParams =
+                nextMode === 'quality'
+                    ? smartAutoQuality
+                    : nextMode === 'risk'
+                        ? smartAutoRisk
+                        : smartAutoConservative;
+
+            const manualBackupToSave = mode === 'manual' ? {
+                ...(existingBackup || activeParams || smartAutoConservative),
+                ...(fairValue > 0 ? { manualFairValue: fairValue } : {}),
+                updatedAt: now
+            } : existingBackup;
+
+            const dcfNext = calculateDcfFairValue(targetSmartParams, effectivePrice);
+            const newFv = parseFloat(dcfNext.fairValue.toFixed(2));
+            const nextEntry = {
+                ...targetSmartParams,
+                isCustom: false,
+                valuationMode: nextMode,
+                ...(manualBackupToSave ? { customBackup: manualBackupToSave } : {}),
+                updatedAt: now
+            };
+            map[symKey] = nextEntry;
+            try { localStorage.setItem('fair_value_params_map', JSON.stringify(map)); } catch {}
+            if (stockFromContext && stock) {
+                updateStock(stock.id, { ...(newFv > 0 ? { fairValue: newFv } : {}), fairValueParams: nextEntry });
+            } else {
+                setVirtualStock((prev: any) => ({ ...prev, ...(newFv > 0 ? { fairValue: newFv } : {}), fairValueParams: nextEntry }));
+            }
+        }
+        setFvModeTick(t => t + 1);
+    };
 
     const handleUpdatePosition = (posId: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[], newBroker?: string) => {
         const updates: any = { shares: newShares };
@@ -1125,7 +1277,10 @@ export function StockDetail() {
                         purchases={position?.purchases}
                         sellLimit={stock.sellLimit}
                         buyLimit={stock.targetPrice}
-                        fairValue={computedFairValue || stock.fairValue}
+                        fairValue={valuationData.fairValue || stock.fairValue}
+                        valuationMode={valuationData.mode}
+                        buyLimitType={valuationData.resolvedTargetType}
+                        onToggleValuationMode={handleToggleValuationMode}
                         stockName={stock.name}
                         stockSymbol={stock.symbol}
                     />
@@ -1515,66 +1670,7 @@ export function StockDetail() {
 
                         const handleToggleFvMode = (e: React.MouseEvent) => {
                             e.stopPropagation();
-                            if (!symKey) return;
-                            const now = new Date().toISOString();
-                            let map: Record<string, any> = {};
-                            try {
-                                const mapRaw = localStorage.getItem('fair_value_params_map');
-                                if (mapRaw) map = JSON.parse(mapRaw);
-                            } catch {
-                                // ignore
-                            }
-                            const existingLocal = map[symKey] || {};
-                            const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
-
-                            const nextMode: 'conservative' | 'quality' | 'risk' =
-                                currentMode === 'conservative'
-                                    ? 'quality'
-                                    : currentMode === 'quality'
-                                        ? 'risk'
-                                        : 'conservative';
-
-                            const targetSmartParams =
-                                nextMode === 'quality'
-                                    ? smartAutoQuality
-                                    : nextMode === 'risk'
-                                        ? smartAutoRisk
-                                        : smartAutoConservative;
-
-                            const manualBackupToSave = currentMode === 'manual' ? {
-                                ...(existingBackup || activeParams || smartAutoConservative),
-                                ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {}),
-                                updatedAt: now
-                            } : existingBackup;
-
-                            const dcfNext = calculateDcfFairValue(targetSmartParams, effectivePrice);
-                            const newFv = parseFloat(dcfNext.fairValue.toFixed(2));
-                            const nextEntry = {
-                                ...targetSmartParams,
-                                isCustom: false,
-                                valuationMode: nextMode,
-                                ...(manualBackupToSave ? { customBackup: manualBackupToSave } : {}),
-                                updatedAt: now
-                            };
-                            map[symKey] = nextEntry;
-                            try {
-                                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
-                            } catch {
-                                // ignore
-                            }
-                            if (stockFromContext) {
-                                updateStock(stock.id, {
-                                    ...(newFv > 0 ? { fairValue: newFv } : {}),
-                                    fairValueParams: nextEntry
-                                });
-                            } else {
-                                setVirtualStock((prev: any) => ({
-                                    ...prev,
-                                    ...(newFv > 0 ? { fairValue: newFv } : {}),
-                                    fairValueParams: nextEntry
-                                }));
-                            }
-                            setFvModeTick(t => t + 1);
+                            handleToggleValuationMode();
                         };
 
                         return (
