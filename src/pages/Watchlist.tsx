@@ -7,7 +7,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
-import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronRight, ChevronLeft, PieChart, Trophy } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronRight, ChevronLeft, PieChart, Trophy, Clock, ArrowUpDown, ClipboardList } from 'lucide-react';
 
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
@@ -17,17 +17,40 @@ import { translateSector } from '../utils/sectorTranslation';
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
 import { EditPositionModal } from '../components/EditPositionModal';
 import { WatchlistPerformanceModal, type WatchlistPeriod } from '../components/WatchlistPerformanceModal';
-import type { Stock } from '../types';
+import { WatchlistReorderModal, type WatchlistTabItem } from '../components/WatchlistReorderModal';
+import { OrderBookModal } from '../components/OrderBookModal';
+import type { Stock, OrderBookEntry } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
-    const { stocks, watchlists, positions, removeFromWatchlist, addPosition, updatePosition, deletePosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices, refreshTick, createWatchlist, deleteWatchlist, renameWatchlist } = usePortfolio(); // Get refresh + tick
+    const {
+        stocks,
+        watchlists,
+        positions,
+        orderBook,
+        removeFromWatchlist,
+        addPosition,
+        updatePosition,
+        deletePosition,
+        lastGlobalRefresh,
+        isGlobalRefreshing,
+        refreshAllPrices,
+        refreshTick,
+        createWatchlist,
+        deleteWatchlist,
+        renameWatchlist,
+        updateStock,
+        deleteOrderBookEntry
+    } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
     const [modalInitialPeriod, setModalInitialPeriod] = useState<WatchlistPeriod>('1D');
-
+    const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
+    const [isOrderBookModalOpen, setIsOrderBookModalOpen] = useState(false);
+    const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
+    const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
 
     // Multi-Watchlist State - Persist in localStorage to survive navigation
     const STORAGE_KEY = 'watchlist_active_tab';
@@ -44,8 +67,8 @@ export function Watchlist() {
 
     // Watchlist Component (v3.14.02)
     useEffect(() => {
-        // Skip if in 'owned' mode (virtual tab)
-        if (activeWatchlistId === 'owned') return;
+        // Skip if in 'owned' or 'orders' mode (virtual tabs)
+        if (activeWatchlistId === 'owned' || activeWatchlistId === 'orders') return;
 
         // If current list was deleted, fallback to 'owned'
         if (watchlists.length > 0 && activeWatchlistId && !watchlists.find(w => w.id === activeWatchlistId)) {
@@ -53,7 +76,9 @@ export function Watchlist() {
         }
     }, [watchlists, activeWatchlistId]);
 
-    const activeWatchlist = watchlists.find(w => w.id === activeWatchlistId) || watchlists[0];
+    const activeWatchlist = (activeWatchlistId === 'owned' || activeWatchlistId === 'orders')
+        ? null
+        : (watchlists.find(w => w.id === activeWatchlistId) || watchlists[0]);
 
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap' | 'price', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
@@ -63,26 +88,195 @@ export function Watchlist() {
         [positions]
     );
 
-    // Filter stocks that are in the watchlist
-    const watchlistStocks = stocks
-        .filter(s => {
-            if (activeWatchlistId === 'owned') {
-                return ownedStockIds.has(String(s.id));
+    // Open Orders from orderBook
+    const openOrders = useMemo(() => {
+        return (orderBook || []).filter(o => o.status === 'open');
+    }, [orderBook]);
+
+    // Orders Stocks List: collects all stocks that have an active order in orderBook or a limit
+    const ordersStocksList = useMemo(() => {
+        const list: Stock[] = [];
+        const addedStockIds = new Set<string>();
+
+        // 1. Stocks matching open orders in orderBook
+        openOrders.forEach(order => {
+            const found = stocks.find(s =>
+                (order.stockId && s.id === order.stockId) ||
+                (order.stockSymbol && s.symbol.toLowerCase() === order.stockSymbol.toLowerCase()) ||
+                (order.stockIsin && s.isin && s.isin.toLowerCase() === order.stockIsin.toLowerCase())
+            );
+            if (found) {
+                if (!addedStockIds.has(String(found.id))) {
+                    const enhancedStock: Stock = {
+                        ...found,
+                        targetPrice: order.mode === 'buy' ? (order.limitPrice || found.targetPrice) : found.targetPrice,
+                        sellLimit: order.mode === 'sell' ? (order.limitPrice || found.sellLimit) : found.sellLimit,
+                    };
+                    list.push(enhancedStock);
+                    addedStockIds.add(String(found.id));
+                }
+            } else {
+                // Synthesize stock if order was created for symbol not yet in stocks
+                const synthId = order.stockId || `order_${order.id}`;
+                if (!addedStockIds.has(String(synthId))) {
+                    const synthStock: Stock = {
+                        id: synthId,
+                        name: order.stockName,
+                        symbol: order.stockSymbol,
+                        isin: order.stockIsin || '',
+                        currency: (order.currency as any) || 'EUR',
+                        currentPrice: order.limitPrice,
+                        previousClose: order.limitPrice,
+                        targetPrice: order.mode === 'buy' ? order.limitPrice : undefined,
+                        sellLimit: order.mode === 'sell' ? order.limitPrice : undefined,
+                        type: 'stock',
+                        sector: 'Auftrag',
+                        dividendYield: order.grossYield || 0,
+                        dividendFrequency: order.dividendFrequency || 'quarterly',
+                    };
+                    list.push(synthStock);
+                    addedStockIds.add(String(synthId));
+                }
             }
-            if (!activeWatchlist) return false;
+        });
 
-            // Check explicit membership
+        // 2. Stocks in stocks that have a targetPrice > 0 or sellLimit > 0
+        stocks.forEach(s => {
+            if (!addedStockIds.has(String(s.id))) {
+                const hasBuyLimit = typeof s.targetPrice === 'number' && s.targetPrice > 0;
+                const hasSellLimit = typeof s.sellLimit === 'number' && s.sellLimit > 0;
+                if (hasBuyLimit || hasSellLimit) {
+                    list.push(s);
+                    addedStockIds.add(String(s.id));
+                }
+            }
+        });
+
+        return list;
+    }, [stocks, openOrders]);
+
+    // All available tabs (system tabs + custom watchlists)
+    const allTabs = useMemo<WatchlistTabItem[]>(() => {
+        const list: WatchlistTabItem[] = [
+            { id: 'owned', name: 'Bestand', isSystem: true, badgeCount: ownedStockIds.size },
+            { id: 'orders', name: 'Aufträge', isSystem: true, badgeCount: ordersStocksList.length }
+        ];
+
+        watchlists.forEach(wl => {
+            list.push({
+                id: wl.id,
+                name: wl.name,
+                isDefault: wl.isDefault,
+                badgeCount: wl.stockIds.length
+            });
+        });
+
+        return list;
+    }, [ownedStockIds.size, ordersStocksList.length, watchlists]);
+
+    // Custom Tab Order - Persisted in localStorage
+    const TAB_ORDER_STORAGE_KEY = 'watchlist_tab_order_v1';
+    const [tabOrder, setTabOrder] = useState<string[]>(() => {
+        try {
+            const saved = localStorage.getItem(TAB_ORDER_STORAGE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed;
+                }
+            }
+        } catch (e) {
+            console.error('Error loading tab order', e);
+        }
+        return ['owned', 'orders'];
+    });
+
+    const orderedTabs = useMemo(() => {
+        const map = new Map(allTabs.map(t => [t.id, t]));
+        const result: WatchlistTabItem[] = [];
+
+        tabOrder.forEach(id => {
+            const item = map.get(id);
+            if (item) {
+                result.push(item);
+                map.delete(id);
+            }
+        });
+
+        // If 'orders' was missing from tabOrder, place right after 'owned'
+        if (map.has('orders')) {
+            const ownedIdx = result.findIndex(t => t.id === 'owned');
+            const ordersItem = map.get('orders')!;
+            map.delete('orders');
+            if (ownedIdx !== -1) {
+                result.splice(ownedIdx + 1, 0, ordersItem);
+            } else {
+                result.push(ordersItem);
+            }
+        }
+
+        // Append remaining items (newly created lists, etc.)
+        map.forEach(item => {
+            result.push(item);
+        });
+
+        return result;
+    }, [allTabs, tabOrder]);
+
+    const saveTabOrder = (newTabs: WatchlistTabItem[]) => {
+        const newIds = newTabs.map(t => t.id);
+        setTabOrder(newIds);
+        try {
+            localStorage.setItem(TAB_ORDER_STORAGE_KEY, JSON.stringify(newIds));
+        } catch (e) {
+            console.error('Error saving tab order', e);
+        }
+    };
+
+    const moveTab = (sourceId: string, targetId: string) => {
+        if (sourceId === targetId) return;
+        const current = [...orderedTabs];
+        const sourceIndex = current.findIndex(t => t.id === sourceId);
+        const targetIndex = current.findIndex(t => t.id === targetId);
+        if (sourceIndex === -1 || targetIndex === -1) return;
+
+        const [moved] = current.splice(sourceIndex, 1);
+        current.splice(targetIndex, 0, moved);
+        saveTabOrder(current);
+    };
+
+    const resetTabOrder = () => {
+        const defaultList: WatchlistTabItem[] = [
+            ...allTabs.filter(t => t.id === 'owned'),
+            ...allTabs.filter(t => t.id === 'orders'),
+            ...allTabs.filter(t => !t.isSystem && !t.isDefault),
+            ...allTabs.filter(t => t.isDefault)
+        ];
+        saveTabOrder(defaultList);
+    };
+
+    // Filter stocks based on activeWatchlistId
+    const baseStocks = useMemo(() => {
+        if (activeWatchlistId === 'owned') {
+            return stocks.filter(s => ownedStockIds.has(String(s.id)));
+        }
+        if (activeWatchlistId === 'orders') {
+            return ordersStocksList;
+        }
+        if (!activeWatchlist) return [];
+
+        return stocks.filter(s => {
             const explicitlyInList = activeWatchlist.stockIds.includes(s.id);
-
-            // For Default List ("Merkliste"), AUTO-INCLUDE all owned positions
             if (activeWatchlist.isDefault) {
                 const isOwned = ownedStockIds.has(String(s.id));
                 return explicitlyInList || isOwned;
             }
-
             return explicitlyInList;
-        })
-        .sort((a, b) => {
+        });
+    }, [activeWatchlistId, ownedStockIds, ordersStocksList, activeWatchlist, stocks]);
+
+    const watchlistStocks = useMemo(() => {
+        return [...baseStocks].sort((a, b) => {
             if (sortConfig.key === 'name') {
                 return sortConfig.direction === 'asc'
                     ? a.name.localeCompare(b.name)
@@ -120,6 +314,7 @@ export function Watchlist() {
             }
             return 0;
         });
+    }, [baseStocks, sortConfig]);
 
     // Split into sections (Stocks vs ETFs); keep owned & unowned together in custom watchlists
     const allStocks = watchlistStocks.filter(s => !s.type || s.type === 'stock');
@@ -165,25 +360,58 @@ export function Watchlist() {
 
     const isEtfList = activeWatchlist?.name?.toLowerCase().includes('etf') ?? false;
 
-    const subTabs: Array<{ id: string; label: string; count: number; icon: any; stocks: Stock[] }> = activeWatchlistId === 'owned'
-        ? [
-            { id: 'owned-stocks', label: 'Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks },
-            { id: 'owned-etfs', label: 'ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }
-        ]
-        : (() => {
-            const stockTab = { id: 'all-stocks', label: 'Aktien', count: allStocks.length, icon: ShoppingBag, stocks: allStocks };
-            const etfTab = { id: 'all-etfs', label: 'ETFs', count: allEtfs.length, icon: PieChart, stocks: allEtfs };
-            if (isEtfList) {
-                return [
-                    ...(allEtfs.length > 0 || allStocks.length === 0 ? [etfTab] : []),
-                    ...(allStocks.length > 0 ? [stockTab] : [])
-                ];
-            }
+    const subTabs: Array<{ id: string; label: string; count: number; icon: any; stocks: Stock[] }> = (() => {
+        if (activeWatchlistId === 'owned') {
             return [
-                ...(allStocks.length > 0 || allEtfs.length === 0 ? [stockTab] : []),
-                ...(allEtfs.length > 0 ? [etfTab] : [])
+                { id: 'owned-stocks', label: 'Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks },
+                { id: 'owned-etfs', label: 'ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }
             ];
-        })();
+        }
+        if (activeWatchlistId === 'orders') {
+            const tabs = [
+                { id: 'orders-stocks', label: 'Aktien', count: allStocks.length, icon: ShoppingBag, stocks: allStocks }
+            ];
+            if (allEtfs.length > 0) {
+                tabs.push({ id: 'orders-etfs', label: 'ETFs', count: allEtfs.length, icon: PieChart, stocks: allEtfs });
+            }
+            return tabs;
+        }
+        const stockTab = { id: 'all-stocks', label: 'Aktien', count: allStocks.length, icon: ShoppingBag, stocks: allStocks };
+        const etfTab = { id: 'all-etfs', label: 'ETFs', count: allEtfs.length, icon: PieChart, stocks: allEtfs };
+        if (isEtfList) {
+            return [
+                ...(allEtfs.length > 0 || allStocks.length === 0 ? [etfTab] : []),
+                ...(allStocks.length > 0 ? [stockTab] : [])
+            ];
+        }
+        return [
+            ...(allStocks.length > 0 || allEtfs.length === 0 ? [stockTab] : []),
+            ...(allEtfs.length > 0 ? [etfTab] : [])
+        ];
+    })();
+
+    const handleRemoveStock = (stockId: string) => {
+        if (activeWatchlistId === 'orders') {
+            const stock = stocks.find(s => s.id === stockId);
+            const stockName = stock?.name || 'diese Aktie';
+            if (window.confirm(`Limit & offenen Auftrag für "${stockName}" entfernen?`)) {
+                const matchingOrders = (orderBook || []).filter(o =>
+                    o.status === 'open' && (
+                        o.stockId === stockId ||
+                        (stock && o.stockSymbol.toLowerCase() === stock.symbol.toLowerCase()) ||
+                        (stock?.isin && o.stockIsin && o.stockIsin.toLowerCase() === stock.isin.toLowerCase())
+                    )
+                );
+                matchingOrders.forEach(o => deleteOrderBookEntry(o.id));
+                if (stock) {
+                    updateStock(stock.id, { targetPrice: undefined, sellLimit: undefined });
+                }
+            }
+            return;
+        }
+        if (activeWatchlistId === 'owned') return;
+        removeFromWatchlist(stockId, activeWatchlistId);
+    };
 
     const SUBTAB_STORAGE_KEY = 'watchlist_active_subtab';
     const [activeSubTab, setActiveSubTab] = useState<string>(() => {
@@ -281,94 +509,133 @@ export function Watchlist() {
                     </div>
                 </div>
 
-                {/* Watchlist Tabs */}
+                {/* Watchlist Tabs Bar with Drag & Drop & Reorder */}
                 <div className="-mx-4 md:-mx-6 px-4 md:px-6 pt-1.5 pb-2 mt-2 overflow-x-auto bg-background shrink-0 iphone-landscape-portfolio-subtabs">
                     <div className="flex items-center gap-2 min-w-max">
-                        {/* 1. Bestand (Always first) */}
-                        <button
-                            onClick={() => setActiveWatchlistId('owned')}
-                            className={cn(
-                                "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                                activeWatchlistId === 'owned'
-                                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                    : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
-                            )}
-                        >
-                            Bestand
-                        </button>
+                        {orderedTabs.map((tab) => {
+                            const isActive = activeWatchlistId === tab.id;
+                            const isDragging = draggedTabId === tab.id;
+                            const isOver = dragOverTabId === tab.id;
 
-                        {/* 2. Other User Lists (excluding Merkliste) */}
-                        {watchlists.filter(wl => !wl.isDefault).map(wl => (
-                            <div key={wl.id} className="relative group">
-                                <button
-                                    onClick={() => setActiveWatchlistId(wl.id)}
+                            return (
+                                <div
+                                    key={tab.id}
+                                    draggable
+                                    onDragStart={(e) => {
+                                        e.dataTransfer.setData('text/plain', tab.id);
+                                        e.dataTransfer.effectAllowed = 'move';
+                                        setDraggedTabId(tab.id);
+                                    }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.dataTransfer.dropEffect = 'move';
+                                        if (dragOverTabId !== tab.id) {
+                                            setDragOverTabId(tab.id);
+                                        }
+                                    }}
+                                    onDragLeave={() => {
+                                        if (dragOverTabId === tab.id) {
+                                            setDragOverTabId(null);
+                                        }
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        const sourceId = e.dataTransfer.getData('text/plain') || draggedTabId;
+                                        if (sourceId && sourceId !== tab.id) {
+                                            moveTab(sourceId, tab.id);
+                                        }
+                                        setDraggedTabId(null);
+                                        setDragOverTabId(null);
+                                    }}
+                                    onDragEnd={() => {
+                                        setDraggedTabId(null);
+                                        setDragOverTabId(null);
+                                    }}
                                     className={cn(
-                                        "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                                        activeWatchlistId === wl.id
-                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                                        "relative group transition-all duration-150 cursor-grab active:cursor-grabbing select-none",
+                                        isDragging && "opacity-40 scale-95",
+                                        isOver && "ring-2 ring-blue-500 rounded-full scale-105"
                                     )}
+                                    title={`Tab "${tab.name}" verschieben (Drag & Drop)`}
                                 >
-                                    {wl.name}
-                                </button>
-                                {activeWatchlistId === wl.id && (
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm(`Liste "${wl.name}" wirklich löschen?`)) {
-                                                deleteWatchlist(wl.id);
-                                                setActiveWatchlistId('owned');
-                                            }
-                                        }}
-                                        className="absolute top-0.5 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10 flex items-center justify-center"
-                                        title="Liste löschen"
+                                        type="button"
+                                        onClick={() => setActiveWatchlistId(tab.id)}
+                                        className={cn(
+                                            "px-4 py-2 rounded-full text-sm font-medium transition-all border flex items-center gap-1.5",
+                                            isActive
+                                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                                : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                                        )}
                                     >
-                                        <Trash2 className="size-3" />
+                                        {tab.id === 'owned' && <ShoppingBag className="size-3.5 shrink-0" />}
+                                        {tab.id === 'orders' && <Clock className="size-3.5 shrink-0 text-amber-500" />}
+                                        <span>{tab.name}</span>
+                                        {tab.id === 'orders' && (tab.badgeCount ?? 0) > 0 && (
+                                            <span className={cn(
+                                                "text-xs px-1.5 py-0.2 rounded-full font-mono font-bold leading-none ml-1",
+                                                isActive
+                                                    ? "bg-primary-foreground/20 text-primary-foreground"
+                                                    : "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                                            )}>
+                                                {tab.badgeCount}
+                                            </span>
+                                        )}
                                     </button>
-                                )}
-                            </div>
-                        ))}
-
-                        {/* 3. Merkliste (Default Watchlist) - Always Last */}
-                        {watchlists.filter(wl => wl.isDefault).map(wl => (
-                            <div key={wl.id} className="relative group">
-                                <button
-                                    onClick={() => setActiveWatchlistId(wl.id)}
-                                    className={cn(
-                                        "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                                        activeWatchlistId === wl.id
-                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                                    {!tab.isSystem && !tab.isDefault && activeWatchlistId === tab.id && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm(`Liste "${tab.name}" wirklich löschen?`)) {
+                                                    deleteWatchlist(tab.id);
+                                                    setActiveWatchlistId('owned');
+                                                }
+                                            }}
+                                            className="absolute top-0.5 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10 flex items-center justify-center cursor-pointer"
+                                            title="Liste löschen"
+                                        >
+                                            <Trash2 className="size-3" />
+                                        </button>
                                     )}
-                                >
-                                    {wl.name}
-                                </button>
-                            </div>
-                        ))}
+                                </div>
+                            );
+                        })}
+
                         {/* Add List Button */}
                         <button
                             onClick={() => {
                                 const name = window.prompt("Name der neuen Liste:");
                                 if (name) createWatchlist(name);
                             }}
-                            className="p-2 iphone-landscape-pill-icon rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors border border-border"
+                            className="p-2 iphone-landscape-pill-icon rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors border border-border flex items-center justify-center shrink-0 cursor-pointer"
                             title="Neue Liste erstellen"
                         >
                             <Plus className="size-4" />
                         </button>
-                        {/* Rename Button (for active list) */}
+
+                        {/* Rename Button (for active non-system list) */}
                         {activeWatchlist && (
                             <button
                                 onClick={() => {
                                     const newName = window.prompt("Neuer Name:", activeWatchlist.name);
                                     if (newName) renameWatchlist(activeWatchlist.id, newName);
                                 }}
-                                className="p-2 ml-2 iphone-landscape-pill-icon rounded-full text-muted-foreground hover:bg-accent transition-colors"
+                                className="p-2 ml-1 iphone-landscape-pill-icon rounded-full text-muted-foreground hover:bg-accent transition-colors border border-border flex items-center justify-center shrink-0 cursor-pointer"
                                 title="Liste umbenennen"
                             >
                                 <Edit className="size-4" />
                             </button>
                         )}
+
+                        {/* Reorder Button */}
+                        <button
+                            onClick={() => setIsReorderModalOpen(true)}
+                            className="p-2 ml-1 iphone-landscape-pill-icon rounded-full bg-secondary/60 text-secondary-foreground hover:bg-secondary transition-colors border border-border flex items-center justify-center shrink-0 cursor-pointer"
+                            title="Listen frei anordnen / sortieren"
+                            aria-label="Listen frei anordnen"
+                        >
+                            <ArrowUpDown className="size-4 text-blue-500" />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -431,6 +698,17 @@ export function Watchlist() {
                             <Trophy className="size-3.5 text-amber-400 shrink-0" />
                             <span>Rangliste (1W / 1M / 3M)</span>
                         </button>
+                        {activeWatchlistId === 'orders' && (
+                            <button
+                                type="button"
+                                onClick={() => setIsOrderBookModalOpen(true)}
+                                className="ml-1 sm:ml-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/25 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs"
+                                title="Auftragsbuch mit allen Details und Limiten öffnen"
+                            >
+                                <ClipboardList className="size-3.5 text-amber-500 shrink-0" />
+                                <span>Auftragsbuch {openOrders.length > 0 && `(${openOrders.length})`}</span>
+                            </button>
+                        )}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs font-medium text-muted-foreground bg-background/50 px-2.5 py-1 rounded-lg border border-border/50">
                         <span className="hidden sm:inline">Legende:</span>
@@ -458,9 +736,14 @@ export function Watchlist() {
                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
                     onBuy={(stock) => handleBuy(stock)}
                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                    onRemove={handleRemoveStock}
                     formatCurrency={formatCurrency}
-                    emptyMessage="Keine Positionen in dieser Ansicht."
+                    emptyMessage={
+                        activeWatchlistId === 'orders'
+                            ? "Keine offenen Aufträge oder gesetzten Limiten vorhanden. Neue Aufträge können im Simulator (Kauf / Verkauf) erfasst werden."
+                            : "Keine Positionen in dieser Ansicht."
+                    }
+                    orderBook={orderBook}
                 />
             </div>
 
@@ -502,6 +785,27 @@ export function Watchlist() {
                         }}
                     />
                 )}
+
+                {/* WatchlistReorderModal for freely moving and sorting tabs */}
+                <WatchlistReorderModal
+                    isOpen={isReorderModalOpen}
+                    onClose={() => setIsReorderModalOpen(false)}
+                    tabs={orderedTabs}
+                    onSaveOrder={saveTabOrder}
+                    onResetOrder={resetTabOrder}
+                    activeTabId={activeWatchlistId}
+                    onSelectTab={(id) => setActiveWatchlistId(id)}
+                />
+
+                {/* OrderBookModal */}
+                <OrderBookModal
+                    isOpen={isOrderBookModalOpen}
+                    onClose={() => setIsOrderBookModalOpen(false)}
+                    onLoadIntoSimulator={(entry) => {
+                        setIsOrderBookModalOpen(false);
+                        navigate(`/calculator?stock=${encodeURIComponent(entry.stockSymbol || entry.stockId || '')}&mode=${entry.mode}&from=watchlist`);
+                    }}
+                />
             </div>
     );
 }
@@ -518,6 +822,7 @@ interface WatchlistTableProps {
     onRemove: (id: string) => void;
     formatCurrency: any;
     emptyMessage: string;
+    orderBook?: OrderBookEntry[];
 }
 
 function WatchlistTable({
@@ -531,7 +836,8 @@ function WatchlistTable({
     onEdit,
     onRemove,
     formatCurrency,
-    emptyMessage
+    emptyMessage,
+    orderBook
 }: WatchlistTableProps) {
     // 0: [Div. Rendite, Aktueller Kurs], 1: [Kauflimit, Verkaufslimit], 2: [EX-Tag, Zahl-Tag], 3: [Aktionen]
     const [mobilePage, setMobilePage] = useState(0);
@@ -974,6 +1280,14 @@ function WatchlistTable({
                     {sortedStocks.map((stock) => {
                         const currentDiv = getCurrentDividendPeriod(stock);
 
+                        const matchingOrder = orderBook?.find((o: any) =>
+                            o.status === 'open' && (
+                                (o.stockId && o.stockId === stock.id) ||
+                                (o.stockSymbol && o.stockSymbol.toLowerCase() === stock.symbol.toLowerCase()) ||
+                                (o.stockIsin && stock.isin && o.stockIsin.toLowerCase() === stock.isin.toLowerCase())
+                            )
+                        );
+
                         const isUnderTarget = stock.targetPrice && stock.currentPrice <= stock.targetPrice;
                         const isOverSell = stock.sellLimit && stock.currentPrice >= stock.sellLimit;
                         const stockChange = stock.previousClose ? ((stock.currentPrice - stock.previousClose) / stock.previousClose) * 100 : 0;
@@ -1015,6 +1329,15 @@ function WatchlistTable({
                                                     >
                                                         <ShoppingBag className="size-2.5 shrink-0" />
                                                         <span>Bestand</span>
+                                                    </span>
+                                                )}
+                                                {matchingOrder && (
+                                                    <span
+                                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shrink-0 leading-none"
+                                                        title={`Offener Auftrag im Auftragsbuch: ${matchingOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} ${matchingOrder.shares} Stk. à ${matchingOrder.limitPrice} ${matchingOrder.currency} (Gültig bis ${matchingOrder.validUntil})`}
+                                                    >
+                                                        <Clock className="size-2.5 shrink-0" />
+                                                        <span>{matchingOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {matchingOrder.shares} Stk.</span>
                                                     </span>
                                                 )}
                                             </div>

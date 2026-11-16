@@ -38,7 +38,7 @@ export function WatchlistPerformanceModal({
     initialAssetFilter = 'stock'
 }: WatchlistPerformanceModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
-    const { stocks, watchlists, positions, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
+    const { stocks, watchlists, positions, orderBook, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
     const navigate = useNavigate();
 
     const [selectedPeriod, setSelectedPeriod] = useState<WatchlistPeriod>(initialPeriod);
@@ -67,7 +67,7 @@ export function WatchlistPerformanceModal({
     }, [activeWatchlistId]);
 
     // Get stock IDs based on the active watchlist
-    const activeWatchlist = currentWatchlistId && currentWatchlistId !== 'owned'
+    const activeWatchlist = currentWatchlistId && currentWatchlistId !== 'owned' && currentWatchlistId !== 'orders'
         ? watchlists.find(w => w.id === currentWatchlistId)
         : null;
 
@@ -77,17 +77,71 @@ export function WatchlistPerformanceModal({
                 .filter(s => positions.some(p => String(p.stockId) === String(s.id)))
                 .map(s => s.id);
         }
+        if (currentWatchlistId === 'orders') {
+            const openOrderSymbols = new Set((orderBook || []).filter(o => o.status === 'open').map(o => o.stockSymbol.toLowerCase()));
+            return stocks
+                .filter(s =>
+                    openOrderSymbols.has(s.symbol.toLowerCase()) ||
+                    (typeof s.targetPrice === 'number' && s.targetPrice > 0) ||
+                    (typeof s.sellLimit === 'number' && s.sellLimit > 0)
+                )
+                .map(s => s.id);
+        }
         if (activeWatchlist) {
             return activeWatchlist.stockIds || [];
         }
         const defaultWatchlist = watchlists.find(w => w.isDefault) || watchlists[0];
         return defaultWatchlist?.stockIds || [];
-    }, [currentWatchlistId, activeWatchlist, stocks, positions, watchlists]);
+    }, [currentWatchlistId, activeWatchlist, stocks, positions, watchlists, orderBook]);
 
     // Determine active tab name for the subtitle
     const activeTabName = currentWatchlistId === 'owned'
         ? 'Bestand'
-        : activeWatchlist?.name || 'Alle Aktien';
+        : currentWatchlistId === 'orders'
+            ? 'Aufträge'
+            : activeWatchlist?.name || 'Alle Aktien';
+
+    const orderedModalTabs = useMemo(() => {
+        const all: Array<{ id: string; name: string }> = [
+            { id: 'owned', name: 'Bestand' },
+            { id: 'orders', name: 'Aufträge' },
+            ...watchlists.map(w => ({ id: w.id, name: w.name }))
+        ];
+        try {
+            const saved = localStorage.getItem('watchlist_tab_order_v1');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    const map = new Map(all.map(t => [t.id, t]));
+                    const res: Array<{ id: string; name: string }> = [];
+                    parsed.forEach(id => {
+                        const it = map.get(id);
+                        if (it) {
+                            res.push(it);
+                            map.delete(id);
+                        }
+                    });
+                    if (map.has('orders')) {
+                        const oIdx = res.findIndex(t => t.id === 'owned');
+                        const oItem = map.get('orders')!;
+                        map.delete('orders');
+                        if (oIdx !== -1) res.splice(oIdx + 1, 0, oItem);
+                        else res.push(oItem);
+                    }
+                    map.forEach(it => res.push(it));
+                    return res;
+                }
+            }
+        } catch (e) {
+            console.error('Error loading tab order in modal', e);
+        }
+        return [
+            { id: 'owned', name: 'Bestand' },
+            { id: 'orders', name: 'Aufträge' },
+            ...watchlists.filter(w => !w.isDefault).map(w => ({ id: w.id, name: w.name })),
+            ...watchlists.filter(w => w.isDefault).map(w => ({ id: w.id, name: w.name }))
+        ];
+    }, [watchlists]);
 
     const isAnyActiveToday = isAnyStockMarketActiveToday(
         stocks.map(s => ({ symbol: s.symbol, currency: s.currency }))
@@ -410,46 +464,19 @@ export function WatchlistPerformanceModal({
 
                 {/* Watchlist Tabs Bar */}
             <div className="px-3 sm:px-4 py-2 border-b border-border/70 bg-muted/20 flex items-center gap-1.5 overflow-x-auto scroller-none shrink-0 pl-14 xl:pl-4">
-                <button
-                    type="button"
-                    onClick={() => setCurrentWatchlistId('owned')}
-                    className={cn(
-                        "px-3 py-1 rounded-full text-xs font-semibold transition-all border shrink-0 cursor-pointer",
-                        currentWatchlistId === 'owned'
-                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                            : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
-                    )}
-                >
-                    Bestand
-                </button>
-                {watchlists.filter(wl => !wl.isDefault).map(wl => (
+                {orderedModalTabs.map(tab => (
                     <button
-                        key={wl.id}
+                        key={tab.id}
                         type="button"
-                        onClick={() => setCurrentWatchlistId(wl.id)}
+                        onClick={() => setCurrentWatchlistId(tab.id)}
                         className={cn(
                             "px-3 py-1 rounded-full text-xs font-semibold transition-all border shrink-0 cursor-pointer whitespace-nowrap",
-                            currentWatchlistId === wl.id
+                            currentWatchlistId === tab.id
                                 ? "bg-primary text-primary-foreground border-primary shadow-xs"
                                 : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
                         )}
                     >
-                        {wl.name}
-                    </button>
-                ))}
-                {watchlists.filter(wl => wl.isDefault).map(wl => (
-                    <button
-                        key={wl.id}
-                        type="button"
-                        onClick={() => setCurrentWatchlistId(wl.id)}
-                        className={cn(
-                            "px-3 py-1 rounded-full text-xs font-semibold transition-all border shrink-0 cursor-pointer whitespace-nowrap",
-                            currentWatchlistId === wl.id
-                                ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
-                        )}
-                    >
-                        {wl.name}
+                        {tab.name}
                     </button>
                 ))}
             </div>
