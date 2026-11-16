@@ -84,6 +84,7 @@ export function PriceHistoryChart({
         return () => window.removeEventListener('resize', handleResize);
     }, []);
     const [isMeasureMode, setIsMeasureMode] = useState(false);
+    const [showFibonacci, setShowFibonacci] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<MeasurePoint[]>([]);
     const lastMeasureClickRef = useRef(0);
     const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null; session?: 'pre' | 'regular' | 'post' } | null>(null);
@@ -498,6 +499,54 @@ export function PriceHistoryChart({
         return { p1, p2, diff, percent };
     }, [measurePoints]);
 
+    const fibonacciData = useMemo(() => {
+        if (!showFibonacci) return null;
+
+        let highVal: number | null = null;
+        let lowVal: number | null = null;
+
+        if (measurement) {
+            highVal = Math.max(measurement.p1.value, measurement.p2.value);
+            lowVal = Math.min(measurement.p1.value, measurement.p2.value);
+        } else if (maxPoint && minPoint && maxPoint.value > minPoint.value) {
+            highVal = maxPoint.value;
+            lowVal = minPoint.value;
+        }
+
+        if (highVal === null || lowVal === null || highVal <= lowVal) {
+            return null;
+        }
+
+        const delta = highVal - lowVal;
+
+        const ratios = [
+            { ratio: 0.000, label: '0.0%', name: 'Hoch', color: '#10b981', dash: '3 3' },
+            { ratio: 0.236, label: '23.6%', name: '', color: '#06b6d4', dash: '2 2' },
+            { ratio: 0.382, label: '38.2%', name: '', color: '#3b82f6', dash: '2 2' },
+            { ratio: 0.500, label: '50.0%', name: 'Mitte', color: '#f59e0b', dash: '3 3' },
+            { ratio: 0.618, label: '61.8%', name: 'Goldener Schnitt', color: '#a855f7', dash: '2 2' },
+            { ratio: 0.786, label: '78.6%', name: 'Support', color: '#ec4899', dash: '2 2' },
+            { ratio: 1.000, label: '100.0%', name: 'Tief', color: '#f43f5e', dash: '3 3' }
+        ];
+
+        const levels = ratios.map(r => {
+            const price = highVal! - (r.ratio * delta);
+            return {
+                ...r,
+                price,
+                formattedPrice: formatCurrency(price, displayCurrency, false)
+            };
+        });
+
+        return {
+            highVal,
+            lowVal,
+            delta,
+            levels,
+            isFromMeasurement: !!measurement
+        };
+    }, [showFibonacci, measurement, maxPoint, minPoint, formatCurrency, displayCurrency]);
+
     const chartContent = (
         <div className={cn(
             "w-full flex flex-col relative transition-all duration-300 select-none min-h-[360px] landscape:min-h-0 h-auto flex-1 pb-2 landscape:pb-0"
@@ -847,6 +896,20 @@ export function PriceHistoryChart({
                                     <Ruler className="size-3.5 shrink-0" />
                                     <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Messen</span>
                                 </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowFibonacci(prev => !prev)}
+                                    className={cn(
+                                        toolbarToggleClass,
+                                        showFibonacci
+                                            ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-700 ring-1 ring-purple-400/50"
+                                            : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
+                                    )}
+                                    title="Fibonacci-Retracements (0%, 23.6%, 38.2%, 50%, 61.8%, 78.6%, 100%) im Chart anzeigen"
+                                >
+                                    <span className="font-serif font-black text-xs leading-none">Φ</span>
+                                    <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Fibonacci</span>
+                                </button>
                             </div>
                         </div>
                     );
@@ -1060,13 +1123,30 @@ export function PriceHistoryChart({
                         </div>
 
                         <div className="flex items-center gap-1 pl-1.5 sm:pl-2 border-l border-white/20">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowFibonacci(prev => !prev);
+                                }}
+                                className={cn(
+                                    "px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer",
+                                    showFibonacci
+                                        ? "bg-purple-500 text-white shadow-sm"
+                                        : "bg-white/20 hover:bg-white/30 text-white"
+                                )}
+                                title="Fibonacci-Linien für diesen Messbereich ein-/ausblenden"
+                            >
+                                <span className="font-serif font-black text-xs">Φ</span>
+                                <span>Fibo</span>
+                            </button>
                             {measurePoints.length > 0 && (
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setMeasurePoints([]);
                                     }}
-                                    className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-[10px] font-bold transition-colors"
+                                    className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer"
                                     title="Messung zurücksetzen"
                                 >
                                     Neu
@@ -1078,12 +1158,36 @@ export function PriceHistoryChart({
                                     setIsMeasureMode(false);
                                     setMeasurePoints([]);
                                 }}
-                                className="bg-white/20 hover:bg-white/40 p-1.5 rounded-full transition-colors"
+                                className="bg-white/20 hover:bg-white/40 p-1.5 rounded-full transition-colors cursor-pointer"
                                 title="Messen beenden"
                             >
                                 <X className="size-3.5" />
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Fibonacci Level Overview Bar */}
+            {fibonacciData && (
+                <div className="w-full flex items-center gap-1.5 overflow-x-auto scroller-none py-1.5 px-3 mb-2 rounded-xl bg-purple-500/10 border border-purple-500/25 text-xs animate-in fade-in duration-150 shrink-0">
+                    <span className="font-bold text-purple-600 dark:text-purple-400 shrink-0 flex items-center gap-1 text-xs">
+                        <span className="font-serif font-black text-sm">Φ</span>
+                        <span>Fibonacci:</span>
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap sm:flex-nowrap">
+                        {fibonacciData.levels.map(lvl => (
+                            <span
+                                key={lvl.label}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-card border border-border shadow-2xs whitespace-nowrap"
+                                style={{ color: lvl.color }}
+                                title={`${lvl.label} ${lvl.name || ''}: ${lvl.formattedPrice}`}
+                            >
+                                <span className="opacity-75">{lvl.label}</span>
+                                <span>{lvl.formattedPrice}</span>
+                                {lvl.name && <span className="text-[9px] font-sans opacity-60 ml-0.5 hidden md:inline">({lvl.name})</span>}
+                            </span>
+                        ))}
                     </div>
                 </div>
             )}
@@ -1569,6 +1673,38 @@ export function PriceHistoryChart({
                                     strokeOpacity={0.7}
                                 />
                             )}
+                            {/* Fibonacci Retracements */}
+                            {fibonacciData && fibonacciData.levels.map((level) => (
+                                <ReferenceLine
+                                    key={`fibo-${level.label}`}
+                                    y={level.price}
+                                    stroke={level.color}
+                                    strokeDasharray={level.dash}
+                                    strokeWidth={level.ratio === 0.618 || level.ratio === 0.786 ? 1.5 : 1}
+                                    strokeOpacity={0.85}
+                                    label={(props: any) => {
+                                        const { viewBox } = props || {};
+                                        if (!viewBox) return <g />;
+                                        const { x, y } = viewBox;
+                                        return (
+                                            <g className="select-none pointer-events-none">
+                                                <text
+                                                    x={x + 6}
+                                                    y={y - 3}
+                                                    fill={level.color}
+                                                    stroke="#0f172a"
+                                                    strokeWidth={2.5}
+                                                    paintOrder="stroke fill"
+                                                    fontSize={9.5}
+                                                    fontWeight={700}
+                                                >
+                                                    Fibo {level.label}{level.name ? ` ${level.name}` : ''} · {level.formattedPrice}
+                                                </text>
+                                            </g>
+                                        );
+                                    }}
+                                />
+                            ))}
                             <Tooltip
                                 content={() => null}
                                 cursor={{ stroke: 'var(--primary)', strokeWidth: 1, strokeDasharray: '4 4' }}
