@@ -246,7 +246,11 @@ export function PriceHistoryChart({
 
     const data = useMemo(() => {
         if (conversionRate === 1) return rawData;
-        return rawData.map(d => ({ ...d, value: d.value * conversionRate }));
+        return rawData.map(d => ({
+            ...d,
+            value: d.value * conversionRate,
+            sma200: (d.sma200 !== undefined && d.sma200 !== null) ? d.sma200 * conversionRate : d.sma200
+        }));
     }, [rawData, conversionRate]);
 
     // Apply conversion to props
@@ -349,28 +353,35 @@ export function PriceHistoryChart({
 
     // SMA calculation logic
     const sma200Data = useMemo(() => {
-        // Use data (already converted or raw)
-        const sourceData = data;
+        // Do not display an invalid 200-period candle average on short/intraday ranges
+        if (['1D', '1W', '1M', '3M'].includes(selectedRange)) return null;
 
-        // Need at least 200 points + 1 to show a line
-        if (sourceData.length < 200) return null;
+        // 1. If data already has precomputed 200-day moving average from yahoo-finance service, use it!
+        const hasPrecomputed = data.some(d => d.sma200 !== undefined && d.sma200 !== null);
+        if (hasPrecomputed) {
+            return data.map(d => ({
+                date: d.date,
+                value: (d.sma200 !== undefined && d.sma200 !== null) ? d.sma200 : null
+            }));
+        }
+
+        // 2. Fallback for mock/demo data:
+        // For weekly data (5Y, BUY), 200 trading days is 40 weeks (40 * 5 = 200):
+        const windowSize = (selectedRange === '5Y' || selectedRange === 'BUY') ? 40 : 200;
+        if (data.length < windowSize) return null;
 
         const smaPoints: { date: string; value: number | null }[] = [];
-
-        // Calculate SMA for every point possible
-        for (let i = 0; i < sourceData.length; i++) {
-            if (i < 199) {
-                // Not enough history for this point
-                smaPoints.push({ date: sourceData[i].date, value: null });
+        for (let i = 0; i < data.length; i++) {
+            if (i < windowSize - 1) {
+                smaPoints.push({ date: data[i].date, value: null });
                 continue;
             }
-            // Average of last 200 points (including current)
-            const slice = sourceData.slice(i - 199, i + 1);
+            const slice = data.slice(i - windowSize + 1, i + 1);
             const sum = slice.reduce((acc, curr) => acc + curr.value, 0);
-            smaPoints.push({ date: sourceData[i].date, value: sum / 200 });
+            smaPoints.push({ date: data[i].date, value: sum / windowSize });
         }
         return smaPoints;
-    }, [data]);
+    }, [data, selectedRange]);
 
     // Filter display data based on selectedRange (Client-Side Slicing)
     const displayData = useMemo(() => {
@@ -577,11 +588,11 @@ export function PriceHistoryChart({
         const ratios = [
             { ratio: 0.000, label: '0.0%', name: 'Hoch', color: '#10b981', dash: '3 3' },
             { ratio: 0.236, label: '23.6%', name: '', color: '#06b6d4', dash: '2 2' },
-            { ratio: 0.382, label: '38.2%', name: '', color: '#3b82f6', dash: '2 2' },
-            { ratio: 0.500, label: '50.0%', name: 'Mitte', color: '#f59e0b', dash: '3 3' },
-            { ratio: 0.618, label: '61.8%', name: 'Goldener Schnitt', color: '#a855f7', dash: '2 2' },
-            { ratio: 0.786, label: '78.6%', name: 'Support', color: '#ec4899', dash: '2 2' },
-            { ratio: 1.000, label: '100.0%', name: 'Tief', color: '#f43f5e', dash: '3 3' }
+            { ratio: 0.382, label: '38.2%', name: '', color: '#38bdf8', dash: '2 2' },
+            { ratio: 0.500, label: '50.0%', name: 'Mitte', color: '#a855f7', dash: '3 3' },
+            { ratio: 0.618, label: '61.8%', name: 'Goldener Schnitt', color: '#eab308', dash: '2 2' },
+            { ratio: 0.786, label: '78.6%', name: 'Support', color: '#f472b6', dash: '2 2' },
+            { ratio: 1.000, label: '100.0%', name: 'Tief', color: '#f87171', dash: '3 3' }
         ];
 
         const levels = ratios.map(r => {
@@ -1318,9 +1329,9 @@ export function PriceHistoryChart({
                                 style={{ color: lvl.color }}
                                 title={`${lvl.label} ${lvl.name || ''}: ${lvl.formattedPrice}`}
                             >
-                                <span className="opacity-75">{lvl.label}</span>
+                                <span>{lvl.label}</span>
                                 <span>{lvl.formattedPrice}</span>
-                                {lvl.name && <span className="text-[9px] font-sans opacity-60 ml-0.5 hidden md:inline">· {lvl.name}</span>}
+                                {lvl.name && <span className="text-[10px] font-sans font-bold ml-0.5 hidden md:inline">· {lvl.name}</span>}
                             </span>
                         ))}
                     </div>

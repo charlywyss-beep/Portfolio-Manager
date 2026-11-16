@@ -8,22 +8,25 @@ export interface ChartDataPoint {
     date: string;
     value: number;
     session?: 'pre' | 'regular' | 'post';
+    sma200?: number | null;
 }
 
 export type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y' | 'BUY';
 
 // Helper to get period and interval for Yahoo Finance
+// For longer ranges (6M, 1Y, 3Y, 5Y), fetch extended history so the 200-day moving average (SMA 200)
+// can be calculated across the entire visible chart window.
 const getYahooParams = (range: TimeRange): { period: string; interval: string } => {
     switch (range) {
         case '1D': return { period: '1d', interval: '5m' };
         case '1W': return { period: '5d', interval: '15m' };
         case '1M': return { period: '1mo', interval: '15m' };
         case '3M': return { period: '3mo', interval: '60m' };
-        case '6M': return { period: '6mo', interval: '60m' };
-        case '1Y': return { period: '1y', interval: '1d' };
-        case '3Y': return { period: '3y', interval: '1d' };
-        case '5Y': return { period: '5y', interval: '1wk' };
-        case 'BUY': return { period: '5y', interval: '1wk' };
+        case '6M': return { period: '2y', interval: '1d' };
+        case '1Y': return { period: '2y', interval: '1d' };
+        case '3Y': return { period: '5y', interval: '1d' };
+        case '5Y': return { period: '10y', interval: '1wk' };
+        case 'BUY': return { period: '10y', interval: '1wk' };
     }
 };
 
@@ -194,7 +197,47 @@ export async function fetchStockHistory(
             }
         }
 
-        return { data: points.length > 0 ? points : null, currency: resultCurrency, previousClose: normalizedPrevClose, open: normalizedOpen, regularMarketPrice: normalizedRegPrice, regularMarketTime: normalizedRegTime };
+        // Precompute accurate 200-day moving average (SMA 200) for daily and weekly ranges
+        const isWeekly = interval === '1wk';
+        const isDaily = interval === '1d';
+        if (isDaily || isWeekly) {
+            const smaWindow = isWeekly ? 40 : 200; // 40 weeks = 200 trading days
+            for (let i = 0; i < points.length; i++) {
+                if (i >= smaWindow - 1) {
+                    let sum = 0;
+                    for (let k = i - smaWindow + 1; k <= i; k++) {
+                        sum += points[k].value;
+                    }
+                    points[i].sma200 = sum / smaWindow;
+                } else {
+                    points[i].sma200 = null;
+                }
+            }
+        }
+
+        // Slice points to the exact requested range window (discarding the extra pre-history used for SMA 200)
+        let finalPoints = points;
+        if (points.length > 0 && ['6M', '1Y', '3Y', '5Y'].includes(range)) {
+            const lastTime = new Date(points[points.length - 1].date).getTime();
+            let cutoffTime = 0;
+            if (range === '6M') {
+                cutoffTime = lastTime - 183 * 24 * 3600 * 1000;
+            } else if (range === '1Y') {
+                cutoffTime = lastTime - 365.25 * 24 * 3600 * 1000;
+            } else if (range === '3Y') {
+                cutoffTime = lastTime - 3 * 365.25 * 24 * 3600 * 1000;
+            } else if (range === '5Y') {
+                cutoffTime = lastTime - 5 * 365.25 * 24 * 3600 * 1000;
+            }
+            if (cutoffTime > 0) {
+                const filtered = points.filter(p => new Date(p.date).getTime() >= cutoffTime);
+                if (filtered.length > 0) {
+                    finalPoints = filtered;
+                }
+            }
+        }
+
+        return { data: finalPoints.length > 0 ? finalPoints : null, currency: resultCurrency, previousClose: normalizedPrevClose, open: normalizedOpen, regularMarketPrice: normalizedRegPrice, regularMarketTime: normalizedRegTime };
 
     } catch (error) {
         console.error("Yahoo Finance Proxy Error:", error);
