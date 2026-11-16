@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins, Globe, Save, Check, Sparkles, ShoppingBag, Compass, Calendar } from 'lucide-react';
+import { BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins, Globe, Save, Check, Sparkles, ShoppingBag, Compass, Calendar, Maximize2, X, FileText } from 'lucide-react';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
@@ -39,11 +39,25 @@ export function SeasonalityPage() {
     const [notes, setNotes] = useState(activeStock?.notes || '');
     const [isSavingNotes, setIsSavingNotes] = useState(false);
     const [notesSavedFeedback, setNotesSavedFeedback] = useState(false);
+    const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const adjustTextareaHeight = () => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${Math.max(160, textareaRef.current.scrollHeight)}px`;
+        }
+    };
 
     useEffect(() => {
         setNotes(activeStock?.notes || '');
         setNotesSavedFeedback(false);
+        setTimeout(adjustTextareaHeight, 50);
     }, [activeStock?.id]);
+
+    useEffect(() => {
+        adjustTextareaHeight();
+    }, [notes]);
 
     const handleSaveNotes = async () => {
         if (!activeStock) return;
@@ -824,12 +838,12 @@ export function SeasonalityPage() {
 
                             {/* Persönliche Saisonalitäts-Strategie & Notizen */}
                             <div className="bg-card border border-border rounded-xl p-4 md:p-6 shadow-sm space-y-3">
-                                <div className="flex items-center justify-between pb-2 border-b border-border">
+                                <div className="flex items-center justify-between pb-2 border-b border-border flex-wrap gap-2">
                                     <h3 className="font-bold text-base md:text-lg flex items-center gap-2">
-                                        <Save className="size-4 md:size-5 text-purple-500 shrink-0" />
+                                        <FileText className="size-4 md:size-5 text-purple-500 shrink-0" />
                                         Persönliche Strategie &amp; Notizen zu {activeStock?.name || activeSymbol}
                                     </h3>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         {seasonalStrategy && (
                                             <button
                                                 type="button"
@@ -841,13 +855,23 @@ export function SeasonalityPage() {
                                                         `• Ziel / Limit:\n`;
                                                     setNotes(prev => prev ? `${prev.trim()}\n\n${template}` : template);
                                                 }}
-                                                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-muted hover:bg-muted/70 text-foreground transition-all"
+                                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-border bg-muted/60 hover:bg-muted text-foreground transition-all"
                                                 title="Saisonale Kurz-Zusammenfassung als Vorlage in das Notizfeld einfügen"
                                             >
                                                 <Sparkles className="size-3.5 text-amber-400" />
-                                                <span>Vorlage einfügen</span>
+                                                <span className="hidden sm:inline">Vorlage einfügen</span>
+                                                <span className="sm:hidden">Vorlage</span>
                                             </button>
                                         )}
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsNotesModalOpen(true)}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 transition-all shadow-sm cursor-pointer"
+                                            title="Notizfeld in großem Dialogfenster öffnen"
+                                        >
+                                            <Maximize2 className="size-3.5" />
+                                            <span>Aufgehen (Großansicht)</span>
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={handleSaveNotes}
@@ -876,23 +900,169 @@ export function SeasonalityPage() {
                                     </div>
                                 </div>
 
-                                <textarea
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    placeholder={activeStock ? `Persönliche Notizen, Timing-Plan oder Limit-Ziele für ${activeStock.name || activeSymbol} festhalten (wird auch auf der Detailseite synchronisiert)...` : "Aktie auswählen..."}
-                                    rows={4}
-                                    disabled={!activeStock}
-                                    className="w-full bg-background border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y min-h-[90px]"
-                                />
-                                <p className="text-[11px] text-muted-foreground">
-                                    💡 Notizen werden automatisch mit der Aktiendetailseite synchronisiert und dauerhaft im Portfolio gespeichert.
-                                </p>
+                                <div className="relative">
+                                    <textarea
+                                        ref={textareaRef}
+                                        value={notes}
+                                        onChange={(e) => {
+                                            setNotes(e.target.value);
+                                            adjustTextareaHeight();
+                                        }}
+                                        onDoubleClick={() => setIsNotesModalOpen(true)}
+                                        placeholder={activeStock ? `Persönliche Notizen, Timing-Plan oder Limit-Ziele für ${activeStock.name || activeSymbol} festhalten (wird auch auf der Detailseite synchronisiert)...` : "Aktie auswählen..."}
+                                        disabled={!activeStock}
+                                        className="w-full bg-background border border-border rounded-lg p-3.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y min-h-[160px] leading-relaxed transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsNotesModalOpen(true)}
+                                        className="absolute top-2.5 right-2.5 p-1.5 rounded-md bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-all border border-border/50 shadow-sm cursor-pointer"
+                                        title="In Großansicht öffnen"
+                                    >
+                                        <Maximize2 className="size-3.5" />
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px] text-muted-foreground flex-wrap gap-2">
+                                    <p>
+                                        💡 Notizen werden automatisch mit der Aktiendetailseite synchronisiert und dauerhaft im Portfolio gespeichert.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsNotesModalOpen(true)}
+                                        className="text-primary hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <Maximize2 className="size-3" />
+                                        <span>Notizfeld im großen Vollfenster öffnen (oder Doppelklick)</span>
+                                    </button>
+                                </div>
                             </div>
                         </>
                     )}
                 </div>
 
             </div>
+
+            {/* Großansicht Modal für Notizen */}
+            {isNotesModalOpen && (
+                <div
+                    className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setIsNotesModalOpen(false)}
+                >
+                    <div
+                        className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/20">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg">
+                                    <FileText className="size-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-base sm:text-lg text-foreground">
+                                        Persönliche Strategie &amp; Notizen • {activeStock?.name || activeSymbol}
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Großansicht zum bequemen Lesen &amp; Schreiben • Synchronisiert mit Portfolio
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsNotesModalOpen(false)}
+                                className="p-1.5 hover:bg-muted text-muted-foreground hover:text-foreground rounded-lg transition-colors cursor-pointer"
+                                title="Schließen"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        {/* Sub-bar */}
+                        <div className="px-5 py-2.5 bg-muted/10 border-b border-border flex items-center justify-between gap-3 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                {seasonalStrategy && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const template = `Saisonaler Fahrplan (${years} Jahre):\n` +
+                                                `• Kauf-Fenster: ${MONTH_NAMES_FULL[seasonalStrategy.monthBeforeStrongest.month]} (vor ${MONTH_NAMES_FULL[seasonalStrategy.strongestMonth.month]}-Rallye)\n` +
+                                                `• Verkaufs-Fenster: ${MONTH_NAMES_FULL[seasonalStrategy.strongestMonth.month]} & ${MONTH_NAMES_FULL[seasonalStrategy.secondStrongest.month]}\n` +
+                                                (seasonalStrategy.exMonthInfo ? `• Ex-Tag: ${seasonalStrategy.exMonthInfo.dateStr} (${seasonalStrategy.exMonthInfo.name} historisch ${seasonalStrategy.exMonthInfo.avgReturn >= 0 ? '+' : ''}${seasonalStrategy.exMonthInfo.avgReturn.toFixed(2)}%)\n` : '') +
+                                                `• Ziel / Limit:\n`;
+                                            setNotes(prev => prev ? `${prev.trim()}\n\n${template}` : template);
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-all shadow-sm cursor-pointer"
+                                    >
+                                        <Sparkles className="size-3.5 text-amber-400" />
+                                        <span>Saisonale Vorlage einfügen</span>
+                                    </button>
+                                )}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                <span>{notes.split('\n').length} Zeilen</span>
+                                <span>•</span>
+                                <span>{notes.length} Zeichen</span>
+                            </div>
+                        </div>
+
+                        {/* Modal Body: Large readable editor */}
+                        <div className="p-5 flex-1 min-h-[350px] max-h-[65vh] flex flex-col">
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Persönliche Notizen, Timing-Plan, Einstiegs- und Kursziele hier erfassen..."
+                                className="w-full flex-1 min-h-[320px] p-4 text-sm sm:text-base leading-relaxed bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y font-sans"
+                                autoFocus
+                            />
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between px-5 py-3.5 bg-muted/20 border-t border-border">
+                            <span className="text-xs text-muted-foreground hidden sm:inline">
+                                💡 Gespeicherte Notizen bleiben dauerhaft erhalten und sind auch in den Stammdaten sichtbar.
+                            </span>
+                            <div className="flex items-center gap-2.5 ml-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsNotesModalOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium hover:bg-muted text-foreground rounded-lg transition-colors border border-border cursor-pointer"
+                                >
+                                    Schließen
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        await handleSaveNotes();
+                                        setIsNotesModalOpen(false);
+                                    }}
+                                    disabled={isSavingNotes || !activeStock}
+                                    className={cn(
+                                        "px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 cursor-pointer",
+                                        notesSavedFeedback
+                                            ? "bg-green-500 text-white"
+                                            : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                    )}
+                                >
+                                    {notesSavedFeedback ? (
+                                        <>
+                                            <Check className="size-4" />
+                                            <span>Gespeichert!</span>
+                                        </>
+                                    ) : isSavingNotes ? (
+                                        <span>Speichern...</span>
+                                    ) : (
+                                        <>
+                                            <Save className="size-4" />
+                                            <span>Speichern &amp; Schließen</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
