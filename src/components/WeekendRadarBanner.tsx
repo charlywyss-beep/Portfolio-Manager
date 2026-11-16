@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, TrendingUp, TrendingDown, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { useExchangeRates } from '../context/ExchangeRateContext';
+import { convertToCHF } from '../utils/currency';
 import { InfoHelp } from './InfoHelp';
 import { cn } from '../utils';
 
@@ -25,9 +27,104 @@ interface WeekendRadarBannerProps {
     showPortfolioEstimate?: boolean;
 }
 
+// Helper: Position-specific beta and index reference based on regional home market, ETF type, sector & dividend profile
+function getPositionEstimatedBeta(pos: any, nqPct: number, esPct: number) {
+    const cur = (pos.stock?.currency || 'USD').toUpperCase();
+    const sector = (pos.stock?.sector || '').toLowerCase();
+    const name = (pos.stock?.name || '').toLowerCase();
+    const type = (pos.stock?.type || '').toLowerCase();
+    const isEtf = type === 'etf' || name.includes('etf') || name.includes('ftse') || name.includes('msci') || name.includes('vanguard') || name.includes('ishares');
+    const yieldPct = Number(pos.stock?.dividendYield || 0);
+    const isHighDiv = yieldPct >= 3.0 || name.includes('dividend') || name.includes('income') || name.includes('aristocrat');
+
+    const isTech = sector.includes('tech') || 
+                   sector.includes('software') || 
+                   sector.includes('semiconductor') || 
+                   sector.includes('halbleiter') ||
+                   sector.includes('it') || 
+                   sector.includes('kommunikation') ||
+                   sector.includes('communication');
+
+    const isDefensive = sector.includes('energie') || 
+                        sector.includes('energy') || 
+                        sector.includes('öl') ||
+                        sector.includes('oil') ||
+                        sector.includes('gas') ||
+                        sector.includes('versorger') || 
+                        sector.includes('utilities') || 
+                        sector.includes('gesundheit') || 
+                        sector.includes('health') || 
+                        sector.includes('pharma') || 
+                        sector.includes('konsum') || 
+                        sector.includes('staples') || 
+                        sector.includes('tabak') ||
+                        sector.includes('tobacco') ||
+                        sector.includes('immobilien') || 
+                        sector.includes('real estate') || 
+                        sector.includes('reit') ||
+                        sector.includes('rohstoff') ||
+                        sector.includes('material') ||
+                        sector.includes('finanz') ||
+                        sector.includes('bank') ||
+                        sector.includes('versicher');
+
+    // 1. ETFs: Berücksichtigt Welt-Streuung und Dividenden-Strategie
+    if (isEtf) {
+        const isWorld = name.includes('world') || name.includes('all-world') || name.includes('acwi') || name.includes('global');
+        if (cur === 'CHF') {
+            return { basePct: esPct, beta: 0.20 };
+        }
+        if (isWorld && isHighDiv) {
+            // z. B. Vanguard FTSE All-World High Dividend
+            return { basePct: esPct, beta: 0.30 };
+        }
+        if (isWorld) {
+            // z. B. Vanguard FTSE All-World (weltweit gestreut, nur ~60% US)
+            return { basePct: esPct, beta: 0.38 };
+        }
+        if (isHighDiv) {
+            return { basePct: esPct, beta: 0.35 };
+        }
+        if (cur === 'EUR') {
+            return { basePct: esPct, beta: 0.40 };
+        }
+        if (isTech) {
+            return { basePct: nqPct, beta: 0.85 };
+        }
+        return { basePct: esPct, beta: 0.55 };
+    }
+
+    // 2. Schweizer Einzeltitel (CHF: Nestlé, Novartis, Roche, Swiss Re... historisch extrem defensiv & krisenresistent)
+    if (cur === 'CHF') {
+        if (isTech) return { basePct: nqPct, beta: 0.50 };
+        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.15 };
+        return { basePct: esPct, beta: 0.20 };
+    }
+
+    // 3. UK & Commonwealth (GBP: BAT, Unilever, Shell, Rio Tinto etc.)
+    if (cur === 'GBP' || cur === 'GBp') {
+        if (isTech) return { basePct: nqPct, beta: 0.60 };
+        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.20 };
+        return { basePct: esPct, beta: 0.25 };
+    }
+
+    // 4. Europäische Titel (EUR: Dividenden-Schwergewichte)
+    if (cur === 'EUR') {
+        if (isTech) return { basePct: nqPct, beta: 0.70 };
+        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.25 };
+        return { basePct: esPct, beta: 0.35 };
+    }
+
+    // 5. US-Aktien & ADRs (USD)
+    if (isTech) return { basePct: nqPct, beta: 0.95 };
+    if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.35 };
+    return { basePct: esPct, beta: 0.55 };
+}
+
 export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: WeekendRadarBannerProps) {
     const navigate = useNavigate();
     const { totals, positions: enrichedPositions } = usePortfolioData();
+    const { rates } = useExchangeRates();
 
     // Collapsed state in localStorage
     const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -135,18 +232,47 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
         return (nqPct + esPct) / 2;
     }, [nqQuote, esQuote]);
 
-    // Portfolio estimate (approx based on stock weight & futures trend)
+    // Portfolio estimate (realistic position-weighted based on currency & sector)
     const portfolioEstimate = useMemo(() => {
         const stockVal = totals.totalValueStock || 0;
         if (stockVal <= 0) return null;
-        // Dampen volatility slightly (beta approx 0.85)
-        const estimatedChangePct = avgFuturesChange * 0.85;
-        const estimatedGainCHF = (stockVal * (estimatedChangePct / 100));
+
+        const nqPct = nqQuote?.changePercent ?? 0;
+        const esPct = esQuote?.changePercent ?? 0;
+
+        if (enrichedPositions && enrichedPositions.length > 0) {
+            let totalEstimatedGainCHF = 0;
+            let calculatedValCHF = 0;
+
+            for (const pos of enrichedPositions) {
+                if (!pos || !pos.stock) continue;
+                const cur = pos.stock.currency || 'USD';
+                const posValCHF = convertToCHF(pos.currentValue, cur, rates);
+                if (posValCHF <= 0) continue;
+
+                calculatedValCHF += posValCHF;
+                const { basePct, beta } = getPositionEstimatedBeta(pos, nqPct, esPct);
+                const posExpectedPct = basePct * beta;
+                totalEstimatedGainCHF += posValCHF * (posExpectedPct / 100);
+            }
+
+            if (calculatedValCHF > 0) {
+                const weightedPct = (totalEstimatedGainCHF / calculatedValCHF) * 100;
+                return {
+                    pct: weightedPct,
+                    gainCHF: totalEstimatedGainCHF
+                };
+            }
+        }
+
+        // Fallback: Realistisches defensives Misch-Beta von 0.25 (statt 0.85) für Dividenden-/Welt-Depot
+        const estimatedChangePct = avgFuturesChange * 0.25;
+        const estimatedGainCHF = stockVal * (estimatedChangePct / 100);
         return {
             pct: estimatedChangePct,
             gainCHF: estimatedGainCHF
         };
-    }, [totals.totalValueStock, avgFuturesChange]);
+    }, [totals.totalValueStock, enrichedPositions, rates, nqQuote, esQuote, avgFuturesChange]);
 
     const formatNum = (val: number | undefined, dec = 2) => {
         if (val === undefined || isNaN(val)) return '-';
@@ -339,11 +465,11 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                                             items={[
                                                 {
                                                     term: "Wie wird die Prozentzahl berechnet?",
-                                                    text: "Die Tendenz (-0.70%) berechnet sich aus dem gewichteten Durchschnitt der US-Leit-Futures (Nasdaq 100 & S&P 500), angepasst an die typische Schwankungsbreite (Beta-Faktor 0.85) deines gesamten Aktienbestands."
+                                                    text: "Die Tendenz berechnet sich aus einer positionsgenauen Gewichtung deines Depots nach Währung und Sektor: Schweizer Standardwerte (SMI) fliessen mit einem defensiven Beta von 0.30 ein, europäische Werte mit 0.40 bis 0.50 und US-Titel je nach Branche (Tech vs. Substanz/Energie) mit 0.65 bis 1.00. Das verhindert unrealistische Übertreibungen bei reinen US-Futures-Ausschlägen."
                                                 },
                                                 {
                                                     term: "Wie entsteht der Franken-Betrag?",
-                                                    text: "Die geschätzte Eröffnungstendenz (-0.70%) wird auf den Gesamtwert deiner Aktienpositionen (ca. 430'000 CHF) hochgerechnet. Daraus ergibt sich die voraussichtliche Auswirkung auf dein Depot (-3'028 CHF)."
+                                                    text: "Die gewichtete Eröffnungstendenz wird für jede einzelne Aktienposition in CHF umgerechnet und summiert. Daraus ergibt sich die realistische Gesamtauswirkung auf dein Portfolio."
                                                 },
                                                 {
                                                     term: "Wofür dient diese Schätzung?",
