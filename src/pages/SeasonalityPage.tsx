@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins, Globe } from 'lucide-react';
+import { BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins, Globe, Save, Check, Sparkles, ShoppingBag, Compass, Calendar } from 'lucide-react';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
@@ -14,7 +14,7 @@ const MONTH_NAMES_FULL = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 
 export function SeasonalityPage() {
     const { symbol: symbolParam } = useParams<{ symbol?: string }>();
     const navigate = useNavigate();
-    const { stocks, positions, watchlists } = usePortfolio();
+    const { stocks, positions, watchlists, updateStock } = usePortfolio();
 
     const [inputSymbol, setInputSymbol] = useState(symbolParam || '');
     const [activeSymbol, setActiveSymbol] = useState(symbolParam || '');
@@ -31,6 +31,129 @@ export function SeasonalityPage() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const chartRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLDivElement>(null);
+
+    const activeStock = useMemo(() => {
+        return stocks.find(s => s.symbol.toUpperCase() === activeSymbol.toUpperCase());
+    }, [stocks, activeSymbol]);
+
+    const [notes, setNotes] = useState(activeStock?.notes || '');
+    const [isSavingNotes, setIsSavingNotes] = useState(false);
+    const [notesSavedFeedback, setNotesSavedFeedback] = useState(false);
+
+    useEffect(() => {
+        setNotes(activeStock?.notes || '');
+        setNotesSavedFeedback(false);
+    }, [activeStock?.id]);
+
+    const handleSaveNotes = async () => {
+        if (!activeStock) return;
+        setIsSavingNotes(true);
+        await new Promise(r => setTimeout(r, 350));
+        updateStock(activeStock.id, { notes });
+        setIsSavingNotes(false);
+        setNotesSavedFeedback(true);
+        setTimeout(() => setNotesSavedFeedback(false), 2500);
+    };
+
+    const upcomingDividendDates = useMemo(() => {
+        if (!activeStock) return { exDate: null, payDate: null, rawExDate: null };
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const pairs: { exDate?: string; payDate?: string }[] = [];
+        if (activeStock.dividendDates && Array.isArray(activeStock.dividendDates)) {
+            pairs.push(...activeStock.dividendDates);
+        }
+        if (activeStock.dividendExDate || activeStock.dividendPayDate) {
+            pairs.push({ exDate: activeStock.dividendExDate, payDate: activeStock.dividendPayDate });
+        }
+
+        let nextPair: { exDate?: string; payDate?: string } | null = null;
+        let minFutureDiff = Infinity;
+
+        for (const p of pairs) {
+            const exTime = p.exDate ? new Date(p.exDate).getTime() : NaN;
+            const payTime = p.payDate ? new Date(p.payDate).getTime() : NaN;
+            const targetTime = !isNaN(exTime) ? exTime : payTime;
+
+            if (!isNaN(targetTime)) {
+                const diff = targetTime - now.getTime();
+                if (diff >= 0 && diff < minFutureDiff) {
+                    minFutureDiff = diff;
+                    nextPair = p;
+                }
+            }
+        }
+
+        if (!nextPair && pairs.length > 0) {
+            nextPair = pairs.filter(p => p.exDate || p.payDate).pop() || null;
+        }
+
+        const fmt = (d?: string) => {
+            if (!d) return null;
+            try {
+                const parts = d.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+                }
+                return new Date(d).toLocaleDateString('de-CH');
+            } catch {
+                return d;
+            }
+        };
+
+        return {
+            exDate: fmt(nextPair?.exDate),
+            payDate: fmt(nextPair?.payDate),
+            rawExDate: nextPair?.exDate ? new Date(nextPair.exDate) : null
+        };
+    }, [activeStock]);
+
+    const seasonalStrategy = useMemo(() => {
+        if (!data || data.length !== 12) return null;
+
+        const currentMonthIdx = new Date().getMonth(); // 0 = Jan .. 11 = Dec
+        const currentMonthData = data[currentMonthIdx];
+
+        // Sort by avgReturn desc and asc
+        const sortedByReturnDesc = [...data].sort((a, b) => b.avgReturn - a.avgReturn);
+        const sortedByReturnAsc = [...data].sort((a, b) => a.avgReturn - b.avgReturn);
+
+        const strongestMonth = sortedByReturnDesc[0];
+        const secondStrongest = sortedByReturnDesc[1];
+        const weakestMonth = sortedByReturnAsc[0];
+
+        // Best buying prep window: Month right before strongest rally
+        const monthBeforeStrongestIdx = (strongestMonth.month + 11) % 12;
+        const monthBeforeStrongest = data[monthBeforeStrongestIdx];
+
+        // Check if nextExDate is in data
+        let exMonthInfo: { monthIdx: number; name: string; avgReturn: number; winRate: number; dateStr: string } | null = null;
+        if (upcomingDividendDates.rawExDate) {
+            const exM = upcomingDividendDates.rawExDate.getMonth();
+            const exData = data[exM];
+            if (exData) {
+                exMonthInfo = {
+                    monthIdx: exM,
+                    name: MONTH_NAMES_FULL[exM],
+                    avgReturn: exData.avgReturn,
+                    winRate: Math.round(exData.positiveRate * 100),
+                    dateStr: upcomingDividendDates.exDate || ''
+                };
+            }
+        }
+
+        return {
+            currentMonthIdx,
+            currentMonthName: MONTH_NAMES_FULL[currentMonthIdx],
+            currentMonthData,
+            strongestMonth,
+            secondStrongest,
+            weakestMonth,
+            monthBeforeStrongest,
+            exMonthInfo
+        };
+    }, [data, upcomingDividendDates]);
 
     const portfolioStocks = stocks.filter(s => positions.some(p => p.stockId === s.id));
     const watchlistStockIds = new Set(watchlists.flatMap(w => w.stockIds || []));
@@ -586,6 +709,184 @@ export function SeasonalityPage() {
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+
+                            {/* Saisonaler Strategie-Kompass & Auswertung */}
+                            {seasonalStrategy && (
+                                <div className="bg-card border border-border rounded-xl p-4 md:p-6 shadow-sm space-y-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="p-2 rounded-xl bg-blue-500/15 text-blue-500 shrink-0">
+                                                <Compass className="size-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-base md:text-lg flex items-center gap-2">
+                                                    Saisonaler Strategie-Kompass • {activeStock?.name || activeSymbol}
+                                                </h3>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Konkrete Handlungsempfehlungen basierend auf {years} Jahren Statistik
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {/* Status-Badge für aktuellen Monat */}
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/40 text-xs font-semibold shrink-0">
+                                            <span className="size-2 rounded-full bg-blue-500 animate-pulse" />
+                                            <span>Aktueller Monat {seasonalStrategy.currentMonthName}:</span>
+                                            <span className={cn(
+                                                "font-bold tabular-nums",
+                                                seasonalStrategy.currentMonthData.avgReturn >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}>
+                                                {seasonalStrategy.currentMonthData.avgReturn >= 0 ? '+' : ''}{seasonalStrategy.currentMonthData.avgReturn.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* 3 Strategie-Karten */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                                        {/* 1. Kauf-Fenster */}
+                                        <div className="p-3.5 rounded-xl border border-emerald-500/25 bg-emerald-500/10 flex flex-col justify-between gap-2.5">
+                                            <div>
+                                                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm mb-1.5">
+                                                    <ShoppingBag className="size-4 shrink-0" />
+                                                    <span>1. Kauf-Fenster (Einstiege / Nachkäufe)</span>
+                                                </div>
+                                                <div className="text-xs text-foreground/90 space-y-1.5">
+                                                    <p>
+                                                        <strong>{MONTH_NAMES_FULL[seasonalStrategy.monthBeforeStrongest.month]}:</strong>{' '}
+                                                        Statistischer Vorbereitungsmonat (Ø {seasonalStrategy.monthBeforeStrongest.avgReturn >= 0 ? '+' : ''}{seasonalStrategy.monthBeforeStrongest.avgReturn.toFixed(2)}%) direkt vor der stärksten Rallye im {MONTH_NAMES_FULL[seasonalStrategy.strongestMonth.month]}.
+                                                    </p>
+                                                    {seasonalStrategy.weakestMonth.month !== seasonalStrategy.monthBeforeStrongest.month && (
+                                                        <p className="text-muted-foreground">
+                                                            Günstigster Tiefpunkt: <strong>{MONTH_NAMES_FULL[seasonalStrategy.weakestMonth.month]}</strong> (Ø {seasonalStrategy.weakestMonth.avgReturn.toFixed(2)}%) für antizyklische Nachkäufe.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="pt-2 border-t border-emerald-500/20 text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">
+                                                ➔ Tipp: Vor starken Monaten akkumulieren, nicht hinterherkaufen.
+                                            </div>
+                                        </div>
+
+                                        {/* 2. Verkaufs-Fenster */}
+                                        <div className="p-3.5 rounded-xl border border-blue-500/25 bg-blue-500/10 flex flex-col justify-between gap-2.5">
+                                            <div>
+                                                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-sm mb-1.5">
+                                                    <TrendingUp className="size-4 shrink-0" />
+                                                    <span>2. Verkaufs-Fenster (Gewinnmitnahmen)</span>
+                                                </div>
+                                                <div className="text-xs text-foreground/90 space-y-1.5">
+                                                    <p>
+                                                        <strong>{MONTH_NAMES_FULL[seasonalStrategy.strongestMonth.month]}</strong> (Ø +{seasonalStrategy.strongestMonth.avgReturn.toFixed(2)}%, {Math.round(seasonalStrategy.strongestMonth.positiveRate * 100)}% Trefferquote) &amp;{' '}
+                                                        <strong>{MONTH_NAMES_FULL[seasonalStrategy.secondStrongest.month]}</strong> (Ø +{seasonalStrategy.secondStrongest.avgReturn.toFixed(2)}%, {Math.round(seasonalStrategy.secondStrongest.positiveRate * 100)}% Trefferquote).
+                                                    </p>
+                                                    <p className="text-muted-foreground">
+                                                        Hier markiert die Aktie statistisch ihre Jahreshöchstkurse. Ideales Fenster für Teilverkäufe oder Verlustreduktion.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="pt-2 border-t border-blue-500/20 text-[11px] text-blue-700 dark:text-blue-300 font-medium">
+                                                ➔ Tipp: Am Ende der Rallye Teilgewinne realisieren.
+                                            </div>
+                                        </div>
+
+                                        {/* 3. Ex-Tag & Dividenden-Effekt */}
+                                        <div className="p-3.5 rounded-xl border border-amber-500/25 bg-amber-500/10 flex flex-col justify-between gap-2.5">
+                                            <div>
+                                                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-sm mb-1.5">
+                                                    <Calendar className="size-4 shrink-0" />
+                                                    <span>3. Ex-Tag &amp; Dividenden-Effekt</span>
+                                                </div>
+                                                <div className="text-xs text-foreground/90 space-y-1.5">
+                                                    {seasonalStrategy.exMonthInfo ? (
+                                                        <>
+                                                            <p>
+                                                                Nächster Ex-Tag: <strong>{seasonalStrategy.exMonthInfo.dateStr}</strong> ({seasonalStrategy.exMonthInfo.name}).
+                                                            </p>
+                                                            <p className={cn("text-xs", seasonalStrategy.exMonthInfo.avgReturn < 0 ? "text-amber-700 dark:text-amber-300 font-medium" : "text-muted-foreground")}>
+                                                                {seasonalStrategy.exMonthInfo.name} historisch: {seasonalStrategy.exMonthInfo.avgReturn >= 0 ? '+' : ''}{seasonalStrategy.exMonthInfo.avgReturn.toFixed(2)}% ({seasonalStrategy.exMonthInfo.winRate}% Trefferquote).
+                                                                {seasonalStrategy.exMonthInfo.avgReturn < 0 && " Dividendenabschlag drückt oft den Kurs!"}
+                                                            </p>
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-muted-foreground">
+                                                            Keine bevorstehenden Ex-Dividenden-Termine für diese Aktie hinterlegt.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="pt-2 border-t border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300 font-medium">
+                                                ➔ Fazit: Ausstiege besser VOR dem Ex-Tag umsetzen.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Persönliche Saisonalitäts-Strategie & Notizen */}
+                            <div className="bg-card border border-border rounded-xl p-4 md:p-6 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between pb-2 border-b border-border">
+                                    <h3 className="font-bold text-base md:text-lg flex items-center gap-2">
+                                        <Save className="size-4 md:size-5 text-purple-500 shrink-0" />
+                                        Persönliche Strategie &amp; Notizen zu {activeStock?.name || activeSymbol}
+                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                        {seasonalStrategy && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const template = `Saisonaler Fahrplan (${years} Jahre):\n` +
+                                                        `• Kauf-Fenster: ${MONTH_NAMES_FULL[seasonalStrategy.monthBeforeStrongest.month]} (vor ${MONTH_NAMES_FULL[seasonalStrategy.strongestMonth.month]}-Rallye)\n` +
+                                                        `• Verkaufs-Fenster: ${MONTH_NAMES_FULL[seasonalStrategy.strongestMonth.month]} & ${MONTH_NAMES_FULL[seasonalStrategy.secondStrongest.month]}\n` +
+                                                        (seasonalStrategy.exMonthInfo ? `• Ex-Tag: ${seasonalStrategy.exMonthInfo.dateStr} (${seasonalStrategy.exMonthInfo.name} historisch ${seasonalStrategy.exMonthInfo.avgReturn >= 0 ? '+' : ''}${seasonalStrategy.exMonthInfo.avgReturn.toFixed(2)}%)\n` : '') +
+                                                        `• Ziel / Limit:\n`;
+                                                    setNotes(prev => prev ? `${prev.trim()}\n\n${template}` : template);
+                                                }}
+                                                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-muted hover:bg-muted/70 text-foreground transition-all"
+                                                title="Saisonale Kurz-Zusammenfassung als Vorlage in das Notizfeld einfügen"
+                                            >
+                                                <Sparkles className="size-3.5 text-amber-400" />
+                                                <span>Vorlage einfügen</span>
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveNotes}
+                                            disabled={isSavingNotes || !activeStock}
+                                            className={cn(
+                                                "px-3.5 py-1.5 rounded-lg font-medium text-xs sm:text-sm transition-all flex items-center gap-1.5",
+                                                notesSavedFeedback
+                                                    ? "bg-green-500 text-white"
+                                                    : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                            )}
+                                        >
+                                            {notesSavedFeedback ? (
+                                                <>
+                                                    <Check className="size-4" />
+                                                    <span>Gespeichert!</span>
+                                                </>
+                                            ) : isSavingNotes ? (
+                                                <span>Speichern...</span>
+                                            ) : (
+                                                <>
+                                                    <Save className="size-4" />
+                                                    <span>Speichern</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <textarea
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder={activeStock ? `Persönliche Notizen, Timing-Plan oder Limit-Ziele für ${activeStock.name || activeSymbol} festhalten (wird auch auf der Detailseite synchronisiert)...` : "Aktie auswählen..."}
+                                    rows={4}
+                                    disabled={!activeStock}
+                                    className="w-full bg-background border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y min-h-[90px]"
+                                />
+                                <p className="text-[11px] text-muted-foreground">
+                                    💡 Notizen werden automatisch mit der Aktiendetailseite synchronisiert und dauerhaft im Portfolio gespeichert.
+                                </p>
                             </div>
                         </>
                     )}
