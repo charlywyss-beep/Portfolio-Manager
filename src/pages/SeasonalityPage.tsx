@@ -949,7 +949,7 @@ export function SeasonalityPage() {
                                         onClick={() => toggleNotesOpen(true)}
                                         className="p-4 bg-background/50 hover:bg-background/80 border border-border/80 hover:border-border rounded-xl cursor-pointer transition-all group"
                                     >
-                                        <p className="text-sm sm:text-base text-foreground line-clamp-3 leading-relaxed font-sans">
+                                        <p className="text-sm text-foreground line-clamp-3 leading-relaxed font-sans">
                                             {notes ? notes : <span className="italic text-muted-foreground">Keine Notizen erfasst. Klicken zum Aufklappen und Erfassen...</span>}
                                         </p>
                                         {notes && (
@@ -971,7 +971,7 @@ export function SeasonalityPage() {
                                                 onDoubleClick={() => setIsNotesModalOpen(true)}
                                                 placeholder={activeStock ? `Persönliche Notizen, Timing-Plan oder Limit-Ziele für ${activeStock.name || activeSymbol} festhalten (wird auch auf der Detailseite synchronisiert)...` : "Aktie auswählen..."}
                                                 disabled={!activeStock}
-                                                className="w-full bg-background border border-border rounded-lg p-3.5 pr-10 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y min-h-[160px] leading-relaxed transition-all"
+                                                className="w-full bg-background border border-border rounded-lg p-3.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y min-h-[160px] leading-relaxed transition-all"
                                             />
                                             <button
                                                 type="button"
@@ -1084,7 +1084,7 @@ export function SeasonalityPage() {
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 placeholder="Persönliche Notizen, Timing-Plan, Einstiegs- und Kursziele hier erfassen..."
-                                className="w-full flex-1 min-h-[320px] p-4 text-sm sm:text-base leading-relaxed bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y font-sans"
+                                className="w-full flex-1 min-h-[320px] p-4 text-sm leading-relaxed bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-y font-sans"
                                 autoFocus
                             />
                         </div>
