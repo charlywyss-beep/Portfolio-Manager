@@ -45,13 +45,17 @@ interface InfoHelpProps {
     items: InfoHelpItem[];
     /** Optionaler Zusatzbereich am Ende (z. B. Hinweise) */
     footer?: ReactNode;
+    /** Optionaler benutzerdefinierter Trigger-Button (z. B. Badge oder Icon) */
+    trigger?: ReactNode;
+    /** Optionale Klassen für den Button */
+    buttonClassName?: string;
 }
 
 /**
  * Kleines Info-Symbol (ⓘ), das ein Erklärungsfenster öffnet.
  * Die Klicks werden gestoppt, damit umliegende klickbare Kacheln nicht ausgelöst werden.
  */
-export function InfoHelp({ title, items, footer }: InfoHelpProps) {
+export function InfoHelp({ title, items, footer, trigger, buttonClassName }: InfoHelpProps) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -59,15 +63,15 @@ export function InfoHelp({ title, items, footer }: InfoHelpProps) {
             <button
                 type="button"
                 onClick={(ev) => { ev.stopPropagation(); setOpen(true); }}
-                className="p-0.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                className={buttonClassName || "p-0.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"}
                 title={`Erklärung: ${title}`}
                 aria-label={`Erklärung: ${title}`}
             >
-                <Info className="size-4 md:size-[18px]" />
+                {trigger || <Info className="size-4 md:size-[18px]" />}
             </button>
             {open && createPortal(
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+                    className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/60 p-4"
                     onClick={(ev) => { ev.stopPropagation(); setOpen(false); }}
                 >
                     <div

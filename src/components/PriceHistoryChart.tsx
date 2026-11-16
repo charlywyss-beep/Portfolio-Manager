@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
-import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2 } from 'lucide-react';
+import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2, HelpCircle } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -24,6 +24,29 @@ export function formatRangeLabel(range: string): string {
     if (range === 'BUY') return 'Seit Kauf';
     return range;
 }
+
+export const FIBONACCI_INFO_ITEMS = [
+    {
+        term: "1. Was sind Fibonacci-Retracements?",
+        text: "Nach einer Kursbewegung korrigiert eine Aktie selten in einer geraden Linie. Fibonacci-Retracements teilen die Spanne zwischen Hoch (0.0%) und Tief (100.0%) in mathematische Natur-Verhältnisse ein, an denen Kurse erfahrungsgemäss Unterstützung finden und wieder nach oben drehen."
+    },
+    {
+        term: "2. Die Schlüssel-Level & ihre Bedeutung",
+        text: "• **61.8% • Goldener Schnitt (Golden Ratio):** Die mit Abstand wichtigste Marke an den weltweiten Finanzmärkten. Dreht der Kurs oberhalb oder genau am Goldenen Schnitt, gilt der übergeordnete Aufwärtstrend als intakt und bestätigt.\n\n• **50.0% • Mitte:** Psychologische Schlüsselmarke für gesunde Standard-Korrekturen (Halbierung der vorherigen Gewinne).\n\n• **78.6% • Letzter Support:** Die letzte Bastion vor einem vollständigen Trendbruch (100.0% Tief).\n\n• **23.6% & 38.2%:** Flache Konsolidierungen in extrem dynamischen Bullenmärkten."
+    },
+    {
+        term: "3. Auf welchen Zeitraum schauen Profis? (Multi-Timeframe)",
+        text: "Profis nutzen den **Top-Down-Ansatz (vom Großen ins Kleine)**:\n\n• **1 Jahr (1J) • Die Haupt-Referenz (80% aller Profis):** Misst das 52-Wochen-Hoch/-Tief. Der 1J-Goldene Schnitt ist der weltweite Standard zur Beurteilung, ob eine Jahresrallye noch intakt ist.\n\n• **3 Jahre (3J) • Der Makro-Boden:** Bestätigt mehrjährige Trendzyklen. Liegen der 1J- und 3J-Goldene Schnitt eng beieinander, bildet sich eine extrem starke **Cluster-Zone**.\n\n• **3 Monate (3M) • Timing für Einstiege:** Dient kurzfristigen Swing-Tradern, um temporäre Quartals-Dips gezielt abzupassen."
+    },
+    {
+        term: "4. Das Profi-Geheimnis: Konfluenz & Cluster",
+        text: "Ein Fibo-Level gewinnt massiv an Trefferquote, wenn mehrere Signale auf derselben Kurshöhe zusammentreffen:\n\n• **200-Tage-Linie (SMA 200)** verläuft in unmittelbarer Nähe\n• **Dein Kauflimit** oder der **Faire Wert** liegen in der Fibo-Zone\n• **Frühere Höchst-/Tiefstkurse** dienen als horizontale Unterstützung"
+    },
+    {
+        term: "5. Tipp: Kombination mit dem Messwerkzeug",
+        text: "Klicke in der Menüleiste auf **`Messen`** und wähle zwei beliebige Punkte im Chart aus. Bei aktivem **`Φ Fibonacci`** berechnet die App die Fibo-Linien sofort millimetergenau für deinen individuellen Messbereich!"
+    }
+];
 
 interface PriceHistoryChartProps {
     currentPrice: number;
@@ -1041,6 +1064,27 @@ export function PriceHistoryChart({
                                     <span className="font-serif font-black text-xs leading-none">Φ</span>
                                     <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Fibonacci</span>
                                 </button>
+                                <InfoHelp
+                                    title="Fibonacci-Anwendung & Goldener Schnitt"
+                                    items={FIBONACCI_INFO_ITEMS}
+                                    buttonClassName={cn(
+                                        "h-7 w-7 inline-flex items-center justify-center rounded-lg border text-xs font-bold leading-none transition-all shadow-sm cursor-pointer shrink-0 -ml-0.5",
+                                        showFibonacci
+                                            ? "bg-purple-600 text-white border-purple-700 hover:bg-purple-500"
+                                            : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
+                                    )}
+                                    trigger={<HelpCircle className="size-3.5 shrink-0" />}
+                                    footer={
+                                        <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs">
+                                            <p className="font-bold text-purple-700 dark:text-purple-300 mb-0.5">
+                                                Praxis-Tipp für dein Portfolio:
+                                            </p>
+                                            <p className="text-muted-foreground">
+                                                Achte vor allem auf den <strong>1J- und 3J-Goldenen Schnitt</strong> (61.8%). Wenn der Kurs dort ankommt und zugleich dein <strong>Fairer Wert</strong>, <strong>Kauflimit</strong> oder die <strong>200-Tage-Linie</strong> in der Nähe liegen, ist das eine der stärksten Kauf- und Unterstützungszonen überhaupt!
+                                            </p>
+                                        </div>
+                                    }
+                                />
                                 <button
                                     type="button"
                                     onClick={() => setIsFullscreen(prev => !prev)}
@@ -1328,12 +1372,12 @@ export function PriceHistoryChart({
 
             {/* Fibonacci Level Overview Bar */}
             {fibonacciData && (
-                <div className="w-full flex items-center gap-1.5 overflow-x-auto scroller-none py-1.5 px-3 mb-2 rounded-xl bg-purple-500/10 border border-purple-500/25 text-xs animate-in fade-in duration-150 shrink-0">
-                    <span className="font-bold text-purple-600 dark:text-purple-400 shrink-0 flex items-center gap-1 text-xs">
-                        <span className="font-serif font-black text-sm">Φ</span>
-                        <span>Fibonacci:</span>
-                    </span>
+                <div className="w-full flex items-center justify-between gap-2 overflow-x-auto scroller-none py-1.5 px-3 mb-2 rounded-xl bg-purple-500/10 border border-purple-500/25 text-xs animate-in fade-in duration-150 shrink-0">
                     <div className="flex items-center gap-1.5 shrink-0 flex-wrap sm:flex-nowrap">
+                        <span className="font-bold text-purple-600 dark:text-purple-400 shrink-0 flex items-center gap-1 text-xs mr-0.5">
+                            <span className="font-serif font-black text-sm">Φ</span>
+                            <span>Fibonacci:</span>
+                        </span>
                         {fibonacciData.levels.map(lvl => (
                             <span
                                 key={lvl.label}
@@ -1346,6 +1390,29 @@ export function PriceHistoryChart({
                                 {lvl.name && <span className="text-[10px] font-sans font-bold ml-0.5 hidden md:inline">· {lvl.name}</span>}
                             </span>
                         ))}
+                    </div>
+                    {/* Fibonacci Infobox */}
+                    <div className="shrink-0 flex items-center pl-1 border-l border-purple-500/20">
+                        <InfoHelp
+                            title="Fibonacci-Anwendung & Goldener Schnitt"
+                            items={FIBONACCI_INFO_ITEMS}
+                            trigger={
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-purple-500/20 hover:bg-purple-500/35 text-purple-700 dark:text-purple-300 border border-purple-500/40 transition-all cursor-pointer whitespace-nowrap shadow-2xs">
+                                    <HelpCircle className="size-3 text-purple-500" />
+                                    <span>Infobox</span>
+                                </span>
+                            }
+                            footer={
+                                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs">
+                                    <p className="font-bold text-purple-700 dark:text-purple-300 mb-0.5">
+                                        Praxis-Tipp für dein Portfolio:
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        Achte vor allem auf den <strong>1J- und 3J-Goldenen Schnitt</strong> (61.8%). Wenn der Kurs dort ankommt und zugleich dein <strong>Fairer Wert</strong>, <strong>Kauflimit</strong> oder die <strong>200-Tage-Linie</strong> in der Nähe liegen, ist das eine der stärksten Kauf- und Unterstützungszonen überhaupt!
+                                    </p>
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
             )}
