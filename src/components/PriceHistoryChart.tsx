@@ -866,9 +866,9 @@ export function PriceHistoryChart({
                 : "min-h-[340px] landscape:min-h-0 h-auto flex-1 pb-0 landscape:pb-0"
         )}>
             <div className={cn(
-                "flex justify-between gap-2 relative",
+                "flex justify-between gap-2 relative w-full",
                 isFullscreen
-                    ? "flex-wrap landscape:flex-nowrap items-start landscape:items-center mb-2 md:mb-3 landscape:mb-1"
+                    ? "flex-nowrap items-center mb-1"
                     : "flex-wrap items-start mb-2 md:mb-3 landscape:mb-1.5"
             )}>
                 <div className={cn(
@@ -959,7 +959,10 @@ export function PriceHistoryChart({
                                 </span>
                             )}
                             {effectiveDateStr && (
-                                <span className="text-xs sm:text-sm landscape:text-xs font-semibold text-muted-foreground tabular-nums whitespace-nowrap">
+                                <span className={cn(
+                                    "text-xs sm:text-sm font-semibold text-muted-foreground tabular-nums whitespace-nowrap",
+                                    isFullscreen ? "landscape:hidden xl:landscape:inline text-xs" : "landscape:text-xs"
+                                )}>
                                     {effectiveDateStr}
                                 </span>
                             )}
@@ -971,7 +974,7 @@ export function PriceHistoryChart({
                                 <span>{performance > 0 ? '+' : ''}{performance.toFixed(2)}%</span>
                                 <span className={cn(
                                     "ml-1 opacity-90",
-                                    isFullscreen ? "text-sm sm:text-lg landscape:text-[11px]" : "text-sm sm:text-lg"
+                                    isFullscreen ? "text-sm sm:text-lg landscape:hidden xl:landscape:inline" : "text-sm sm:text-lg"
                                 )}>{diffNativeFormatted}</span>
                             </div>
                         </div>
@@ -1088,7 +1091,14 @@ export function PriceHistoryChart({
                                         isMeasureMode && highMeasureIdx >= 0 ? "text-white" : "text-emerald-500 dark:text-emerald-400"
                                     )}>H:</span>
                                     <span className={cn("font-bold", isMeasureMode && highMeasureIdx >= 0 ? "text-white" : "text-foreground")}>
-                                        {formatCurrency(maxPrice, displayCurrency, false)}
+                                        {isFullscreen ? (
+                                            <>
+                                                <span className="landscape:hidden xl:landscape:inline">{formatCurrency(maxPrice, displayCurrency, false)}</span>
+                                                <span className="hidden landscape:inline xl:landscape:hidden">
+                                                    {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(maxPrice)}
+                                                </span>
+                                            </>
+                                        ) : formatCurrency(maxPrice, displayCurrency, false)}
                                     </span>
                                     {isMeasureMode && (
                                         <span className={cn(
@@ -1138,7 +1148,14 @@ export function PriceHistoryChart({
                                         isMeasureMode && lowMeasureIdx >= 0 ? "text-white" : "text-rose-500 dark:text-rose-400"
                                     )}>T:</span>
                                     <span className={cn("font-bold", isMeasureMode && lowMeasureIdx >= 0 ? "text-white" : "text-foreground")}>
-                                        {formatCurrency(minPrice, displayCurrency, false)}
+                                        {isFullscreen ? (
+                                            <>
+                                                <span className="landscape:hidden xl:landscape:inline">{formatCurrency(minPrice, displayCurrency, false)}</span>
+                                                <span className="hidden landscape:inline xl:landscape:hidden">
+                                                    {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(minPrice)}
+                                                </span>
+                                            </>
+                                        ) : formatCurrency(minPrice, displayCurrency, false)}
                                     </span>
                                     {isMeasureMode && (
                                         <span className={cn(
@@ -1270,18 +1287,18 @@ export function PriceHistoryChart({
                             >
                                 <RefreshCw className={cn("size-3.5 shrink-0", isRefreshing && "animate-spin")} />
                                 <span className="whitespace-nowrap font-bold">
-                                    {isRefreshing ? 'Laden...' : typeof minutesAgo === 'number' ? `Vor ${minutesAgo} Min` : 'Laden'}
+                                    {isRefreshing ? 'Laden...' : typeof minutesAgo === 'number' ? `${minutesAgo} Min` : 'Laden'}
                                 </span>
                             </button>
                         ) : null}
                         <button
                             type="button"
                             onClick={handleToggleFullscreen}
-                            className="h-7 inline-flex items-center justify-center gap-1.5 px-3 py-0 rounded-lg border text-xs font-bold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0 mt-auto landscape:mt-0 whitespace-nowrap"
+                            className="h-7 inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-0 rounded-lg border text-xs font-bold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0 mt-auto landscape:mt-0 whitespace-nowrap"
                             title="Großansicht schließen (Esc)"
                         >
                             <Minimize2 className="size-3.5 shrink-0" />
-                            <span>Verkleinern</span>
+                            <span className="hidden sm:inline landscape:inline">Verkleinern</span>
                             <span className="text-[9px] font-mono opacity-80 hidden md:inline ml-0.5">Esc</span>
                         </button>
                     </div>
@@ -1306,7 +1323,7 @@ export function PriceHistoryChart({
                                                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-background/70"
                                         )}
                                     >
-                                        {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : formatRangeLabel(range)}
+                                        {range === 'BUY' ? <><span className="lg:hidden">SK</span><span className="hidden lg:inline">Seit Kauf</span></> : formatRangeLabel(range)}
                                     </button>
                                 ))}
                             </div>
@@ -1727,7 +1744,7 @@ export function PriceHistoryChart({
                     >
                         <AreaChart
                             data={displayData}
-                            margin={{ top: selectedRange === '1D' && showPrePost && hasPrePostData ? 26 : 14, right: 20, left: 0, bottom: 4 }}
+                            margin={{ top: selectedRange === '1D' && showPrePost && hasPrePostData ? 26 : 14, right: 0, left: 0, bottom: 4 }}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);
@@ -1805,7 +1822,7 @@ export function PriceHistoryChart({
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickLine={{ stroke: '#475569', strokeWidth: 1 }}
                                 axisLine={{ stroke: '#475569', strokeWidth: 1 }}
-                                padding={{ left: 16, right: 28 }}
+                                padding={{ left: 16, right: 8 }}
                                 tickFormatter={(str) => {
                                     const date = new Date(str);
                                     const weekdayShort = date.toLocaleDateString('de-DE', { weekday: 'short' });
@@ -1983,7 +2000,7 @@ export function PriceHistoryChart({
                                 }}
                                 axisLine={false}
                                 tickLine={false}
-                                width={46}
+                                width={38}
                                 mirror={false}
                             />
                             {/* Extended Hours Session Dividers (1D when Vor-/Nachbörse active) */}

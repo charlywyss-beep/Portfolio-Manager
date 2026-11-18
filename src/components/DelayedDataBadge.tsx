@@ -101,10 +101,12 @@ export const DelayedDataBadge: React.FC<DelayedDataBadgeProps> = ({
                     </span>
                 </span>
             </div>
-            <InfoHelp
-                title="Dein Spickzettel • Wann kommen welche Live-Daten rein?"
-                items={DELAYED_DATA_SPICKZETTEL_ITEMS}
-            />
+            <div className="hidden sm:inline-flex landscape:hidden xl:landscape:inline-flex shrink-0">
+                <InfoHelp
+                    title="Dein Spickzettel • Wann kommen welche Live-Daten rein?"
+                    items={DELAYED_DATA_SPICKZETTEL_ITEMS}
+                />
+            </div>
         </div>
     );
 };
