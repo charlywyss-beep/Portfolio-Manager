@@ -88,6 +88,14 @@ interface PriceHistoryChartProps {
     minutesAgo?: number;
     isFullscreen?: boolean;
     onToggleFullscreen?: (fullscreen: boolean) => void;
+    extendedHours?: {
+        isPre: boolean;
+        label: string;
+        price?: number | null;
+        pct?: number | null;
+        time?: number | string | null;
+        timeText?: string | null;
+    } | null;
 }
 
 export function PriceHistoryChart({
@@ -121,7 +129,8 @@ export function PriceHistoryChart({
     isRefreshing,
     minutesAgo,
     isFullscreen: controlledFullscreen,
-    onToggleFullscreen
+    onToggleFullscreen,
+    extendedHours
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
     const [isNarrowPortrait, setIsNarrowPortrait] = useState(() =>
@@ -583,6 +592,57 @@ export function PriceHistoryChart({
     const hasPost = useMemo(() => (displayData || []).some(p => p.session === 'post'), [displayData]);
     const hasPrePostData = hasPre || hasPost;
 
+    const effectiveExtendedHours = useMemo(() => {
+        if (selectedRange !== '1D') return null;
+
+        const propPrice = (extendedHours && extendedHours.price && extendedHours.price > 0)
+            ? extendedHours.price * conversionRate
+            : undefined;
+        const propDiff = (propPrice && effectiveCurrentPrice > 0)
+            ? (propPrice - effectiveCurrentPrice)
+            : undefined;
+
+        // 1. If 1D range and chart data contains pre or post session points
+        if (displayData && displayData.length > 0) {
+            const lastPoint = displayData[displayData.length - 1];
+            if (lastPoint && (lastPoint.session === 'post' || lastPoint.session === 'pre')) {
+                const isPre = lastPoint.session === 'pre';
+                const price = lastPoint.value; // already converted by conversionRate
+                const lastReg = [...displayData].reverse().find(p => !p.session || p.session === 'regular') || displayData[0];
+                const base = (effectiveCurrentPrice > 0 ? effectiveCurrentPrice : lastReg?.value) || 1;
+                const diff = price - base;
+                const pct = base > 0 ? (diff / base) * 100 : 0;
+                const d = new Date(lastPoint.date);
+                const timeText = !isNaN(d.getTime()) ? d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }) : '';
+                return {
+                    isPre,
+                    label: isPre ? 'US Vorbörse' : 'US Nachbörse',
+                    price,
+                    pct,
+                    diff,
+                    timeText: extendedHours?.timeText || timeText
+                };
+            }
+        }
+
+        // 2. Fallback to prop if available (even before chart points load or when showPrePost is false)
+        if (extendedHours && propPrice && propPrice > 0) {
+            const base = (effectiveCurrentPrice > 0 ? effectiveCurrentPrice : 0) || 1;
+            const diff = propDiff !== undefined ? propDiff : (propPrice - base);
+            const pct = (extendedHours.pct !== undefined && extendedHours.pct !== null) ? extendedHours.pct : (base > 0 ? (diff / base) * 100 : 0);
+            return {
+                isPre: extendedHours.isPre,
+                label: extendedHours.label || (extendedHours.isPre ? 'US Vorbörse' : 'US Nachbörse'),
+                price: propPrice,
+                pct,
+                diff,
+                timeText: extendedHours.timeText
+            };
+        }
+
+        return null;
+    }, [extendedHours, displayData, selectedRange, conversionRate, effectiveCurrentPrice]);
+
     const totalDurationDays = useMemo(() => {
         if (!displayData || displayData.length < 2) return 0;
         const start = new Date(displayData[0].date).getTime();
@@ -872,6 +932,47 @@ export function PriceHistoryChart({
                                 <span className="ml-1.5 opacity-90 text-sm sm:text-lg landscape:text-xs">{diffNativeFormatted}</span>
                             </div>
                         </div>
+
+                        {/* Extended Hours Badge (US Vorbörse / US Nachbörse) */}
+                        {effectiveExtendedHours && effectiveExtendedHours.price && effectiveExtendedHours.price > 0 && (
+                            <div
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg border text-xs sm:text-sm font-bold tabular-nums shrink-0 transition-all select-none shadow-sm",
+                                    effectiveExtendedHours.isPre
+                                        ? "bg-amber-500/15 border-amber-500/40 text-amber-500 dark:text-amber-300"
+                                        : "bg-indigo-500/15 border-indigo-500/40 text-indigo-400 dark:text-indigo-300"
+                                )}
+                                title={`${effectiveExtendedHours.label} ${effectiveExtendedHours.timeText ? `· ${effectiveExtendedHours.timeText}` : ''}`}
+                            >
+                                <span className="uppercase tracking-wider text-[10px] sm:text-xs font-black opacity-90">
+                                    {effectiveExtendedHours.label}
+                                </span>
+                                <span className="font-extrabold text-foreground">
+                                    {formatCurrency(effectiveExtendedHours.price, displayCurrency, false)}
+                                </span>
+                                {effectiveExtendedHours.pct !== undefined && effectiveExtendedHours.pct !== null && (
+                                    <span className={cn(
+                                        "font-bold text-[11px] sm:text-xs",
+                                        effectiveExtendedHours.pct >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-rose-500"
+                                    )}>
+                                        {effectiveExtendedHours.pct >= 0 ? '+' : ''}{effectiveExtendedHours.pct.toFixed(2)}%
+                                    </span>
+                                )}
+                                {effectiveExtendedHours.diff !== undefined && effectiveExtendedHours.diff !== null && (
+                                    <span className={cn(
+                                        "font-medium text-[10px] sm:text-xs opacity-80 hidden sm:inline",
+                                        effectiveExtendedHours.diff >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-rose-500"
+                                    )}>
+                                        {effectiveExtendedHours.diff >= 0 ? '+' : ''}{formatCurrency(effectiveExtendedHours.diff, displayCurrency, false)}
+                                    </span>
+                                )}
+                                {effectiveExtendedHours.timeText && (
+                                    <span className="text-[10px] text-muted-foreground opacity-75 hidden md:inline ml-0.5 font-normal">
+                                        · {effectiveExtendedHours.timeText}
+                                    </span>
+                                )}
+                            </div>
+                        )}
 
                         {/* Hoch / Tief Indicators (H / T) beside Current Price */}
                         <div className={cn(
@@ -2081,6 +2182,42 @@ export function PriceHistoryChart({
                                     }}
                                 />
                             )}
+
+                            {/* 5. Vorbörse / Nachbörse Referenzlinie (1D wenn Vor-/Nachbörse aktiv) */}
+                            {selectedRange === '1D' && showPrePost && effectiveExtendedHours && effectiveExtendedHours.price && effectiveExtendedHours.price >= domainMin && effectiveExtendedHours.price <= domainMax && (
+                                <ReferenceLine
+                                    y={effectiveExtendedHours.price}
+                                    stroke={effectiveExtendedHours.isPre ? "#f59e0b" : "#818cf8"}
+                                    strokeWidth={1.8}
+                                    strokeDasharray="4 3"
+                                    strokeOpacity={0.95}
+                                    label={(props: any) => {
+                                        const { viewBox } = props || {};
+                                        if (!viewBox) return <g />;
+                                        const { x, y, width } = viewBox;
+                                        const rightEdge = x + width - 6;
+                                        const yOffset = getRightLabelYOffset(effectiveExtendedHours.price!, [effectivePurchasePrice, effectiveBuyLimit, effectiveModelBuyPrice, effectiveFairValue]);
+                                        const color = effectiveExtendedHours.isPre ? "#fbbf24" : "#a5b4fc";
+                                        return (
+                                            <g className="select-none pointer-events-none">
+                                                <text
+                                                    x={rightEdge}
+                                                    y={y + yOffset}
+                                                    textAnchor="end"
+                                                    fill={color}
+                                                    stroke="#0f172a"
+                                                    strokeWidth={2.5}
+                                                    paintOrder="stroke fill"
+                                                    fontSize={isFullscreen ? 11 : 9.5}
+                                                    fontWeight={700}
+                                                >
+                                                    {effectiveExtendedHours.label} · {formatCurrency(effectiveExtendedHours.price!, displayCurrency, false)}
+                                                </text>
+                                            </g>
+                                        );
+                                    }}
+                                />
+                            )}
                             {/* Individual Purchase Markers (Vertical dashed line + blue dot at bottom baseline) */}
                             {selectedRange !== '1D' && purchaseMarkers.map((marker) => (
                                 <Fragment key={marker.id}>
@@ -2284,7 +2421,7 @@ export function PriceHistoryChart({
                             {/* Live End-Point Dot on current price (like Yahoo Finance) */}
                             {displayData.length > 0 && (() => {
                                 const lastPoint = displayData[displayData.length - 1];
-                                const liveDotColor = isPositive ? '#22c55e' : '#ef4444';
+                                const liveDotColor = lastPoint.session === 'post' ? '#818cf8' : lastPoint.session === 'pre' ? '#f59e0b' : (isPositive ? '#22c55e' : '#ef4444');
                                 return (
                                     <ReferenceDot
                                         key={`live-endpoint-${lastPoint.date}`}

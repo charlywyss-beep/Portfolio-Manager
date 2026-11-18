@@ -64,7 +64,11 @@ function getExtendedHoursInfo(stock: ExtendedHoursSource | null | undefined) {
         ? { isPre: true, label: 'US Vorbörse', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
         : isPost
             ? { isPre: false, label: 'US Nachbörse', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
-            : null;
+            : (stock.postMarketPrice
+                ? { isPre: false, label: 'US Nachbörse', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
+                : (stock.preMarketPrice
+                    ? { isPre: true, label: 'US Vorbörse', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
+                    : null));
     if (!ext || !ext.price) return null;
     const timeText = ext.time ? (() => {
         const d = typeof ext.time === 'number' ? new Date(ext.time > 1e12 ? ext.time : ext.time * 1000) : new Date(ext.time);
@@ -1376,6 +1380,7 @@ export function StockDetail() {
                         minutesAgo={minutesAgo}
                         isFullscreen={isChartFullscreen}
                         onToggleFullscreen={setIsChartFullscreen}
+                        extendedHours={getExtendedHoursInfo(stock)}
                     />
                 </div>
             </div>
