@@ -514,8 +514,67 @@ export function PriceHistoryChart({
 
     const range = calcMax - calcMin;
     const padding = range === 0 ? calcMax * 0.05 : range * 0.05;
-    const domainMin = Math.max(0, calcMin - padding);
-    const domainMax = calcMax + padding;
+    const rawDomainMin = Math.max(0, calcMin - padding);
+    const rawDomainMax = calcMax + padding;
+
+    // Generate clean, round "nice" ticks (integers where possible) for the Y-axis so the scale never has ugly fractional ticks like 614.78
+    const yAxisInfo = useMemo(() => {
+        if (rawDomainMax <= rawDomainMin || isNaN(rawDomainMin) || isNaN(rawDomainMax)) {
+            return {
+                ticks: undefined,
+                domain: [rawDomainMin, rawDomainMax] as [number, number],
+                step: 1,
+            };
+        }
+        const span = rawDomainMax - rawDomainMin;
+        const rawStep = span / 4;
+        const power = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        const fraction = rawStep / power;
+
+        let step: number;
+        if (power < 1) {
+            if (fraction < 1.4) step = 1 * power;
+            else if (fraction < 3.0) step = 2 * power;
+            else if (fraction < 7.0) step = 5 * power;
+            else step = 10 * power;
+        } else {
+            if (fraction < 1.5) step = 1 * power;
+            else if (fraction < 3.5) step = 2 * power;
+            else if (fraction < 7.5) step = 5 * power;
+            else step = 10 * power;
+            step = Math.round(step);
+        }
+
+        let niceMin = Math.max(0, Math.floor(rawDomainMin / step) * step);
+        let niceMax = Math.ceil(rawDomainMax / step) * step;
+        let ticks: number[] = [];
+        for (let t = niceMin; t <= niceMax + step * 0.001; t += step) {
+            ticks.push(Number(t.toFixed(4)));
+        }
+
+        // Keep tick count reasonable (between 3 and 7 ticks)
+        if (ticks.length > 7) {
+            step = step * 2;
+            niceMin = Math.max(0, Math.floor(rawDomainMin / step) * step);
+            niceMax = Math.ceil(rawDomainMax / step) * step;
+            ticks = [];
+            for (let t = niceMin; t <= niceMax + step * 0.001; t += step) {
+                ticks.push(Number(t.toFixed(4)));
+            }
+        }
+
+        const domainLow = ticks.length > 0 ? ticks[0] : rawDomainMin;
+        const domainHigh = ticks.length > 0 ? ticks[ticks.length - 1] : rawDomainMax;
+
+        return {
+            ticks: ticks.length >= 3 ? ticks : undefined,
+            domain: [domainLow, domainHigh] as [number, number],
+            step,
+        };
+    }, [rawDomainMin, rawDomainMax]);
+
+    const domainMin = yAxisInfo.domain[0];
+    const domainMax = yAxisInfo.domain[1];
 
     // Helper: Offset Y for right-side labels so they never collide if two lines are very close
     const getRightLabelYOffset = (val: number, otherVals: (number | undefined)[]) => {
@@ -1989,13 +2048,18 @@ export function PriceHistoryChart({
                             />
                             <YAxis
                                 domain={[domainMin, domainMax]}
+                                ticks={yAxisInfo.ticks}
                                 hide={false}
                                 orientation="right"
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickFormatter={(val) => {
+                                    if (Number.isInteger(val) || Math.abs(val - Math.round(val)) < 1e-4) {
+                                        return Math.round(val).toString();
+                                    }
+                                    const decimals = yAxisInfo.step >= 1 ? 0 : yAxisInfo.step >= 0.1 ? 1 : yAxisInfo.step >= 0.01 ? 2 : 3;
                                     return new Intl.NumberFormat('de-CH', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
+                                        minimumFractionDigits: decimals,
+                                        maximumFractionDigits: decimals,
                                     }).format(val);
                                 }}
                                 axisLine={false}
