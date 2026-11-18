@@ -865,8 +865,18 @@ export function PriceHistoryChart({
                 ? "fixed inset-0 z-[9999] bg-background dark:bg-[#080d1a] pt-[max(env(safe-area-inset-top,0px),0.75rem)] pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] landscape:pt-[max(env(safe-area-inset-top,0px),0.35rem)] landscape:pb-[max(env(safe-area-inset-bottom,0px),0.35rem)] landscape:pl-[max(env(safe-area-inset-left,0px),0.5rem)] landscape:pr-[max(env(safe-area-inset-right,0px),0.5rem)] sm:portrait:p-6 lg:portrait:p-8 flex flex-col w-screen h-screen overflow-hidden"
                 : "min-h-[340px] landscape:min-h-0 h-auto flex-1 pb-0 landscape:pb-0"
         )}>
-            <div className="flex flex-wrap landscape:flex-nowrap items-start landscape:items-center justify-between mb-2 md:mb-3 landscape:mb-1 gap-2 relative">
-                <div className="flex flex-col landscape:flex-row landscape:items-center gap-0.5 landscape:gap-2.5 flex-1 min-w-0 pr-1 sm:pr-3">
+            <div className={cn(
+                "flex justify-between gap-2 relative",
+                isFullscreen
+                    ? "flex-wrap landscape:flex-nowrap items-start landscape:items-center mb-2 md:mb-3 landscape:mb-1"
+                    : "flex-wrap items-start mb-2 md:mb-3 landscape:mb-1.5"
+            )}>
+                <div className={cn(
+                    "flex flex-1 min-w-0 pr-1 sm:pr-3",
+                    isFullscreen
+                        ? "flex-col landscape:flex-row landscape:items-center gap-0.5 landscape:gap-2.5"
+                        : "flex-col gap-0.5"
+                )}>
                     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         {stockLogoUrl && isFullscreen && (
                             <div className="shrink-0 flex items-center justify-center">
@@ -885,7 +895,12 @@ export function PriceHistoryChart({
                         <div className="flex flex-col gap-0.5 min-w-0">
                             {stockName && (
                                 <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 landscape:mb-0">
-                                    <h4 className="text-base sm:text-2xl landscape:text-sm font-black tracking-tighter text-foreground drop-shadow-sm whitespace-nowrap">
+                                    <h4 className={cn(
+                                        "font-black tracking-tighter text-foreground drop-shadow-sm whitespace-nowrap",
+                                        isFullscreen
+                                            ? "text-base sm:text-2xl landscape:text-sm"
+                                            : "text-base sm:text-2xl landscape:text-lg"
+                                    )}>
                                         <StockName name={stockName} />
                                     </h4>
                                     {isMarketOpen ? (
@@ -910,10 +925,23 @@ export function PriceHistoryChart({
                     </div>
 
                     {/* Performance, Kurs, Extended Hours & Hoch/Tief mit exakter Linksbündigkeit bei H: */}
-                    <div className="relative flex flex-wrap landscape:flex-nowrap items-end landscape:items-center gap-x-3 sm:gap-x-5 gap-y-1 mt-0.5 landscape:mt-0 min-h-[32px] sm:min-h-0">
+                    <div className={cn(
+                        "relative flex gap-x-3 sm:gap-x-5 gap-y-1 mt-0.5 min-h-[32px] sm:min-h-0",
+                        isFullscreen
+                            ? "flex-wrap landscape:flex-nowrap items-end landscape:items-center landscape:mt-0"
+                            : "flex-wrap items-end"
+                    )}>
                         {/* Spalte 1 (Links): Performance-Untertitel & Kurs-Zeile */}
-                        <div className="flex flex-col landscape:flex-row landscape:items-center gap-0.5 sm:gap-1 landscape:gap-2 min-w-0">
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap landscape:hidden">
+                        <div className={cn(
+                            "flex min-w-0",
+                            isFullscreen
+                                ? "flex-col landscape:flex-row landscape:items-center gap-0.5 sm:gap-1 landscape:gap-2"
+                                : "flex-col gap-0.5 sm:gap-1"
+                        )}>
+                            <div className={cn(
+                                "flex items-center gap-1.5 sm:gap-2 flex-wrap",
+                                isFullscreen && "landscape:hidden"
+                            )}>
                                 <p className="text-xs sm:text-sm text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
                                 <span className="text-[11px] sm:text-xs text-muted-foreground italic select-none hidden sm:inline">
                                     · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
@@ -923,7 +951,10 @@ export function PriceHistoryChart({
                                 {/* Current Price, Date & Performance Diff */}
                         <div className="flex items-baseline gap-1.5 sm:gap-2.5 shrink-0">
                             {(effectiveCurrentPrice > 0 || endPrice > 0) && (
-                                <span className="text-xl sm:text-2xl landscape:text-base font-black tabular-nums text-foreground tracking-tight">
+                                <span className={cn(
+                                    "font-black tabular-nums text-foreground tracking-tight",
+                                    isFullscreen ? "text-xl sm:text-2xl landscape:text-base" : "text-xl sm:text-2xl landscape:text-xl"
+                                )}>
                                     {formatCurrency(effectiveCurrentPrice > 0 ? effectiveCurrentPrice : endPrice, displayCurrency, false)}
                                 </span>
                             )}
@@ -932,9 +963,16 @@ export function PriceHistoryChart({
                                     {effectiveDateStr}
                                 </span>
                             )}
-                            <div className={cn("font-bold flex items-baseline gap-1 text-base sm:text-xl landscape:text-xs tabular-nums", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
+                            <div className={cn(
+                                "font-bold flex items-baseline gap-1 tabular-nums",
+                                isFullscreen ? "text-base sm:text-xl landscape:text-xs" : "text-base sm:text-xl",
+                                isPositive ? "text-green-600 dark:text-green-400" : "text-red-500"
+                            )}>
                                 <span>{performance > 0 ? '+' : ''}{performance.toFixed(2)}%</span>
-                                <span className="ml-1 opacity-90 text-sm sm:text-lg landscape:text-[11px]">{diffNativeFormatted}</span>
+                                <span className={cn(
+                                    "ml-1 opacity-90",
+                                    isFullscreen ? "text-sm sm:text-lg landscape:text-[11px]" : "text-sm sm:text-lg"
+                                )}>{diffNativeFormatted}</span>
                             </div>
                         </div>
 
@@ -982,7 +1020,12 @@ export function PriceHistoryChart({
                         </div>
 
                         {/* Spalte 2 (Rechts): Beginn des Feldes startet exakt bei H: */}
-                        <div className="flex flex-col landscape:flex-row landscape:items-center items-start gap-1 landscape:gap-2 sm:border-l sm:border-border/60 sm:pl-3.5 landscape:border-l landscape:border-border/60 landscape:pl-2.5">
+                        <div className={cn(
+                            "flex items-start sm:border-l sm:border-border/60 sm:pl-3.5",
+                            isFullscreen
+                                ? "flex-col landscape:flex-row landscape:items-center gap-1 landscape:gap-2 landscape:border-l landscape:border-border/60 landscape:pl-2.5"
+                                : "flex-col gap-1.5"
+                        )}>
                             {/* Obere Zeile: Live-Kurs / Schlusskurs (Vollbild) ODER Performance Details & Position (Normalansicht) */}
                             {((isFullscreen && !isMeasureMode) || (!isFullscreen && headerActions)) && (
                                 <div className="h-7 inline-flex items-center gap-2">
@@ -1005,7 +1048,8 @@ export function PriceHistoryChart({
 
                             {/* Untere Zeile: Hoch / Tief Indikatoren (H: und T:) & CHF-Umschalter in Zeile USD */}
                             <div className={cn(
-                                "flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold text-foreground transition-opacity duration-150 select-none",
+                                "flex flex-nowrap items-center gap-1.5 sm:gap-3 text-sm sm:text-lg font-bold text-foreground transition-opacity duration-150 select-none whitespace-nowrap",
+                                isFullscreen ? "landscape:text-sm md:landscape:text-lg" : "landscape:text-sm md:landscape:text-base",
                                 hoveredData && "opacity-0 sm:opacity-100"
                             )}>
                             <div className="flex items-center gap-1">
@@ -1020,7 +1064,7 @@ export function PriceHistoryChart({
                                         }
                                     }}
                                     className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold",
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold whitespace-nowrap shrink-0",
                                         isMeasureMode
                                             ? highMeasureIdx >= 0
                                                 ? "bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50"
@@ -1070,7 +1114,7 @@ export function PriceHistoryChart({
                                         }
                                     }}
                                     className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold",
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold whitespace-nowrap shrink-0",
                                         isMeasureMode
                                             ? lowMeasureIdx >= 0
                                                 ? "bg-rose-600 text-white border-rose-500 shadow-md ring-2 ring-rose-400/50"
@@ -1136,7 +1180,7 @@ export function PriceHistoryChart({
                                     type="button"
                                     onClick={() => setShowInCHF(!showInCHF)}
                                     className={cn(
-                                        "h-7 inline-flex items-center justify-center px-2.5 sm:px-3 py-0 rounded-lg border text-xs font-bold leading-none transition-all shadow-sm whitespace-nowrap cursor-pointer active:scale-95 ml-0.5 sm:ml-1",
+                                        "h-7 inline-flex items-center justify-center px-2.5 sm:px-3 py-0 rounded-lg border text-xs font-bold leading-none transition-all shadow-sm whitespace-nowrap cursor-pointer active:scale-95 ml-0.5 sm:ml-1 shrink-0",
                                         showInCHF
                                             ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-700 shadow-sm"
                                             : "bg-emerald-50 dark:bg-emerald-950/25 text-emerald-600 dark:text-emerald-400 border-emerald-400/60 dark:border-emerald-500/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/35 shadow-2xs"

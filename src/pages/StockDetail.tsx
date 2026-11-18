@@ -911,7 +911,7 @@ export function StockDetail() {
         <div className="stock-detail-page p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10 pl-[max(env(safe-area-inset-left,0px),0.5rem)] pr-[max(env(safe-area-inset-right,0px),0.5rem)]">
             {/* Sticky Header on Desktop and Mobile */}
             <div className="stock-detail-sticky-header sticky top-0 -mx-2 lg:-mx-8 px-3 py-2 lg:px-8 lg:py-3.5 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 lg:-mt-8 mb-3 md:mb-6 pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)]">
-                <div className="stock-detail-top-actions flex flex-wrap lg:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3.5 md:mb-4 landscape:mb-1 pl-12 xl:pl-0 w-full overflow-x-auto touch-pan-x">
+                <div className="stock-detail-top-actions flex portrait:flex-wrap landscape:flex-nowrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3.5 md:mb-4 landscape:mb-1 pl-12 xl:pl-0 w-full overflow-x-auto scroller-none">
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <button
                             onClick={() => {
@@ -1365,8 +1365,8 @@ export function StockDetail() {
                                     title="Performance Details aller Positionen öffnen"
                                 >
                                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                                    <span className="hidden sm:inline">Performance Details</span>
-                                    <span className="sm:hidden">Details</span>
+                                    <span className="hidden lg:inline">Performance Details</span>
+                                    <span className="lg:hidden">Details</span>
                                 </button>
                                 <button
                                     type="button"
