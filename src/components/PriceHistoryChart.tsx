@@ -921,7 +921,7 @@ export function PriceHistoryChart({
         <div className={cn(
             "w-full flex flex-col relative transition-all duration-300 select-none",
             isFullscreen
-                ? "fixed inset-0 z-[9999] bg-background dark:bg-[#080d1a] pt-[max(env(safe-area-inset-top,0px),0.75rem)] pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] landscape:pt-[max(env(safe-area-inset-top,0px),0.35rem)] landscape:pb-[max(env(safe-area-inset-bottom,0px),0.35rem)] landscape:pl-[max(env(safe-area-inset-left,0px),0.5rem)] landscape:pr-[max(env(safe-area-inset-right,0px),0.5rem)] sm:portrait:p-6 lg:portrait:p-8 flex flex-col w-screen h-screen overflow-hidden"
+                ? "fixed inset-0 z-[9999] bg-background dark:bg-[#080d1a] pt-[max(env(safe-area-inset-top,0px),0.75rem)] pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] landscape:pt-[max(env(safe-area-inset-top,0px),0.35rem)] landscape:pb-[max(env(safe-area-inset-bottom,0px),0.35rem)] landscape:pl-[max(env(safe-area-inset-left,0px),0.5rem)] landscape:pr-[max(env(safe-area-inset-right,0px),0.5rem)] sm:portrait:p-6 lg:portrait:p-8 flex flex-col w-screen h-screen overflow-hidden chart-fullscreen-container"
                 : "min-h-[340px] landscape:min-h-0 h-auto flex-1 pb-0 landscape:pb-0"
         )}>
             <div className={cn(

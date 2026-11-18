@@ -146,6 +146,12 @@
     height: calc(100dvh - max(env(safe-area-inset-top, 0px), 2.35rem)) !important;
   }
 
+  /* Fullscreen Chart im Großansicht-Modus auf dem iPad (Quer- & Hochformat):
+     Oberste Zeile (Aktienname, Kurse, Aktionen) exakt unter der iPadOS-Status-/Menüleiste andocken */
+  .chart-fullscreen-container {
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 2.35rem) + 0.5rem) !important;
+  }
+
   /* Marktuebersicht auf dem iPad: immer exakt ganze Kacheln ohne Anschnitt oben oder unten */
   .market-overview-page {
     height: calc(100dvh - max(env(safe-area-inset-top, 0px), 2.35rem)) !important;
@@ -254,6 +260,14 @@
   .market-overview-page .market-tile-card {
     height: calc((100dvh - 12.2rem) / 5) !important;
     height: calc((100cqh - 3rem) / 5) !important;
+  }
+}
+
+/* Generelle Absicherung für Fullscreen Chart auf Tablets / iPad / Desktop (Höhe > 500px):
+   Oberste Zeile sauber unter der iPadOS-Status-/Menüleiste andocken */
+@media (min-width: 641px) and (min-height: 501px) {
+  .chart-fullscreen-container {
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 2.35rem) + 0.5rem) !important;
   }
 }
 
