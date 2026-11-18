@@ -1313,29 +1313,8 @@ export function StockDetail() {
                         ]} />
                     </div>
 
-                    {/* Right: Action Buttons (Performance Details, Position & Vollbild) */}
-                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        {position && (
-                            <>
-                                <button
-                                    onClick={() => navigate('/?openPerformance=true')}
-                                    className="h-7 inline-flex items-center justify-center gap-1 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 py-0 px-2.5 text-xs group active:scale-95 whitespace-nowrap leading-none"
-                                    title="Performance Details aller Positionen öffnen"
-                                >
-                                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                                    <span className="hidden sm:inline">Performance Details</span>
-                                    <span className="sm:hidden">Details</span>
-                                </button>
-                                <button
-                                    onClick={() => setIsEditPositionModalOpen(true)}
-                                    className="h-7 inline-flex items-center justify-center gap-1 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 py-0 px-2.5 text-xs group active:scale-95 whitespace-nowrap leading-none"
-                                    title="Position bearbeiten (Käufe, Stückzahl, Kaufpreise)"
-                                >
-                                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                                    <span>Position</span>
-                                </button>
-                            </>
-                        )}
+                    {/* Right: Action Button (Vollbild) */}
+                    <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={() => setIsChartFullscreen(true)}
@@ -1382,6 +1361,29 @@ export function StockDetail() {
                         isFullscreen={isChartFullscreen}
                         onToggleFullscreen={setIsChartFullscreen}
                         extendedHours={getExtendedHoursInfo(stock)}
+                        headerActions={position ? (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/?openPerformance=true')}
+                                    className="h-7 inline-flex items-center justify-center gap-1 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 py-0 px-2.5 text-xs group active:scale-95 whitespace-nowrap leading-none cursor-pointer"
+                                    title="Performance Details aller Positionen öffnen"
+                                >
+                                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                                    <span className="hidden sm:inline">Performance Details</span>
+                                    <span className="sm:hidden">Details</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditPositionModalOpen(true)}
+                                    className="h-7 inline-flex items-center justify-center gap-1 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 py-0 px-2.5 text-xs group active:scale-95 whitespace-nowrap leading-none cursor-pointer"
+                                    title="Position bearbeiten (Käufe, Stückzahl, Kaufpreise)"
+                                >
+                                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                                    <span>Position</span>
+                                </button>
+                            </>
+                        ) : undefined}
                     />
                 </div>
             </div>

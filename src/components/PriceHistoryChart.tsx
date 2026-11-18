@@ -88,6 +88,7 @@ interface PriceHistoryChartProps {
     minutesAgo?: number;
     isFullscreen?: boolean;
     onToggleFullscreen?: (fullscreen: boolean) => void;
+    headerActions?: React.ReactNode;
     extendedHours?: {
         isPre: boolean;
         label: string;
@@ -130,6 +131,7 @@ export function PriceHistoryChart({
     minutesAgo,
     isFullscreen: controlledFullscreen,
     onToggleFullscreen,
+    headerActions,
     extendedHours
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
@@ -904,11 +906,29 @@ export function PriceHistoryChart({
                                     )}
                                 </div>
                             )}
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
-                                <span className="text-xs text-muted-foreground italic select-none">
-                                    · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
-                                </span>
+                            <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap mt-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
+                                    <span className="text-xs text-muted-foreground italic select-none">
+                                        · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
+                                    </span>
+                                </div>
+
+                                {/* Im Vollbild: Live-Kurs Badge (DelayedDataBadge) links über Hoch und Tief */}
+                                {isFullscreen && !isMeasureMode && (
+                                    <DelayedDataBadge
+                                        quoteDate={quoteDate}
+                                        lastDataDate={data && data.length > 0 ? new Date(data[data.length - 1].date) : null}
+                                        isMarketOpen={isMarketOpen}
+                                    />
+                                )}
+
+                                {/* Im verkleinerten Modus (Normalansicht): Performance Details & Position links über Hoch und Tief */}
+                                {!isFullscreen && headerActions && (
+                                    <div className="inline-flex items-center gap-1.5 sm:gap-2">
+                                        {headerActions}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1169,35 +1189,24 @@ export function PriceHistoryChart({
                             <span>Verkleinern</span>
                             <span className="text-[9px] font-mono opacity-80 hidden md:inline ml-0.5">Esc</span>
                         </button>
-                        {(!isMeasureMode || onRefresh) && (
-                            <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-                                {!isMeasureMode && (
-                                    <DelayedDataBadge
-                                        quoteDate={quoteDate}
-                                        lastDataDate={data && data.length > 0 ? new Date(data[data.length - 1].date) : null}
-                                        isMarketOpen={isMarketOpen}
-                                    />
+                        {onRefresh && !isMeasureMode && (
+                            <button
+                                type="button"
+                                onClick={onRefresh}
+                                disabled={isRefreshing}
+                                className={cn(
+                                    "h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-sm",
+                                    "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                    "active:scale-95 shrink-0 cursor-pointer",
+                                    isRefreshing && "opacity-50 cursor-not-allowed"
                                 )}
-                                {onRefresh && !isMeasureMode && (
-                                    <button
-                                        type="button"
-                                        onClick={onRefresh}
-                                        disabled={isRefreshing}
-                                        className={cn(
-                                            "h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-sm",
-                                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                            "active:scale-95 shrink-0 cursor-pointer",
-                                            isRefreshing && "opacity-50 cursor-not-allowed"
-                                        )}
-                                        title={typeof minutesAgo === 'number' ? `Zuletzt aktualisiert: Vor ${minutesAgo} Min. Klick zum Aktualisieren.` : 'Kursdaten aktualisieren'}
-                                    >
-                                        <RefreshCw className={cn("size-3.5 shrink-0", isRefreshing && "animate-spin")} />
-                                        <span className="whitespace-nowrap font-bold">
-                                            {isRefreshing ? 'Laden...' : typeof minutesAgo === 'number' ? `Vor ${minutesAgo} Min` : 'Laden'}
-                                        </span>
-                                    </button>
-                                )}
-                            </div>
+                                title={typeof minutesAgo === 'number' ? `Zuletzt aktualisiert: Vor ${minutesAgo} Min. Klick zum Aktualisieren.` : 'Kursdaten aktualisieren'}
+                            >
+                                <RefreshCw className={cn("size-3.5 shrink-0", isRefreshing && "animate-spin")} />
+                                <span className="whitespace-nowrap font-bold">
+                                    {isRefreshing ? 'Laden...' : typeof minutesAgo === 'number' ? `Vor ${minutesAgo} Min` : 'Laden'}
+                                </span>
+                            </button>
                         )}
                     </div>
                 )}
