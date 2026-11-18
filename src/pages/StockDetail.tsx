@@ -1292,7 +1292,7 @@ export function StockDetail() {
 
             {/* Price Chart (Kursverlauf) - Über ganze Breite */}
             <div className="stock-detail-chart-card bg-card border border-border rounded-xl px-2 md:px-4 pt-3 md:pt-4 pb-2 md:pb-2.5 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 h-auto flex flex-col w-full mb-6 overflow-hidden isolate relative z-0">
-                <div className="flex items-center justify-between gap-2 mb-2 md:mb-3 landscape:mb-1.5 shrink-0 px-1 md:px-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2 md:mb-3 landscape:mb-1.5 shrink-0 px-1 md:px-2">
                     {/* Left: Title */}
                     <div className="flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500 shrink-0" />
@@ -1314,7 +1314,7 @@ export function StockDetail() {
                     </div>
 
                     {/* Right: Action Buttons (Performance Details, Position & Vollbild) */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         {position && (
                             <>
                                 <button
@@ -1323,7 +1323,8 @@ export function StockDetail() {
                                     title="Performance Details aller Positionen öffnen"
                                 >
                                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                                    <span>Performance Details</span>
+                                    <span className="hidden sm:inline">Performance Details</span>
+                                    <span className="sm:hidden">Details</span>
                                 </button>
                                 <button
                                     onClick={() => setIsEditPositionModalOpen(true)}

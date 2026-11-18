@@ -863,8 +863,8 @@ export function PriceHistoryChart({
                 ? "fixed inset-0 z-[9999] bg-background dark:bg-[#080d1a] p-3 sm:p-6 lg:p-8 flex flex-col w-screen h-screen overflow-hidden"
                 : "min-h-[340px] landscape:min-h-0 h-auto flex-1 pb-0 landscape:pb-0"
         )}>
-            <div className="flex flex-wrap items-center justify-between mb-2 md:mb-3 landscape:mb-1.5 gap-2 relative">
-                <div className="flex flex-col gap-0.5 w-full sm:w-auto">
+            <div className="flex flex-wrap items-start justify-between mb-2 md:mb-3 landscape:mb-1.5 gap-2 relative">
+                <div className="flex flex-col gap-0.5 flex-1 min-w-0 pr-1 sm:pr-3">
                     <div className="flex items-center gap-2.5 sm:gap-3">
                         {stockLogoUrl && isFullscreen && (
                             <div className="shrink-0 flex items-center justify-center">
@@ -937,7 +937,7 @@ export function PriceHistoryChart({
                         {effectiveExtendedHours && effectiveExtendedHours.price && effectiveExtendedHours.price > 0 && (
                             <div
                                 className={cn(
-                                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg border text-xs sm:text-sm font-bold tabular-nums shrink-0 transition-all select-none shadow-sm",
+                                    "h-7 inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0 rounded-lg border text-xs sm:text-sm font-bold tabular-nums shrink-0 transition-all select-none shadow-sm leading-none",
                                     effectiveExtendedHours.isPre
                                         ? "bg-amber-500/15 border-amber-500/40 text-amber-500 dark:text-amber-300"
                                         : "bg-indigo-500/15 border-indigo-500/40 text-indigo-400 dark:text-indigo-300"
@@ -945,7 +945,7 @@ export function PriceHistoryChart({
                                 title={`${effectiveExtendedHours.label} ${effectiveExtendedHours.timeText ? `· ${effectiveExtendedHours.timeText}` : ''}`}
                             >
                                 <span className="uppercase tracking-wider text-[10px] sm:text-xs font-black opacity-90">
-                                    {effectiveExtendedHours.label}
+                                    <span className="hidden sm:inline">US </span>{effectiveExtendedHours.isPre ? 'Vorbörse' : 'Nachbörse'}
                                 </span>
                                 <span className="font-extrabold text-foreground">
                                     {formatCurrency(effectiveExtendedHours.price, displayCurrency, false)}
@@ -1158,7 +1158,7 @@ export function PriceHistoryChart({
                     </div>
                 </div>
                 {isFullscreen && (
-                    <div className="flex flex-col items-end gap-1.5 shrink-0 ml-auto self-start">
+                    <div className="flex flex-col items-end gap-1.5 shrink-0 ml-auto self-start z-10">
                         <button
                             type="button"
                             onClick={handleToggleFullscreen}
@@ -1170,7 +1170,7 @@ export function PriceHistoryChart({
                             <span className="text-[9px] font-mono opacity-80 hidden md:inline ml-0.5">Esc</span>
                         </button>
                         {(!isMeasureMode || onRefresh) && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
                                 {!isMeasureMode && (
                                     <DelayedDataBadge
                                         quoteDate={quoteDate}
@@ -1256,7 +1256,10 @@ export function PriceHistoryChart({
                                             )}
                                             title="Vor- und nachbörsliche Kurse (Pre-Market / After-Hours) im 1D-Chart ein-/ausblenden"
                                         >
-                                            <span className={cn("text-[10px] sm:text-xs font-bold leading-none", showPrePost ? "text-white" : "")}>Vor-/Nachbörse</span>
+                                            <span className={cn("text-[10px] sm:text-xs font-bold leading-none", showPrePost ? "text-white" : "")}>
+                                                <span className="hidden sm:inline">Vor-/Nachbörse</span>
+                                                <span className="sm:hidden">Vor/Nach</span>
+                                            </span>
                                         </button>
                                     )}
                                 </div>
