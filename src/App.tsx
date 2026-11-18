@@ -184,7 +184,7 @@ function App() {
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="fixed top-[calc(max(env(safe-area-inset-top,0px),2.35rem)+0.8rem)] z-[1100] p-1.5 md:p-2 bg-card/90 backdrop-blur-sm border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors active:scale-95 app-hamburger-btn"
-                style={{ left: 'max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.75rem)' }}
+                style={{ left: 'max(env(safe-area-inset-left, 0px), 0.75rem)' }}
                 aria-label="Menü öffnen"
               >
                 <Menu className="size-4 md:size-5" />
@@ -295,8 +295,8 @@ function App() {
             <main
               className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300 flex flex-col app-main-landscape-safe"
               style={{
-                paddingLeft: 'max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem)',
-                paddingRight: 'max(calc(env(safe-area-inset-right, 0px) - 1.25rem), 0.5rem)',
+                paddingLeft: 'max(env(safe-area-inset-left, 0px), 0.75rem)',
+                paddingRight: 'max(env(safe-area-inset-right, 0px), 0.75rem)',
                 paddingBottom: 'env(safe-area-inset-bottom, 0px)'
               }}
             >
