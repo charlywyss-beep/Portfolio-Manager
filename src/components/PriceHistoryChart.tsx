@@ -1,12 +1,11 @@
 import { StockName } from './StockName';
-import { InfoHelp } from './InfoHelp';
 import { DelayedDataBadge } from './DelayedDataBadge';
 import { Logo } from './Logo';
 import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
-import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2, HelpCircle, ShieldCheck, Sparkles, TriangleAlert, Sliders, RefreshCw } from 'lucide-react';
+import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2, ShieldCheck, Sparkles, TriangleAlert, Sliders, RefreshCw } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -906,36 +905,21 @@ export function PriceHistoryChart({
                                     )}
                                 </div>
                             )}
-                            <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap mt-0.5">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
-                                    <span className="text-xs text-muted-foreground italic select-none">
-                                        · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
-                                    </span>
-                                </div>
-
-                                {/* Im Vollbild: Live-Kurs Badge (DelayedDataBadge) links über Hoch und Tief */}
-                                {isFullscreen && !isMeasureMode && (
-                                    <DelayedDataBadge
-                                        quoteDate={quoteDate}
-                                        lastDataDate={data && data.length > 0 ? new Date(data[data.length - 1].date) : null}
-                                        isMarketOpen={isMarketOpen}
-                                    />
-                                )}
-
-                                {/* Im verkleinerten Modus (Normalansicht): Performance Details & Position links über Hoch und Tief */}
-                                {!isFullscreen && headerActions && (
-                                    <div className="inline-flex items-center gap-1.5 sm:gap-2">
-                                        {headerActions}
-                                    </div>
-                                )}
-                            </div>
                         </div>
                     </div>
 
-                    {/* Price, Performance & Hoch/Tief in a Single Unified Row */}
-                    <div className="relative flex flex-wrap items-center gap-x-3.5 sm:gap-x-4 gap-y-1.5 mt-0.5 min-h-[32px] sm:min-h-0">
-                        {/* Current Price, Date & Performance Diff */}
+                    {/* Performance, Kurs, Extended Hours & Hoch/Tief mit exakter Linksbündigkeit bei H: */}
+                    <div className="relative flex flex-wrap items-end gap-x-4 sm:gap-x-5 gap-y-1.5 mt-0.5 min-h-[32px] sm:min-h-0">
+                        {/* Spalte 1 (Links): Performance-Untertitel & Kurs-Zeile */}
+                        <div className="flex flex-col gap-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
+                                <span className="text-xs text-muted-foreground italic select-none">
+                                    · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
+                                </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-2.5 sm:gap-x-3 gap-y-1">
+                                {/* Current Price, Date & Performance Diff */}
                         <div className="flex items-baseline gap-2 sm:gap-2.5 shrink-0">
                             {(effectiveCurrentPrice > 0 || endPrice > 0) && (
                                 <span className="text-xl sm:text-2xl landscape:text-lg font-black tabular-nums text-foreground tracking-tight">
@@ -993,12 +977,34 @@ export function PriceHistoryChart({
                                 )}
                             </div>
                         )}
+                            </div>
+                        </div>
 
-                        {/* Hoch / Tief Indicators (H / T) beside Current Price */}
-                        <div className={cn(
-                            "flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold text-foreground transition-opacity duration-150 select-none sm:border-l sm:border-border/60 sm:pl-3.5",
-                            hoveredData && "opacity-0 sm:opacity-100"
-                        )}>
+                        {/* Spalte 2 (Rechts): Beginn des Feldes startet exakt bei H: */}
+                        <div className="flex flex-col items-start gap-1 sm:border-l sm:border-border/60 sm:pl-3.5">
+                            {/* Obere Zeile: Live-Kurs / Schlusskurs (Vollbild) ODER Performance Details & Position (Normalansicht) */}
+                            {((isFullscreen && !isMeasureMode) || (!isFullscreen && headerActions)) && (
+                                <div className="h-7 inline-flex items-center">
+                                    {isFullscreen && !isMeasureMode && (
+                                        <DelayedDataBadge
+                                            quoteDate={quoteDate}
+                                            lastDataDate={data && data.length > 0 ? new Date(data[data.length - 1].date) : null}
+                                            isMarketOpen={isMarketOpen}
+                                        />
+                                    )}
+                                    {!isFullscreen && headerActions && (
+                                        <div className="inline-flex items-center gap-1.5 sm:gap-2">
+                                            {headerActions}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Untere Zeile: Hoch / Tief Indikatoren (H: und T:) */}
+                            <div className={cn(
+                                "flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold text-foreground transition-opacity duration-150 select-none",
+                                hoveredData && "opacity-0 sm:opacity-100"
+                            )}>
                             <div className="flex items-center gap-1">
                                 <button
                                     type="button"
@@ -1011,7 +1017,7 @@ export function PriceHistoryChart({
                                         }
                                     }}
                                     className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold",
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold",
                                         isMeasureMode
                                             ? highMeasureIdx >= 0
                                                 ? "bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50"
@@ -1061,7 +1067,7 @@ export function PriceHistoryChart({
                                         }
                                     }}
                                     className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold",
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold",
                                         isMeasureMode
                                             ? lowMeasureIdx >= 0
                                                 ? "bg-rose-600 text-white border-rose-500 shadow-md ring-2 ring-rose-400/50"
@@ -1120,6 +1126,7 @@ export function PriceHistoryChart({
                                     </div>
                                 );
                             })()}
+                            </div>
                         </div>
 
                         {/* Mobile-Only Hover Info (Directly over H/T & Price on touch) */}
@@ -1178,18 +1185,8 @@ export function PriceHistoryChart({
                     </div>
                 </div>
                 {isFullscreen && (
-                    <div className="flex flex-col items-end gap-1.5 shrink-0 ml-auto self-start z-10">
-                        <button
-                            type="button"
-                            onClick={handleToggleFullscreen}
-                            className="h-7 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0"
-                            title="Großansicht schließen (Esc)"
-                        >
-                            <Minimize2 className="size-3.5 shrink-0" />
-                            <span>Verkleinern</span>
-                            <span className="text-[9px] font-mono opacity-80 hidden md:inline ml-0.5">Esc</span>
-                        </button>
-                        {onRefresh && !isMeasureMode && (
+                    <div className="flex flex-col items-end justify-between gap-2.5 sm:gap-3.5 shrink-0 ml-auto self-stretch z-10 pb-0.5">
+                        {onRefresh && !isMeasureMode ? (
                             <button
                                 type="button"
                                 onClick={onRefresh}
@@ -1207,7 +1204,17 @@ export function PriceHistoryChart({
                                     {isRefreshing ? 'Laden...' : typeof minutesAgo === 'number' ? `Vor ${minutesAgo} Min` : 'Laden'}
                                 </span>
                             </button>
-                        )}
+                        ) : <div />}
+                        <button
+                            type="button"
+                            onClick={handleToggleFullscreen}
+                            className="h-7 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0 mt-auto"
+                            title="Großansicht schließen (Esc)"
+                        >
+                            <Minimize2 className="size-3.5 shrink-0" />
+                            <span>Verkleinern</span>
+                            <span className="text-[9px] font-mono opacity-80 hidden md:inline ml-0.5">Esc</span>
+                        </button>
                     </div>
                 )}
             </div>
@@ -1296,53 +1303,29 @@ export function PriceHistoryChart({
                                     <Ruler className="size-3.5 shrink-0" />
                                     <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Messen</span>
                                 </button>
-                                <div className="inline-flex items-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setShowFibonacci(prev => {
-                                                const next = !prev;
-                                                if (next) {
-                                                    if (!isFullscreen) handleToggleFullscreen();
-                                                    handleRangeChange('3M');
-                                                }
-                                                return next;
-                                            });
-                                        }}
-                                        className={cn(
-                                            toolbarToggleClass,
-                                            "rounded-r-none border-r-0",
-                                            showFibonacci
-                                                ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-700 ring-1 ring-purple-400/50"
-                                                : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
-                                        )}
-                                        title="Fibonacci-Retracements im Chart anzeigen (öffnet Großansicht)"
-                                    >
-                                        <span className="font-serif font-black text-xs leading-none">Φ</span>
-                                        <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Fibonacci</span>
-                                    </button>
-                                    <InfoHelp
-                                        title="Fibonacci-Anwendung & Goldener Schnitt"
-                                        items={FIBONACCI_INFO_ITEMS}
-                                        buttonClassName={cn(
-                                            "h-7 w-7 inline-flex items-center justify-center rounded-r-lg border text-xs font-bold leading-none transition-all shadow-sm cursor-pointer shrink-0",
-                                            showFibonacci
-                                                ? "bg-purple-600 text-white border-purple-700 hover:bg-purple-500"
-                                                : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
-                                        )}
-                                        trigger={<HelpCircle className="size-3.5 shrink-0" />}
-                                        footer={
-                                            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs">
-                                                <p className="font-bold text-purple-700 dark:text-purple-300 mb-0.5">
-                                                    Praxis-Tipp für dein Portfolio:
-                                                </p>
-                                                <p className="text-muted-foreground">
-                                                    Achte vor allem auf den <strong>1J- und 3J-Goldenen Schnitt</strong> (61.8%). Wenn der Kurs dort ankommt und zugleich dein <strong>Fairer Wert</strong>, <strong>Kauflimit</strong> oder die <strong>200-Tage-Linie</strong> in der Nähe liegen, ist das eine der stärksten Kauf- und Unterstützungszonen überhaupt!
-                                                </p>
-                                            </div>
-                                        }
-                                    />
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowFibonacci(prev => {
+                                            const next = !prev;
+                                            if (next) {
+                                                if (!isFullscreen) handleToggleFullscreen();
+                                                handleRangeChange('3M');
+                                            }
+                                            return next;
+                                        });
+                                    }}
+                                    className={cn(
+                                        toolbarToggleClass,
+                                        showFibonacci
+                                            ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-700 ring-1 ring-purple-400/50"
+                                            : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
+                                    )}
+                                    title="Fibonacci-Retracements im Chart anzeigen (öffnet Großansicht)"
+                                >
+                                    <span className="font-serif font-black text-xs leading-none">Φ</span>
+                                    <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Fibonacci</span>
+                                </button>
                                 {onToggleValuationMode && valuationMode && (
                                     <button
                                         type="button"
@@ -1653,53 +1636,6 @@ export function PriceHistoryChart({
                                 <X className="size-3.5" />
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Fibonacci Level Overview Bar */}
-            {fibonacciData && (
-                <div className="w-full flex flex-wrap items-center justify-between gap-2 py-1.5 px-2.5 sm:px-3 mb-2 rounded-xl bg-purple-500/10 border border-purple-500/25 text-xs animate-in fade-in duration-150">
-                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                        <span className="font-bold text-purple-600 dark:text-purple-400 shrink-0 flex items-center gap-1 text-xs mr-0.5">
-                            <span className="font-serif font-black text-sm">Φ</span>
-                            <span>Fibonacci:</span>
-                        </span>
-                        {fibonacciData.levels.map(lvl => (
-                            <span
-                                key={lvl.label}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-card border border-border shadow-2xs whitespace-nowrap"
-                                style={{ color: lvl.color }}
-                                title={`${lvl.label} ${lvl.name || ''}: ${lvl.formattedPrice}`}
-                            >
-                                <span>{lvl.label}</span>
-                                <span>{lvl.formattedPrice}</span>
-                                {lvl.name && <span className="text-[10px] font-sans font-bold ml-0.5">· {lvl.name}</span>}
-                            </span>
-                        ))}
-                    </div>
-                    {/* Fibonacci Infobox */}
-                    <div className="shrink-0 flex items-center pl-1 border-l border-purple-500/20 ml-auto">
-                        <InfoHelp
-                            title="Fibonacci-Anwendung & Goldener Schnitt"
-                            items={FIBONACCI_INFO_ITEMS}
-                            trigger={
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-purple-500/20 hover:bg-purple-500/35 text-purple-700 dark:text-purple-300 border border-purple-500/40 transition-all cursor-pointer whitespace-nowrap shadow-2xs">
-                                    <HelpCircle className="size-3 text-purple-500" />
-                                    <span>Infobox</span>
-                                </span>
-                            }
-                            footer={
-                                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs">
-                                    <p className="font-bold text-purple-700 dark:text-purple-300 mb-0.5">
-                                        Praxis-Tipp für dein Portfolio:
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        Achte vor allem auf den <strong>1J- und 3J-Goldenen Schnitt</strong> (61.8%). Wenn der Kurs dort ankommt und zugleich dein <strong>Fairer Wert</strong>, <strong>Kauflimit</strong> oder die <strong>200-Tage-Linie</strong> in der Nähe liegen, ist das eine der stärksten Kauf- und Unterstützungszonen überhaupt!
-                                    </p>
-                                </div>
-                            }
-                        />
                     </div>
                 </div>
             )}

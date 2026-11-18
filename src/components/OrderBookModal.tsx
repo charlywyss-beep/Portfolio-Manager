@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { X, Search, Trash2, ClipboardList, CheckCircle2, Clock, AlertCircle, Calendar, ArrowDownToLine, Rocket, Check } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -139,13 +140,15 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
         }
     };
 
-    return (
+    if (!isOpen) return null;
+
+    return createPortal(
         <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs z-[2000] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto overscroll-contain animate-in fade-in duration-150"
             onClick={onClose}
         >
             <div
-                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl h-[580px] md:h-[620px] max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-foreground"
+                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl h-[580px] md:h-[620px] max-h-[92vh] max-h-[92dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-foreground my-auto"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -587,6 +590,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                 order={executingOrder}
                 onExecute={handleExecuteWithParams}
             />
-        </div>
+        </div>,
+        document.body
     );
 }

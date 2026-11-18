@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, Rocket, Calendar, ShieldCheck, Building2 } from 'lucide-react';
 import { Logo } from './Logo';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -193,13 +194,13 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
         return `${new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)} ${curr}`;
     };
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 bg-black/75 backdrop-blur-xs z-60 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs z-[2100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
             onClick={onClose}
         >
             <div
-                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col text-foreground animate-in zoom-in-95 duration-150"
+                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col text-foreground animate-in zoom-in-95 duration-150 my-auto"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -468,6 +469,7 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
