@@ -1034,18 +1034,20 @@ export function EditDividendPage() {
                                             mos: Math.max(25, Math.min(50, smartAutoConservative.mos + 10))
                                         };
 
-                                        const isManualFv = Boolean(
-                                            activeParams?.isCustom ||
-                                            activeParams?.valuationMode === 'manual' ||
-                                            currentStockObj?.targetPriceType === 'manual'
-                                        );
-                                        const currentValuationMode: 'conservative' | 'quality' | 'risk' =
-                                            activeParams?.valuationMode === 'risk'
-                                                ? 'risk'
-                                                : activeParams?.valuationMode === 'quality'
-                                                    ? 'quality'
-                                                    : 'conservative';
-                                        const currentMode: 'conservative' | 'quality' | 'risk' | 'manual' = isManualFv ? 'manual' : currentValuationMode;
+                                        let currentMode: 'conservative' | 'quality' | 'risk' | 'manual' = 'conservative';
+                                        if (activeParams?.valuationMode === 'quality') {
+                                            currentMode = 'quality';
+                                        } else if (activeParams?.valuationMode === 'risk') {
+                                            currentMode = 'risk';
+                                        } else if (activeParams?.valuationMode === 'conservative') {
+                                            currentMode = 'conservative';
+                                        } else if (activeParams?.valuationMode === 'manual' || activeParams?.isCustom) {
+                                            currentMode = 'manual';
+                                        } else if (currentStockObj?.targetPriceType === 'quality' || currentStockObj?.targetPriceType === 'risk' || currentStockObj?.targetPriceType === 'conservative') {
+                                            currentMode = currentStockObj.targetPriceType;
+                                        } else if (currentStockObj?.targetPriceType === 'manual') {
+                                            currentMode = 'manual';
+                                        }
 
                                         let effectiveFairValue = 0;
                                         let calcBuyPrice: number | null = null;
@@ -1191,7 +1193,8 @@ export function EditDividendPage() {
                                                 if (currentStockObj) {
                                                     updateStock(currentStockObj.id, {
                                                         ...(newFv > 0 ? { fairValue: newFv } : {}),
-                                                        ...(shouldAutoSyncLimit && newNextBuyPrice > 0 ? { targetPrice: newNextBuyPrice, targetPriceType: nextMode } : {}),
+                                                        targetPriceType: nextMode,
+                                                        ...(shouldAutoSyncLimit && newNextBuyPrice > 0 ? { targetPrice: newNextBuyPrice } : {}),
                                                         fairValueParams: nextEntry
                                                     });
                                                 }

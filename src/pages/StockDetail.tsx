@@ -403,17 +403,20 @@ export function StockDetail() {
         };
 
         const savedTargetPriceType = (stock as any).targetPriceType;
-        const isManualMode = Boolean(
-            savedTargetPriceType === 'manual' ||
-            activeParams?.isCustom ||
-            activeParams?.valuationMode === 'manual'
-        );
-        const currentValuationMode = activeParams?.valuationMode === 'risk'
-            ? 'risk'
-            : activeParams?.valuationMode === 'quality'
-                ? 'quality'
-                : 'conservative';
-        const currentMode: 'conservative' | 'quality' | 'risk' | 'manual' = isManualMode ? 'manual' : currentValuationMode;
+        let currentMode: 'conservative' | 'quality' | 'risk' | 'manual' = 'conservative';
+        if (activeParams?.valuationMode === 'quality') {
+            currentMode = 'quality';
+        } else if (activeParams?.valuationMode === 'risk') {
+            currentMode = 'risk';
+        } else if (activeParams?.valuationMode === 'conservative') {
+            currentMode = 'conservative';
+        } else if (activeParams?.valuationMode === 'manual' || activeParams?.isCustom) {
+            currentMode = 'manual';
+        } else if (savedTargetPriceType === 'quality' || savedTargetPriceType === 'risk' || savedTargetPriceType === 'conservative') {
+            currentMode = savedTargetPriceType;
+        } else if (savedTargetPriceType === 'manual') {
+            currentMode = 'manual';
+        }
 
         let fairValue = 0;
         let buyPrice: number | null = null;
@@ -459,34 +462,9 @@ export function StockDetail() {
             mos = dcf.mos;
         }
 
-        // Determine resolvedTargetType for buyLimit
-        const dcfRisk = calculateDcfFairValue(smartAutoRisk, effectivePrice);
-        const dcfQuality = calculateDcfFairValue(smartAutoQuality, effectivePrice);
-        const dcfCons = calculateDcfFairValue(smartAutoConservative, effectivePrice);
-
-        let resolvedTargetType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
-        if (savedTargetPriceType === 'manual') {
-            resolvedTargetType = 'manual';
-        } else if (savedTargetPriceType) {
-            resolvedTargetType = savedTargetPriceType;
-        } else if (currentMode !== 'manual') {
-            resolvedTargetType = currentMode;
-        } else if (stock.targetPrice) {
-            if (Math.abs(stock.targetPrice - dcfRisk.buyPrice) < 0.05) {
-                resolvedTargetType = 'risk';
-            } else if (Math.abs(stock.targetPrice - dcfQuality.buyPrice) < 0.05) {
-                resolvedTargetType = 'quality';
-            } else if (Math.abs(stock.targetPrice - dcfCons.buyPrice) < 0.05) {
-                resolvedTargetType = 'conservative';
-            } else if (fairValue > 0 && Math.abs(stock.targetPrice - fairValue) < 0.05) {
-                resolvedTargetType = 'fairValue';
-            } else {
-                resolvedTargetType = 'manual';
-            }
-        }
-
-        const effectiveBuyPrice = (savedTargetPriceType === 'manual' && stock.targetPrice && stock.targetPrice > 0)
-            ? stock.targetPrice
+        const resolvedTargetType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = (savedTargetPriceType === 'fairValue' ? 'fairValue' : currentMode) as any;
+        const effectiveBuyPrice = currentMode === 'manual'
+            ? ((stock.targetPrice && stock.targetPrice > 0) ? stock.targetPrice : buyPrice)
             : buyPrice;
 
         return {
@@ -588,12 +566,11 @@ export function StockDetail() {
             map[symKey] = nextEntry;
             try { localStorage.setItem('fair_value_params_map', JSON.stringify(map)); } catch {}
 
-            // Keep user's manual target price intact if it was set manually
-            const hasManualLimit = (stock as any)?.targetPriceType === 'manual';
             const stockUpdates: any = {
                 fairValueParams: nextEntry,
+                targetPriceType: nextMode,
                 ...(newFv > 0 ? { fairValue: newFv } : {}),
-                ...(!hasManualLimit && newBuyPrice > 0 ? { targetPrice: newBuyPrice, targetPriceType: nextMode } : {})
+                ...(newBuyPrice > 0 ? { targetPrice: newBuyPrice } : {})
             };
 
             if (stockFromContext && stock) {
