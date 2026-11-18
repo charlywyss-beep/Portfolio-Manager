@@ -113,8 +113,8 @@
 
 @media (orientation: landscape) and (max-width: 1024px) and (max-height: 500px) {
   .app-main-landscape-safe {
-    padding-left: max(env(safe-area-inset-left, 0px), 1rem) !important;
-    padding-right: max(env(safe-area-inset-right, 0px), 1rem) !important;
+    padding-left: max(env(safe-area-inset-left, 0px), 0.5rem) !important;
+    padding-right: max(env(safe-area-inset-right, 0px), 0.5rem) !important;
   }
 }
 
@@ -288,10 +288,12 @@
     scroll-snap-align: start;
   }
 
-  /* StockDetail: Maximale vertikale Kompaktheit im iPhone Querformat */
+  /* StockDetail: Maximale vertikale Kompaktheit & Rand-zu-Rand im iPhone Querformat */
   .stock-detail-page {
     padding-top: 0.25rem !important;
     padding-bottom: 1.5rem !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     gap: 0.35rem !important;
   }
 
@@ -340,6 +342,12 @@
   .stock-detail-chart-card {
     padding-top: 0.35rem !important;
     padding-bottom: 0.35rem !important;
+    padding-left: 0.35rem !important;
+    padding-right: 0.35rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    border-radius: 0.5rem !important;
     margin-bottom: 0.5rem !important;
   }
 

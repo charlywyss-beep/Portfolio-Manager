@@ -1231,7 +1231,7 @@ export function PriceHistoryChart({
                         <button
                             type="button"
                             onClick={handleToggleFullscreen}
-                            className="h-7 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0 mt-auto"
+                            className="h-7 inline-flex items-center justify-center gap-1.5 px-3 py-0 rounded-lg border text-xs font-bold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0 mt-auto whitespace-nowrap"
                             title="Großansicht schließen (Esc)"
                         >
                             <Minimize2 className="size-3.5 shrink-0" />
@@ -1246,15 +1246,15 @@ export function PriceHistoryChart({
                 {(() => {
                     const toolbarToggleClass = "h-7 inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-0 rounded-lg border text-[11px] sm:text-xs font-bold leading-none transition-all shadow-sm whitespace-nowrap cursor-pointer";
                     return (
-                        <div className="flex flex-wrap items-center gap-2 max-w-full">
+                        <div className="flex flex-wrap items-center gap-2 w-full">
                             {/* Group 1: Time range segmented bar */}
-                            <div className="flex bg-muted/50 p-0.5 rounded-lg items-center gap-0.5 overflow-x-auto scroller-none shrink-0">
+                            <div className="flex w-full sm:w-auto bg-muted/50 p-0.5 rounded-lg items-center gap-0.5 overflow-x-auto scroller-none">
                                 {(['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
                                     <button
                                         key={range}
                                         onClick={() => handleRangeChange(range)}
                                         className={cn(
-                                            "h-7 inline-flex items-center justify-center px-2 sm:px-3 py-0 text-xs font-medium leading-none rounded-md border transition-all whitespace-nowrap",
+                                            "h-7 flex-1 sm:flex-initial inline-flex items-center justify-center px-1 sm:px-3 py-0 text-xs font-medium leading-none rounded-md border transition-all whitespace-nowrap",
                                             selectedRange === range
                                                 ? "bg-background border-slate-300/80 dark:border-slate-500/50 shadow-sm text-foreground"
                                                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-background/70"

@@ -911,8 +911,8 @@ export function StockDetail() {
         <div className="stock-detail-page p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10 pl-[max(env(safe-area-inset-left,0px),0.5rem)] pr-[max(env(safe-area-inset-right,0px),0.5rem)]">
             {/* Sticky Header on Desktop and Mobile */}
             <div className="stock-detail-sticky-header sticky top-0 -mx-2 lg:-mx-8 px-3 py-2 lg:px-8 lg:py-3.5 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 lg:-mt-8 mb-3 md:mb-6 pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)]">
-                <div className="stock-detail-top-actions flex items-center justify-between gap-2 mb-3.5 md:mb-4 landscape:mb-1 pl-12 xl:pl-0">
-                    <div className="flex items-center gap-2">
+                <div className="stock-detail-top-actions flex items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3.5 md:mb-4 landscape:mb-1 pl-12 xl:pl-0 overflow-x-auto scroller-none max-w-full">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <button
                             onClick={() => {
                                 const from = searchParams.get('from');
@@ -929,7 +929,7 @@ export function StockDetail() {
                                     navigate('/');
                                 }
                             }}
-                            className="flex items-center justify-center gap-1.5 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800/60 py-1 px-2.5 text-xs group active:scale-95"
+                            className="h-7 flex items-center justify-center gap-1.5 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800/60 py-0 px-2 sm:px-2.5 text-xs group active:scale-95 shrink-0 whitespace-nowrap"
                             title={
                                 searchParams.get('from') === 'orderbook'
                                     ? "Zurück zum Auftragsbuch"
@@ -971,15 +971,20 @@ export function StockDetail() {
                             return (
                                 <button
                                     onClick={() => navigate('/calculator?orderbook=true')}
-                                    className="flex items-center justify-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all font-semibold rounded-lg shadow-sm border border-amber-500/30 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
+                                    className="h-7 flex items-center justify-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all font-semibold rounded-lg shadow-sm border border-amber-500/30 py-0 px-2 sm:px-2.5 text-xs group active:scale-95 whitespace-nowrap shrink-0"
                                     title="Zum Auftragsbuch wechseln"
                                 >
-                                    <ClipboardList className="size-3.5 text-amber-500" />
+                                    <ClipboardList className="size-3.5 text-amber-500 shrink-0" />
                                     <span>
-                                        Auftrag: {activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {activeOrder.shares} Stk. à {activeOrder.limitPrice.toFixed(2)} {activeOrder.currency}
+                                        <span className="hidden sm:inline">
+                                            Auftrag: {activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {activeOrder.shares} Stk. à {activeOrder.limitPrice.toFixed(2)} {activeOrder.currency}
+                                        </span>
+                                        <span className="sm:hidden">
+                                            Auftrag {activeOrder.shares} Stk.
+                                        </span>
                                         {orderGap !== null && (
                                             <span className="font-mono ml-1 font-bold">
-                                                • Gap: {orderGap > 0 ? '+' : ''}{orderGap.toFixed(1)}%
+                                                • Gap {orderGap > 0 ? '+' : ''}{orderGap.toFixed(1)}%
                                             </span>
                                         )}
                                     </span>
@@ -990,16 +995,16 @@ export function StockDetail() {
                         {/* Saisonalität Button */}
                         <button
                             onClick={() => navigate(`/seasonality/${stock.symbol}`)}
-                            className="flex items-center justify-center gap-1.5 bg-white dark:bg-card text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all font-semibold rounded-lg shadow-sm border border-violet-200 dark:border-violet-800 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
+                            className="h-7 flex items-center justify-center gap-1.5 bg-white dark:bg-card text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all font-semibold rounded-lg shadow-sm border border-violet-200 dark:border-violet-800 py-0 px-2 sm:px-2.5 text-xs group active:scale-95 whitespace-nowrap shrink-0"
                             title="Saisonalitätsanalyse"
                         >
-                            <BarChart2 className="size-3.5" />
+                            <BarChart2 className="size-3.5 shrink-0" />
                             <span>Saisonalität</span>
                         </button>
                     </div>
 
                     {/* Aktualisierung Button + Verzögerte Daten Badge überall oben rechts */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <DelayedDataBadge
                             quoteDate={quoteDate || (stock.lastQuoteDate ? new Date(stock.lastQuoteDate) : null)}
                             lastDataDate={chartData && chartData.length > 0 ? new Date(chartData[chartData.length - 1].date) : null}
@@ -1009,15 +1014,15 @@ export function StockDetail() {
                             onClick={loadData}
                             disabled={isRefreshing}
                             className={cn(
-                                "h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-sm",
+                                "h-7 inline-flex items-center gap-1.5 px-2 sm:px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-sm",
                                 "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                "active:scale-95 shrink-0",
+                                "active:scale-95 shrink-0 cursor-pointer",
                                 isRefreshing && "opacity-50 cursor-not-allowed"
                             )}
                             title={lastUpdate ? `Zuletzt aktualisiert: Vor ${minutesAgo} Min (${lastUpdate.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })} Uhr). Klick zum Aktualisieren.` : 'Kursdaten aktualisieren'}
                         >
                             <RefreshCw className={cn("size-3.5 shrink-0", isRefreshing && "animate-spin")} />
-                            <span className="whitespace-nowrap">
+                            <span className="whitespace-nowrap font-bold">
                                 {isRefreshing ? 'Laden...' : lastUpdate ? `Vor ${minutesAgo} Min` : 'Laden'}
                             </span>
                         </button>
