@@ -1,10 +1,12 @@
 import { StockName } from './StockName';
 import { InfoHelp } from './InfoHelp';
+import { DelayedDataBadge } from './DelayedDataBadge';
+import { Logo } from './Logo';
 import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
-import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2, HelpCircle, ShieldCheck, Sparkles, TriangleAlert, Sliders } from 'lucide-react';
+import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2, HelpCircle, ShieldCheck, Sparkles, TriangleAlert, Sliders, RefreshCw } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -72,12 +74,20 @@ interface PriceHistoryChartProps {
     }>;
     sellLimit?: number;
     buyLimit?: number;
+    modelBuyPrice?: number;
     fairValue?: number;
     valuationMode?: 'conservative' | 'quality' | 'risk' | 'manual';
     buyLimitType?: 'conservative' | 'quality' | 'risk' | 'manual' | 'fairValue';
     onToggleValuationMode?: () => void;
     stockName?: string;
     stockSymbol?: string;
+    stockLogoUrl?: string;
+    stockDate?: string;
+    onRefresh?: () => void;
+    isRefreshing?: boolean;
+    minutesAgo?: number;
+    isFullscreen?: boolean;
+    onToggleFullscreen?: (fullscreen: boolean) => void;
 }
 
 export function PriceHistoryChart({
@@ -98,12 +108,20 @@ export function PriceHistoryChart({
     purchases,
     sellLimit,
     buyLimit,
+    modelBuyPrice,
     fairValue,
     valuationMode,
     buyLimitType,
     onToggleValuationMode,
     stockName,
-    stockSymbol
+    stockSymbol,
+    stockLogoUrl,
+    stockDate,
+    onRefresh,
+    isRefreshing,
+    minutesAgo,
+    isFullscreen: controlledFullscreen,
+    onToggleFullscreen
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
     const [isNarrowPortrait, setIsNarrowPortrait] = useState(() =>
@@ -119,7 +137,20 @@ export function PriceHistoryChart({
     }, []);
     const [isMeasureMode, setIsMeasureMode] = useState(false);
     const [showFibonacci, setShowFibonacci] = useState(false);
-    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [internalFullscreen, setInternalFullscreen] = useState(false);
+    const isFullscreen = controlledFullscreen !== undefined ? controlledFullscreen : internalFullscreen;
+
+    const handleToggleFullscreen = () => {
+        const next = !isFullscreen;
+        if (onToggleFullscreen) {
+            onToggleFullscreen(next);
+        } else {
+            setInternalFullscreen(next);
+        }
+        if (!next) {
+            setShowFibonacci(false);
+        }
+    };
     const [measurePoints, setMeasurePoints] = useState<MeasurePoint[]>([]);
     const lastMeasureClickRef = useRef(0);
     const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null; session?: 'pre' | 'regular' | 'post' } | null>(null);
@@ -130,7 +161,7 @@ export function PriceHistoryChart({
         if (!isFullscreen) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                setIsFullscreen(false);
+                handleToggleFullscreen();
             }
         };
         const prevOverflow = document.body.style.overflow;
@@ -204,7 +235,8 @@ export function PriceHistoryChart({
         if (historyData && historyData.length > 0) {
             // Check if we should append the currentPrice (Live connection)
             // Only during active regular market session (avoids flat tail at 08:54 on weekends/closed hours)
-            if (selectedRange === '1D' && isMarketOpen && !showPrePost && currentPrice > 0) {
+            const hasPostInHistory = historyData.some(p => p.session === 'post');
+            if (selectedRange === '1D' && isMarketOpen && (!showPrePost || !hasPostInHistory) && currentPrice > 0) {
                 const lastPoint = historyData[historyData.length - 1];
                 const lastDate = new Date(lastPoint.date).getTime();
                 const liveDate = quoteDate ? quoteDate.getTime() : Date.now();
@@ -287,6 +319,7 @@ export function PriceHistoryChart({
     const effectivePreviousClose = previousClose ? previousClose * conversionRate : undefined;
     const effectivePurchasePrice = purchasePrice ? purchasePrice * conversionRate : undefined;
     const effectiveBuyLimit = buyLimit && buyLimit > 0 ? buyLimit * conversionRate : undefined;
+    const effectiveModelBuyPrice = modelBuyPrice && modelBuyPrice > 0 ? modelBuyPrice * conversionRate : undefined;
     const effectiveFairValue = fairValue && fairValue > 0 ? fairValue * conversionRate : undefined;
     const effectiveSellLimit = sellLimit ? sellLimit * conversionRate : undefined;
 
@@ -298,21 +331,24 @@ export function PriceHistoryChart({
                     stroke: '#a855f7', // Purple-500
                     fill: '#d8b4fe',   // Purple-300
                     badge: 'B',
-                    labelPrefix: 'Fairer Wert B'
+                    labelPrefix: 'Fairer Wert B',
+                    modelBuyLabel: 'Kaufpreis Qualität B'
                 };
             case 'risk':
                 return {
                     stroke: '#f59e0b', // Amber-500
                     fill: '#fde047',   // Amber-300
                     badge: 'C',
-                    labelPrefix: 'Fairer Wert C'
+                    labelPrefix: 'Fairer Wert C',
+                    modelBuyLabel: 'Kaufpreis Risiko C'
                 };
             case 'manual':
                 return {
                     stroke: '#ec4899', // Pink-500
                     fill: '#f472b6',   // Pink-400
                     badge: 'Manuell',
-                    labelPrefix: 'Fairer Wert Manuell'
+                    labelPrefix: 'Fairer Wert Manuell',
+                    modelBuyLabel: 'Kaufpreis Manuell'
                 };
             case 'conservative':
             default:
@@ -320,7 +356,8 @@ export function PriceHistoryChart({
                     stroke: '#3b82f6', // Blue-500
                     fill: '#93c5fd',   // Blue-300
                     badge: 'A',
-                    labelPrefix: 'Fairer Wert A'
+                    labelPrefix: 'Fairer Wert A',
+                    modelBuyLabel: 'Kaufpreis Sicherheit A'
                 };
         }
     }, [valuationMode]);
@@ -396,6 +433,20 @@ export function PriceHistoryChart({
     // Format native difference
     const diffNativeFormatted = (diffNative > 0 ? '+' : '') + formatCurrency(diffNative, displayCurrency, false);
 
+    const effectiveDateStr = useMemo(() => {
+        if (stockDate) return stockDate;
+        const validQuoteDate = quoteDate && !isNaN(quoteDate.getTime()) ? quoteDate : null;
+        const lastDataDate = (historyData && historyData.length > 0)
+            ? new Date(historyData[historyData.length - 1].date)
+            : (data && data.length > 0 ? new Date(data[data.length - 1].date) : null);
+        const validLastDataDate = lastDataDate && !isNaN(lastDataDate.getTime()) ? lastDataDate : null;
+        const targetDate = (!isMarketOpen && (validQuoteDate || validLastDataDate))
+            ? (validQuoteDate || validLastDataDate)
+            : (validQuoteDate || validLastDataDate || new Date());
+        if (!targetDate || isNaN(targetDate.getTime())) return null;
+        return targetDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    }, [stockDate, quoteDate, historyData, data, isMarketOpen]);
+
     // Calculate Min/Max for the current range
     const prices = data.map(d => d.value);
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
@@ -422,11 +473,15 @@ export function PriceHistoryChart({
         }
     }
 
-    // Smart Domain Expansion for Strategy Lines (Ø Kauf, Kauflimit, Fairer Wert):
-    // Always expand domain to accommodate active strategy lines (Kauflimit & Fairer Wert) so they are NEVER hidden on any timeframe!
+    // Smart Domain Expansion for Strategy Lines (Ø Kauf, Kauflimit, Fairer Wert, Modell-Kaufpreis):
+    // Always expand domain to accommodate active strategy lines (Kauflimit, Fairer Wert & Modell-Kaufpreis) so they are NEVER hidden on any timeframe!
     if (effectiveBuyLimit && effectiveBuyLimit > 0) {
         calcMin = Math.min(calcMin, effectiveBuyLimit);
         calcMax = Math.max(calcMax, effectiveBuyLimit);
+    }
+    if (effectiveModelBuyPrice && effectiveModelBuyPrice > 0) {
+        calcMin = Math.min(calcMin, effectiveModelBuyPrice);
+        calcMax = Math.max(calcMax, effectiveModelBuyPrice);
     }
     if (effectiveFairValue && effectiveFairValue > 0) {
         calcMin = Math.min(calcMin, effectiveFairValue);
@@ -523,6 +578,10 @@ export function PriceHistoryChart({
         }
         return displayPoints;
     }, [data, selectedRange, sma200Data]);
+
+    const hasPre = useMemo(() => (displayData || []).some(p => p.session === 'pre'), [displayData]);
+    const hasPost = useMemo(() => (displayData || []).some(p => p.session === 'post'), [displayData]);
+    const hasPrePostData = hasPre || hasPost;
 
     const totalDurationDays = useMemo(() => {
         if (!displayData || displayData.length < 2) return 0;
@@ -690,7 +749,7 @@ export function PriceHistoryChart({
     }, [measurePoints]);
 
     const fibonacciData = useMemo(() => {
-        if (!showFibonacci) return null;
+        if (!showFibonacci || !isFullscreen) return null;
 
         let highVal: number | null = null;
         let lowVal: number | null = null;
@@ -735,7 +794,7 @@ export function PriceHistoryChart({
             levels,
             isFromMeasurement: !!measurement
         };
-    }, [showFibonacci, measurement, maxPoint, minPoint, formatCurrency, displayCurrency]);
+    }, [showFibonacci, isFullscreen, measurement, maxPoint, minPoint, formatCurrency, displayCurrency]);
 
     const chartContent = (
         <div className={cn(
@@ -745,30 +804,67 @@ export function PriceHistoryChart({
                 : "min-h-[340px] landscape:min-h-0 h-auto flex-1 pb-0 landscape:pb-0"
         )}>
             <div className="flex flex-wrap items-center justify-between mb-2 md:mb-3 landscape:mb-1.5 gap-2 relative">
-                <div className="flex flex-col gap-1 w-full sm:w-auto">
-                    <div>
-                        {stockName && (
-                            <div className="flex items-baseline gap-2 mb-1 landscape:mb-0.5">
-                                <h4 className="text-base sm:text-2xl landscape:text-lg font-black tracking-tighter text-foreground drop-shadow-sm">
-                                    <StockName name={stockName} />
-                                </h4>
-                                {stockSymbol && (
-                                    <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">
-                                        {stockSymbol}
-                                    </span>
-                                )}
+                <div className="flex flex-col gap-0.5 w-full sm:w-auto">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                        {stockLogoUrl && isFullscreen && (
+                            <div className="shrink-0 flex items-center justify-center">
+                                <Logo
+                                    url={stockLogoUrl}
+                                    alt={stockName || 'Aktie'}
+                                    size="size-10 sm:size-12"
+                                    fallback={
+                                        <span className="text-sm sm:text-base font-bold">
+                                            {(stockSymbol || stockName || '').slice(0, 2).toUpperCase()}
+                                        </span>
+                                    }
+                                />
                             </div>
                         )}
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
-                            <span className="text-[10px] text-muted-foreground/50 italic select-none">
-                                · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
-                            </span>
+                        <div className="flex flex-col gap-0.5 min-w-0">
+                            {stockName && (
+                                <div className="flex items-center gap-2 mb-0.5 landscape:mb-0.5">
+                                    <h4 className="text-base sm:text-2xl landscape:text-lg font-black tracking-tighter text-foreground drop-shadow-sm">
+                                        <StockName name={stockName} />
+                                    </h4>
+                                    {isMarketOpen ? (
+                                        <div 
+                                            className="size-2 md:size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background shrink-0" 
+                                            title="Markt geöffnet (Live)" 
+                                        />
+                                    ) : (
+                                        <div 
+                                            className="size-2 md:size-2.5 rounded-full bg-red-500 cursor-help border border-background shrink-0" 
+                                            title="Markt geschlossen" 
+                                        />
+                                    )}
+                                    {stockSymbol && (
+                                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                            {stockSymbol}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
+                                <span className="text-xs text-muted-foreground italic select-none">
+                                    · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex items-baseline gap-2.5 flex-wrap my-0.5">
+                    </div>
+
+                    {/* Price, Performance & Hoch/Tief in a Single Unified Row */}
+                    <div className="relative flex flex-wrap items-center gap-x-3.5 sm:gap-x-4 gap-y-1.5 mt-0.5 min-h-[32px] sm:min-h-0">
+                        {/* Current Price, Date & Performance Diff */}
+                        <div className="flex items-baseline gap-2 sm:gap-2.5 shrink-0">
                             {(effectiveCurrentPrice > 0 || endPrice > 0) && (
                                 <span className="text-xl sm:text-2xl landscape:text-lg font-black tabular-nums text-foreground tracking-tight">
                                     {formatCurrency(effectiveCurrentPrice > 0 ? effectiveCurrentPrice : endPrice, displayCurrency, false)}
+                                </span>
+                            )}
+                            {effectiveDateStr && (
+                                <span className="text-xs sm:text-sm font-semibold text-muted-foreground tabular-nums whitespace-nowrap">
+                                    {effectiveDateStr}
                                 </span>
                             )}
                             <div className={cn("font-bold flex items-baseline gap-1 text-base sm:text-xl landscape:text-base tabular-nums", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
@@ -776,11 +872,10 @@ export function PriceHistoryChart({
                                 <span className="ml-1.5 opacity-90 text-sm sm:text-lg landscape:text-xs">{diffNativeFormatted}</span>
                             </div>
                         </div>
-                    </div>
-                    {/* High/Low Indicators + Mobile Hover Overlay */}
-                    <div className="relative mt-1 min-h-[38px] sm:min-h-0 flex items-center">
+
+                        {/* Hoch / Tief Indicators (H / T) beside Current Price */}
                         <div className={cn(
-                            "flex flex-wrap items-center gap-3 text-lg landscape:text-lg font-bold text-foreground transition-opacity duration-150 select-none",
+                            "flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold text-foreground transition-opacity duration-150 select-none sm:border-l sm:border-border/60 sm:pl-3.5",
                             hoveredData && "opacity-0 sm:opacity-100"
                         )}>
                             <div className="flex items-center gap-1">
@@ -906,7 +1001,7 @@ export function PriceHistoryChart({
                             })()}
                         </div>
 
-                        {/* Mobile-Only Hover Info (Directly over H/T, below Performance) */}
+                        {/* Mobile-Only Hover Info (Directly over H/T & Price on touch) */}
                         {hoveredData && (
                             <div className="flex sm:hidden justify-between items-center gap-2 text-sm animate-in fade-in duration-150 z-20 bg-card px-3 py-1.5 rounded-xl border border-border shadow-lg absolute inset-x-0 -top-0.5">
                                 <div className="flex flex-col items-start leading-tight">
@@ -961,111 +1056,59 @@ export function PriceHistoryChart({
                         )}
                     </div>
                 </div>
-                {selectedRange === '1D' && historyData && historyData.length > 0 && (
-                    <div className="mt-2 text-xs">
-                        {(() => {
-                            const validQuoteDate = quoteDate && !isNaN(quoteDate.getTime()) ? quoteDate : null;
-                            const lastDataDate = data.length > 0 ? new Date(data[data.length - 1].date) : null;
-                            const validLastDataDate = lastDataDate && !isNaN(lastDataDate.getTime()) ? lastDataDate : null;
-                            const displayDate = (validQuoteDate && validLastDataDate)
-                                ? (validQuoteDate.getTime() >= validLastDataDate.getTime() ? validQuoteDate : validLastDataDate)
-                                : (validQuoteDate || validLastDataDate);
-                            if (!displayDate) return null;
-                            const today = new Date();
-                            const isToday = displayDate.toDateString() === today.toDateString();
-                            const isDelayed = isToday && isMarketOpen && (today.getTime() - displayDate.getTime() > 15 * 60 * 1000);
-
-                            let label = 'Schlusskurs';
-                            if (isToday && isMarketOpen) {
-                                label = isDelayed ? 'Verzögerte Daten' : 'Live-Kurs';
-                            } else if (isToday && !isMarketOpen) {
-                                label = 'Schlusskurs';
-                            }
-
-                            return (
-                                <div className="inline-flex items-center gap-1.5">
-                                    <div className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
-                                        (isToday && isMarketOpen)
-                                            ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-950 dark:text-yellow-200" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
-                                            : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                                    )}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            {(isToday && isMarketOpen && !isDelayed)
-                                                ? <polyline points="20 6 9 17 4 12"></polyline>
-                                                : (isDelayed
-                                                    ? <circle cx="12" cy="12" r="10"></circle>
-                                                    : <circle cx="12" cy="12" r="10"></circle>
-                                                )
-                                            }
-                                            {isDelayed && <path d="M12 6v6l4 2"></path>}
-                                        </svg>
-                                        <span>
-                                            {label} {displayDate.toLocaleDateString('de-DE', {
-                                                day: '2-digit',
-                                                month: '2-digit',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })} Uhr
-                                        </span>
-                                    </div>
-                                    <InfoHelp
-                                        title="Dein Spickzettel • Wann kommen welche Live-Daten rein?"
-                                        items={[
-                                            {
-                                                term: "1. Ab 00:00 Uhr • US-Futures, Rohstoffe, Währungen & Asien",
-                                                text: "Nasdaq 100 & S&P 500 Futures, Gold, Öl, Devisen sowie die asiatischen Börsen (Tokio, Hongkong, Shanghai) liefern ab Mitternacht sofort laufende Kurse."
-                                            },
-                                            {
-                                                term: "2. Ab 08:15 Uhr • Erste Früh-Indikation aus Frankfurt (*.F)",
-                                                text: "Deutsche Parkett- und Tradegate-Börsen handeln US- und Europa-Aktien ab 08:00 Uhr MEZ. Durch die 15-minütige Börsenverzögerung treffen die ersten Morgenkurse ab 08:15 Uhr ein."
-                                            },
-                                            {
-                                                term: "3. Ab 09:15 / 09:16 Uhr • Schweiz (SIX), Xetra (*.DE), London (*.L) & Paris (*.PA)",
-                                                text: "Die europäischen Hauptbörsen öffnen um 09:00 Uhr MEZ. Da kostenlose Datenanbieter europäische Kurse gesetzlich mit 15 Minuten Verzögerung ausliefern, schaltet die Anzeige um 09:15 / 09:16 Uhr auf die neuen Tageskurse um."
-                                            },
-                                            {
-                                                term: "4. Ab 10:00 Uhr • Offizielle US Vorbörse (Pre-Market)",
-                                                text: "Die US-Vorbörse an der Nasdaq und NYSE startet um 10:00 Uhr MEZ und wird ohne Verzögerung in Echtzeit übertragen."
-                                            },
-                                            {
-                                                term: "5. Ab 15:30 Uhr • Wall Street (New York)",
-                                                text: "Der reguläre US-Börsenhandel läuft von 15:30 bis 22:00 Uhr MEZ komplett ohne Zeitverzögerung in Echtzeit."
-                                            }
-                                        ]}
-                                    />
-                                </div>
-                            );
-                        })()}
-                    </div>
-                )}
                 {isFullscreen && (
-                    <div className="flex items-center gap-2 shrink-0 ml-auto">
-                        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400 text-xs font-bold">
-                            <Maximize2 className="size-3.5" />
-                            Großansicht
-                        </span>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0 ml-auto self-start">
                         <button
                             type="button"
-                            onClick={() => setIsFullscreen(false)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-bold transition-all shadow-sm cursor-pointer hover:border-foreground/30 active:scale-95"
+                            onClick={handleToggleFullscreen}
+                            className="h-7 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0"
                             title="Großansicht schließen (Esc)"
                         >
-                            <Minimize2 className="size-4 text-primary shrink-0" />
+                            <Minimize2 className="size-3.5 shrink-0" />
                             <span>Verkleinern</span>
-                            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-muted rounded border border-border/80 text-muted-foreground">Esc</kbd>
+                            <span className="text-[9px] font-mono opacity-80 hidden md:inline ml-0.5">Esc</span>
                         </button>
+                        {(!isMeasureMode || onRefresh) && (
+                            <div className="flex items-center gap-2">
+                                {!isMeasureMode && (
+                                    <DelayedDataBadge
+                                        quoteDate={quoteDate}
+                                        lastDataDate={data && data.length > 0 ? new Date(data[data.length - 1].date) : null}
+                                        isMarketOpen={isMarketOpen}
+                                    />
+                                )}
+                                {onRefresh && !isMeasureMode && (
+                                    <button
+                                        type="button"
+                                        onClick={onRefresh}
+                                        disabled={isRefreshing}
+                                        className={cn(
+                                            "h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-sm",
+                                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                            "active:scale-95 shrink-0 cursor-pointer",
+                                            isRefreshing && "opacity-50 cursor-not-allowed"
+                                        )}
+                                        title={typeof minutesAgo === 'number' ? `Zuletzt aktualisiert: Vor ${minutesAgo} Min. Klick zum Aktualisieren.` : 'Kursdaten aktualisieren'}
+                                    >
+                                        <RefreshCw className={cn("size-3.5 shrink-0", isRefreshing && "animate-spin")} />
+                                        <span className="whitespace-nowrap font-bold">
+                                            {isRefreshing ? 'Laden...' : typeof minutesAgo === 'number' ? `Vor ${minutesAgo} Min` : 'Laden'}
+                                        </span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1.5 min-h-[38px]">
+            <div className="flex flex-wrap items-center gap-2 mb-2 md:mb-4 landscape:mb-1.5 min-h-[38px]">
                 {(() => {
                     const toolbarToggleClass = "h-7 inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-0 rounded-lg border text-[11px] sm:text-xs font-bold leading-none transition-all shadow-sm whitespace-nowrap cursor-pointer";
                     return (
-                        <div className="flex bg-muted/50 p-0.5 rounded-lg items-center overflow-x-auto scroller-none max-w-full sm:max-w-fit">
-                            <div className="flex flex-1 items-center gap-0.5">
+                        <div className="flex flex-wrap items-center gap-2 max-w-full">
+                            {/* Group 1: Time range segmented bar */}
+                            <div className="flex bg-muted/50 p-0.5 rounded-lg items-center gap-0.5 overflow-x-auto scroller-none shrink-0">
                                 {(['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
                                     <button
                                         key={range}
@@ -1081,43 +1124,45 @@ export function PriceHistoryChart({
                                     </button>
                                 ))}
                             </div>
-                            {/* Toggle Button for Currency */}
-                            {canConvert && (
-                                <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
-                                    <button
-                                        onClick={() => setShowInCHF(!showInCHF)}
-                                        className={cn(
-                                            toolbarToggleClass,
-                                            showInCHF
-                                                ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-700"
-                                                : "bg-background text-muted-foreground border-slate-300/80 dark:border-slate-500/50 hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/50"
-                                        )}
-                                        title="Währung in CHF umschalten"
-                                    >
-                                        <span className={cn("text-[10px] sm:text-xs font-bold leading-none", showInCHF ? "text-white" : "")}>CHF</span>
-                                    </button>
+
+                            {/* Group 2: Currency & Pre/Post */}
+                            {(canConvert || (selectedRange === '1D' && onTogglePrePost)) && (
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    {canConvert && (
+                                        <button
+                                            onClick={() => setShowInCHF(!showInCHF)}
+                                            className={cn(
+                                                toolbarToggleClass,
+                                                showInCHF
+                                                    ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-700"
+                                                    : "bg-background text-muted-foreground border-slate-300/80 dark:border-slate-500/50 hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/50"
+                                            )}
+                                            title="Währung in CHF umschalten"
+                                        >
+                                            <span className={cn("text-[10px] sm:text-xs font-bold leading-none", showInCHF ? "text-white" : "")}>CHF</span>
+                                        </button>
+                                    )}
+
+                                    {selectedRange === '1D' && onTogglePrePost && (
+                                        <button
+                                            type="button"
+                                            onClick={onTogglePrePost}
+                                            className={cn(
+                                                toolbarToggleClass,
+                                                showPrePost
+                                                    ? "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-700"
+                                                    : "bg-background text-muted-foreground border-slate-300/80 dark:border-slate-500/50 hover:bg-indigo-500/15 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500/50"
+                                            )}
+                                            title="Vor- und nachbörsliche Kurse (Pre-Market / After-Hours) im 1D-Chart ein-/ausblenden"
+                                        >
+                                            <span className={cn("text-[10px] sm:text-xs font-bold leading-none", showPrePost ? "text-white" : "")}>Vor-/Nachbörse</span>
+                                        </button>
+                                    )}
                                 </div>
                             )}
 
-                            {selectedRange === '1D' && onTogglePrePost && (
-                                <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
-                                    <button
-                                        type="button"
-                                        onClick={onTogglePrePost}
-                                        className={cn(
-                                            toolbarToggleClass,
-                                            showPrePost
-                                                ? "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-700"
-                                                : "bg-background text-muted-foreground border-slate-300/80 dark:border-slate-500/50 hover:bg-indigo-500/15 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500/50"
-                                        )}
-                                        title="Vor- und nachbörsliche Kurse (Pre-Market / After-Hours) im 1D-Chart ein-/ausblenden"
-                                    >
-                                        <span className={cn("text-[10px] sm:text-xs font-bold leading-none", showPrePost ? "text-white" : "")}>Vor-/Nachbörse</span>
-                                    </button>
-                                </div>
-                            )}
-
-                            <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
+                            {/* Group 3: Analysis Tools, Valuation Mode & Fullscreen */}
+                            <div className="flex flex-wrap items-center gap-1.5">
                                 <button
                                     onClick={() => {
                                         setIsMeasureMode(prev => {
@@ -1138,47 +1183,53 @@ export function PriceHistoryChart({
                                     <Ruler className="size-3.5 shrink-0" />
                                     <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Messen</span>
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowFibonacci(prev => {
-                                            const next = !prev;
-                                            if (next && !isFullscreen) setIsFullscreen(true);
-                                            return next;
-                                        });
-                                    }}
-                                    className={cn(
-                                        toolbarToggleClass,
-                                        showFibonacci
-                                            ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-700 ring-1 ring-purple-400/50"
-                                            : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
-                                    )}
-                                    title="Fibonacci-Retracements im Chart anzeigen (öffnet Großansicht)"
-                                >
-                                    <span className="font-serif font-black text-xs leading-none">Φ</span>
-                                    <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Fibonacci</span>
-                                </button>
-                                <InfoHelp
-                                    title="Fibonacci-Anwendung & Goldener Schnitt"
-                                    items={FIBONACCI_INFO_ITEMS}
-                                    buttonClassName={cn(
-                                        "h-7 w-7 inline-flex items-center justify-center rounded-lg border text-xs font-bold leading-none transition-all shadow-sm cursor-pointer shrink-0 -ml-0.5",
-                                        showFibonacci
-                                            ? "bg-purple-600 text-white border-purple-700 hover:bg-purple-500"
-                                            : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
-                                    )}
-                                    trigger={<HelpCircle className="size-3.5 shrink-0" />}
-                                    footer={
-                                        <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs">
-                                            <p className="font-bold text-purple-700 dark:text-purple-300 mb-0.5">
-                                                Praxis-Tipp für dein Portfolio:
-                                            </p>
-                                            <p className="text-muted-foreground">
-                                                Achte vor allem auf den <strong>1J- und 3J-Goldenen Schnitt</strong> (61.8%). Wenn der Kurs dort ankommt und zugleich dein <strong>Fairer Wert</strong>, <strong>Kauflimit</strong> oder die <strong>200-Tage-Linie</strong> in der Nähe liegen, ist das eine der stärksten Kauf- und Unterstützungszonen überhaupt!
-                                            </p>
-                                        </div>
-                                    }
-                                />
+                                <div className="inline-flex items-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowFibonacci(prev => {
+                                                const next = !prev;
+                                                if (next) {
+                                                    if (!isFullscreen) handleToggleFullscreen();
+                                                    handleRangeChange('3M');
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                        className={cn(
+                                            toolbarToggleClass,
+                                            "rounded-r-none border-r-0",
+                                            showFibonacci
+                                                ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-700 ring-1 ring-purple-400/50"
+                                                : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
+                                        )}
+                                        title="Fibonacci-Retracements im Chart anzeigen (öffnet Großansicht)"
+                                    >
+                                        <span className="font-serif font-black text-xs leading-none">Φ</span>
+                                        <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Fibonacci</span>
+                                    </button>
+                                    <InfoHelp
+                                        title="Fibonacci-Anwendung & Goldener Schnitt"
+                                        items={FIBONACCI_INFO_ITEMS}
+                                        buttonClassName={cn(
+                                            "h-7 w-7 inline-flex items-center justify-center rounded-r-lg border text-xs font-bold leading-none transition-all shadow-sm cursor-pointer shrink-0",
+                                            showFibonacci
+                                                ? "bg-purple-600 text-white border-purple-700 hover:bg-purple-500"
+                                                : "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-900/25"
+                                        )}
+                                        trigger={<HelpCircle className="size-3.5 shrink-0" />}
+                                        footer={
+                                            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs">
+                                                <p className="font-bold text-purple-700 dark:text-purple-300 mb-0.5">
+                                                    Praxis-Tipp für dein Portfolio:
+                                                </p>
+                                                <p className="text-muted-foreground">
+                                                    Achte vor allem auf den <strong>1J- und 3J-Goldenen Schnitt</strong> (61.8%). Wenn der Kurs dort ankommt und zugleich dein <strong>Fairer Wert</strong>, <strong>Kauflimit</strong> oder die <strong>200-Tage-Linie</strong> in der Nähe liegen, ist das eine der stärksten Kauf- und Unterstützungszonen überhaupt!
+                                                </p>
+                                            </div>
+                                        }
+                                    />
+                                </div>
                                 {onToggleValuationMode && valuationMode && (
                                     <button
                                         type="button"
@@ -1199,7 +1250,7 @@ export function PriceHistoryChart({
                                                 : valuationMode === 'quality'
                                                     ? "Sichtweise Qualität B: Klick wechselt zu Risiko C"
                                                     : valuationMode === 'risk'
-                                                        ? "Sichtweise Risiko C: Klick wechselt zu Manuell bzw. Sicherheit A"
+                                                        ? "Sichtweise Risiko C: Klick wechselt zu Manuell"
                                                         : "Sichtweise Manuell: Klick wechselt zu Sicherheit A"
                                         }
                                     >
@@ -1221,29 +1272,6 @@ export function PriceHistoryChart({
                                         </span>
                                     </button>
                                 )}
-                                <button
-                                    type="button"
-                                    onClick={() => setIsFullscreen(prev => !prev)}
-                                    className={cn(
-                                        toolbarToggleClass,
-                                        isFullscreen
-                                            ? "bg-amber-600 hover:bg-amber-500 text-white border-amber-700 ring-1 ring-amber-400/50"
-                                            : "bg-background text-muted-foreground border-slate-300/80 dark:border-slate-500/50 hover:bg-amber-500/15 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-500/50"
-                                    )}
-                                    title={isFullscreen ? "Großansicht schließen (Esc)" : "Vollbild / Großansicht öffnen"}
-                                >
-                                    {isFullscreen ? (
-                                        <>
-                                            <Minimize2 className="size-3.5 shrink-0" />
-                                            <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Verkleinern</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Maximize2 className="size-3.5 shrink-0" />
-                                            <span className="text-[10px] sm:text-xs font-bold leading-none hidden sm:inline">Vollbild</span>
-                                        </>
-                                    )}
-                                </button>
                             </div>
                         </div>
                     );
@@ -1315,11 +1343,18 @@ export function PriceHistoryChart({
                     <div className="bg-blue-600 dark:bg-blue-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl shadow-2xl border border-blue-400/30 flex items-center justify-between sm:justify-start gap-1.5 sm:gap-3 text-xs sm:text-sm overflow-x-auto scroller-none">
                         {measurement ? (
                             <div className="flex items-center gap-2 sm:gap-3">
-                                <div className="flex flex-col items-center leading-tight">
+                                <div className={cn(
+                                    "flex flex-col items-center leading-tight px-2.5 py-1 rounded-lg border shadow-sm",
+                                    measurement.percent > 0
+                                        ? "bg-emerald-600 text-white border-emerald-500"
+                                        : measurement.percent < 0
+                                            ? "bg-rose-600 text-white border-rose-500"
+                                            : "bg-white/20 text-white border-white/30"
+                                )}>
                                     <span className="text-base sm:text-lg font-black whitespace-nowrap text-white">
                                         {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                     </span>
-                                    <span className="text-[11px] sm:text-xs font-bold text-blue-100 whitespace-nowrap">
+                                    <span className="text-[11px] sm:text-xs font-bold text-white/95 whitespace-nowrap">
                                         {measurement.diff > 0 ? '+' : ''}{formatCurrency(measurement.diff, displayCurrency, false)}
                                     </span>
                                 </div>
@@ -1329,16 +1364,16 @@ export function PriceHistoryChart({
                                         <span className="font-bold text-blue-100 flex items-center gap-1.5">
                                             <span className="w-7 shrink-0">Von:</span>
                                             {measurement.p1.extremumType === 'high' ? (
-                                                <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">H</span>
+                                                <span className="bg-emerald-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
                                             ) : measurement.p1.extremumType === 'low' ? (
-                                                <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">T</span>
+                                                <span className="bg-rose-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
                                             ) : (
                                                 <span className="w-4 shrink-0" />
                                             )}
                                         </span>
-                                        <span className="tabular-nums">
+                                        <span className="tabular-nums text-white font-bold">
                                             {formatCurrency(measurement.p1.value, displayCurrency, false)}
-                                            <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-bold">
+                                            <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-normal">
                                                 {formatPointDate(measurement.p1.date)}
                                             </span>
                                         </span>
@@ -1347,16 +1382,16 @@ export function PriceHistoryChart({
                                         <span className="font-bold text-blue-100 flex items-center gap-1.5">
                                             <span className="w-7 shrink-0">Bis:</span>
                                             {measurement.p2.extremumType === 'high' ? (
-                                                <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">H</span>
+                                                <span className="bg-emerald-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
                                             ) : measurement.p2.extremumType === 'low' ? (
-                                                <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">T</span>
+                                                <span className="bg-rose-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
                                             ) : (
                                                 <span className="w-4 shrink-0" />
                                             )}
                                         </span>
-                                        <span className="tabular-nums">
+                                        <span className="tabular-nums text-white font-bold">
                                             {formatCurrency(measurement.p2.value, displayCurrency, false)}
-                                            <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-bold">
+                                            <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-normal">
                                                 {formatPointDate(measurement.p2.date)}
                                             </span>
                                         </span>
@@ -1380,11 +1415,11 @@ export function PriceHistoryChart({
                                     <span className="text-xs font-bold whitespace-nowrap flex items-center gap-1.5 text-white">
                                         <span>1. Punkt:</span>
                                         {measurePoints[0].extremumType === 'high' ? (
-                                            <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">H</span>
+                                            <span className="bg-emerald-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
                                         ) : measurePoints[0].extremumType === 'low' ? (
-                                            <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">T</span>
+                                            <span className="bg-rose-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
                                         ) : null}
-                                        <span>{formatCurrency(measurePoints[0].value, displayCurrency, false)}</span>
+                                        <span className="tabular-nums text-white font-bold">{formatCurrency(measurePoints[0].value, displayCurrency, false)}</span>
                                     </span>
                                     <span className="text-[10px] text-blue-100">Jetzt 2. Punkt wählen: [H], [T] oder im Chart</span>
                                 </div>
@@ -1463,7 +1498,10 @@ export function PriceHistoryChart({
                                     e.stopPropagation();
                                     setShowFibonacci(prev => {
                                         const next = !prev;
-                                        if (next && !isFullscreen) setIsFullscreen(true);
+                                        if (next) {
+                                            if (!isFullscreen) handleToggleFullscreen();
+                                            handleRangeChange('3M');
+                                        }
                                         return next;
                                     });
                                 }}
@@ -1508,8 +1546,8 @@ export function PriceHistoryChart({
 
             {/* Fibonacci Level Overview Bar */}
             {fibonacciData && (
-                <div className="w-full flex items-center justify-between gap-2 overflow-x-auto scroller-none py-1.5 px-3 mb-2 rounded-xl bg-purple-500/10 border border-purple-500/25 text-xs animate-in fade-in duration-150 shrink-0">
-                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap sm:flex-nowrap">
+                <div className="w-full flex flex-wrap items-center justify-between gap-2 py-1.5 px-2.5 sm:px-3 mb-2 rounded-xl bg-purple-500/10 border border-purple-500/25 text-xs animate-in fade-in duration-150">
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                         <span className="font-bold text-purple-600 dark:text-purple-400 shrink-0 flex items-center gap-1 text-xs mr-0.5">
                             <span className="font-serif font-black text-sm">Φ</span>
                             <span>Fibonacci:</span>
@@ -1523,12 +1561,12 @@ export function PriceHistoryChart({
                             >
                                 <span>{lvl.label}</span>
                                 <span>{lvl.formattedPrice}</span>
-                                {lvl.name && <span className="text-[10px] font-sans font-bold ml-0.5 hidden md:inline">· {lvl.name}</span>}
+                                {lvl.name && <span className="text-[10px] font-sans font-bold ml-0.5">· {lvl.name}</span>}
                             </span>
                         ))}
                     </div>
                     {/* Fibonacci Infobox */}
-                    <div className="shrink-0 flex items-center pl-1 border-l border-purple-500/20">
+                    <div className="shrink-0 flex items-center pl-1 border-l border-purple-500/20 ml-auto">
                         <InfoHelp
                             title="Fibonacci-Anwendung & Goldener Schnitt"
                             items={FIBONACCI_INFO_ITEMS}
@@ -1557,7 +1595,7 @@ export function PriceHistoryChart({
                 "w-full min-w-0 transition-all",
                 isFullscreen
                     ? "flex-1 w-full min-h-0 min-w-0"
-                    : "h-[310px] sm:h-[350px] landscape:h-[180px] min-h-[160px]"
+                    : "h-[320px] sm:h-[410px] landscape:h-[190px] min-h-[180px]"
             )}>
                 {hasMounted && (
                     <ResponsiveContainer
@@ -1570,7 +1608,7 @@ export function PriceHistoryChart({
                     >
                         <AreaChart
                             data={displayData}
-                            margin={{ top: selectedRange === '1D' && showPrePost ? 26 : 14, right: 6, left: 0, bottom: 4 }}
+                            margin={{ top: selectedRange === '1D' && showPrePost && hasPrePostData ? 26 : 14, right: 20, left: 0, bottom: 4 }}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);
@@ -1648,7 +1686,7 @@ export function PriceHistoryChart({
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickLine={{ stroke: '#475569', strokeWidth: 1 }}
                                 axisLine={{ stroke: '#475569', strokeWidth: 1 }}
-                                padding={{ left: 16, right: 16 }}
+                                padding={{ left: 16, right: 28 }}
                                 tickFormatter={(str) => {
                                     const date = new Date(str);
                                     const weekdayShort = date.toLocaleDateString('de-DE', { weekday: 'short' });
@@ -1656,7 +1694,7 @@ export function PriceHistoryChart({
                                     if (selectedRange === '1D') {
                                         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                                     } else if (selectedRange === '1W' || selectedRange === '1M' || selectedRange === '3M' || selectedRange === '6M' || (selectedRange === 'BUY' && totalDurationDays <= 120)) {
-                                        // Show weekday + date (e.g. "Fr 06.02")
+                                        // Show weekday + date (e.g. "Fr 06.02" or "Di 17.11")
                                         const dayMonth = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                                         return `${weekdayShort} ${dayMonth}`;
                                     } else if (selectedRange === '1Y' || selectedRange === '3Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
@@ -1667,6 +1705,24 @@ export function PriceHistoryChart({
                                 }}
                                 ticks={(() => {
                                     if (displayData.length === 0) return undefined;
+
+                                    const lastPoint = displayData[displayData.length - 1];
+                                    const ensureLastPoint = (list: string[], minDaysDiff = 3) => {
+                                        if (!lastPoint || list.length === 0) return list;
+                                        const lastDayKey = new Date(lastPoint.date).toISOString().slice(0, 10);
+                                        const alreadyHasLast = list.some(d => new Date(d).toISOString().slice(0, 10) === lastDayKey);
+                                        if (alreadyHasLast) return list;
+
+                                        const lastTickTime = new Date(list[list.length - 1]).getTime();
+                                        const diffDays = (new Date(lastPoint.date).getTime() - lastTickTime) / (1000 * 60 * 60 * 24);
+                                        if (diffDays >= minDaysDiff) {
+                                            return [...list, lastPoint.date];
+                                        } else {
+                                            const copy = [...list];
+                                            copy[copy.length - 1] = lastPoint.date;
+                                            return copy;
+                                        }
+                                    };
 
                                     // 1W: One tick per day
                                     if (selectedRange === '1W') {
@@ -1686,9 +1742,9 @@ export function PriceHistoryChart({
                                             for (let i = ticks.length - 1; i >= 0; i -= step) {
                                                 filtered.unshift(ticks[i]);
                                             }
-                                            return filtered;
+                                            return ensureLastPoint(filtered, 1);
                                         }
-                                        return ticks;
+                                        return ensureLastPoint(ticks, 1);
                                     }
 
                                     // 1M: Every Friday (5) - one tick per day (also BUY if <= 35 days)
@@ -1711,9 +1767,9 @@ export function PriceHistoryChart({
                                             for (let i = ticks.length - 1; i >= 0; i -= step) {
                                                 filtered.unshift(ticks[i]);
                                             }
-                                            return filtered;
+                                            return ensureLastPoint(filtered, 2);
                                         }
-                                        return ticks;
+                                        return ensureLastPoint(ticks, 2);
                                     }
 
                                     // 3M: Every Friday (5) - one tick per day (also BUY if 35 < duration <= 120 days)
@@ -1735,9 +1791,9 @@ export function PriceHistoryChart({
                                             for (let i = ticks.length - 1; i >= 0; i -= step) {
                                                 filtered.unshift(ticks[i]);
                                             }
-                                            return filtered;
+                                            return ensureLastPoint(filtered, 3);
                                         }
-                                        return ticks;
+                                        return ensureLastPoint(ticks, 3);
                                     }
 
                                     // 6M: Bi-weekly Fridays (every 2nd Friday)
@@ -1761,7 +1817,7 @@ export function PriceHistoryChart({
                                                 fridayCount++;
                                             }
                                         }
-                                        return ticks;
+                                        return ensureLastPoint(ticks, 5);
                                     }
 
                                     // 1Y / 5Y / BUY: Monthly first-trading-day points
@@ -1777,7 +1833,7 @@ export function PriceHistoryChart({
                                             }
                                         }
 
-                                        if (selectedRange === '1Y' && !isNarrowPortrait) return monthlyFirstPoints;
+                                        if (selectedRange === '1Y' && !isNarrowPortrait) return ensureLastPoint(monthlyFirstPoints, 12);
 
                                         // For 3Y/5Y/BUY: Every 3rd month (or 4th for 5Y desktop), backtracking from the end
                                         const result: string[] = [];
@@ -1787,7 +1843,7 @@ export function PriceHistoryChart({
                                         for (let i = monthlyFirstPoints.length - 1; i >= 0; i -= gap) {
                                             result.unshift(monthlyFirstPoints[i]);
                                         }
-                                        return result;
+                                        return ensureLastPoint(result, 15);
                                     }
 
                                     return undefined;
@@ -1812,9 +1868,7 @@ export function PriceHistoryChart({
                                 mirror={false}
                             />
                             {/* Extended Hours Session Dividers (1D when Vor-/Nachbörse active) */}
-                            {selectedRange === '1D' && showPrePost && (() => {
-                                const hasPre = displayData.some(p => p.session === 'pre');
-                                const hasPost = displayData.some(p => p.session === 'post');
+                            {selectedRange === '1D' && showPrePost && hasPrePostData && (() => {
                                 const firstReg = hasPre ? displayData.find(p => p.session === 'regular') : null;
                                 const firstPost = hasPost ? displayData.find(p => p.session === 'post') : null;
                                 return (
@@ -1901,7 +1955,7 @@ export function PriceHistoryChart({
                                         if (!viewBox) return <g />;
                                         const { x, y, width } = viewBox;
                                         const rightEdge = x + width - 6;
-                                        const yOffset = getRightLabelYOffset(effectivePurchasePrice, [effectiveBuyLimit, effectiveFairValue]);
+                                        const yOffset = getRightLabelYOffset(effectivePurchasePrice, [effectiveBuyLimit, effectiveModelBuyPrice, effectiveFairValue]);
                                         return (
                                             <g className="select-none pointer-events-none">
                                                 <text
@@ -1936,7 +1990,7 @@ export function PriceHistoryChart({
                                         if (!viewBox) return <g />;
                                         const { x, y, width } = viewBox;
                                         const rightEdge = x + width - 6;
-                                        const yOffset = getRightLabelYOffset(effectiveBuyLimit, [effectivePurchasePrice, effectiveFairValue]);
+                                        const yOffset = getRightLabelYOffset(effectiveBuyLimit, [effectivePurchasePrice, effectiveModelBuyPrice, effectiveFairValue]);
                                         return (
                                             <g className="select-none pointer-events-none">
                                                 <text
@@ -1958,7 +2012,42 @@ export function PriceHistoryChart({
                                 />
                             )}
 
-                            {/* 3. Fairer Wert (Fair Value) - Passt sich dynamisch der gewählten Sichtweise an */}
+                            {/* 3. Modell-Kaufpreis (z. B. Kaufpreis Sicherheit A) - Passt sich dynamisch an, wenn ein manuelles Kauflimit aktiv ist */}
+                            {effectiveModelBuyPrice && effectiveModelBuyPrice >= domainMin && effectiveModelBuyPrice <= domainMax && (!effectiveBuyLimit || Math.abs(effectiveModelBuyPrice - effectiveBuyLimit) > 0.05) && (
+                                <ReferenceLine
+                                    y={effectiveModelBuyPrice}
+                                    stroke={fvTheme.stroke}
+                                    strokeWidth={1.8}
+                                    strokeDasharray="4 3"
+                                    strokeOpacity={0.9}
+                                    label={(props: any) => {
+                                        const { viewBox } = props || {};
+                                        if (!viewBox) return <g />;
+                                        const { x, y, width } = viewBox;
+                                        const rightEdge = x + width - 6;
+                                        const yOffset = getRightLabelYOffset(effectiveModelBuyPrice, [effectivePurchasePrice, effectiveBuyLimit, effectiveFairValue]);
+                                        return (
+                                            <g className="select-none pointer-events-none">
+                                                <text
+                                                    x={rightEdge}
+                                                    y={y + yOffset}
+                                                    textAnchor="end"
+                                                    fill={fvTheme.fill}
+                                                    stroke="#0f172a"
+                                                    strokeWidth={2.5}
+                                                    paintOrder="stroke fill"
+                                                    fontSize={isFullscreen ? 11 : 9.5}
+                                                    fontWeight={700}
+                                                >
+                                                    {fvTheme.modelBuyLabel} · {formatCurrency(effectiveModelBuyPrice, displayCurrency, false)}
+                                                </text>
+                                            </g>
+                                        );
+                                    }}
+                                />
+                            )}
+
+                            {/* 4. Fairer Wert (Fair Value) - Passt sich dynamisch der gewählten Sichtweise an */}
                             {effectiveFairValue && effectiveFairValue >= domainMin && effectiveFairValue <= domainMax && (
                                 <ReferenceLine
                                     y={effectiveFairValue}
@@ -1971,7 +2060,7 @@ export function PriceHistoryChart({
                                         if (!viewBox) return <g />;
                                         const { x, y, width } = viewBox;
                                         const rightEdge = x + width - 6;
-                                        const yOffset = getRightLabelYOffset(effectiveFairValue, [effectivePurchasePrice, effectiveBuyLimit]);
+                                        const yOffset = getRightLabelYOffset(effectiveFairValue, [effectivePurchasePrice, effectiveBuyLimit, effectiveModelBuyPrice]);
                                         return (
                                             <g className="select-none pointer-events-none">
                                                 <text
@@ -2192,6 +2281,29 @@ export function PriceHistoryChart({
                                 isAnimationActive={false}
                                 activeDot={{ r: 4, fill: '#fbbf24' }}
                             />
+                            {/* Live End-Point Dot on current price (like Yahoo Finance) */}
+                            {displayData.length > 0 && (() => {
+                                const lastPoint = displayData[displayData.length - 1];
+                                const liveDotColor = isPositive ? '#22c55e' : '#ef4444';
+                                return (
+                                    <ReferenceDot
+                                        key={`live-endpoint-${lastPoint.date}`}
+                                        x={lastPoint.date}
+                                        y={lastPoint.value}
+                                        r={5}
+                                        shape={(props: any) => {
+                                            const { cx, cy } = props;
+                                            if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+                                            return (
+                                                <g className="pointer-events-none select-none" style={{ outline: 'none' }} tabIndex={-1}>
+                                                    <circle cx={cx} cy={cy} r={8} fill={liveDotColor} fillOpacity={0.25} />
+                                                    <circle cx={cx} cy={cy} r={4} fill={liveDotColor} stroke="#ffffff" strokeWidth={1.5} />
+                                                </g>
+                                            );
+                                        }}
+                                    />
+                                );
+                            })()}
                         </AreaChart>
                     </ResponsiveContainer>
                 )}
@@ -2212,7 +2324,7 @@ export function PriceHistoryChart({
                     </p>
                     <button
                         type="button"
-                        onClick={() => setIsFullscreen(false)}
+                        onClick={handleToggleFullscreen}
                         className="px-3 py-1 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-sm cursor-pointer"
                     >
                         Großansicht verkleinern (Esc)

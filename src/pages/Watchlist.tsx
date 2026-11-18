@@ -1306,8 +1306,10 @@ function WatchlistTable({
                             )
                         );
 
-                        const isUnderTarget = stock.targetPrice && stock.currentPrice <= stock.targetPrice;
-                        const isOverSell = stock.sellLimit && stock.currentPrice >= stock.sellLimit;
+                        const effectiveTargetPrice = stock.targetPrice || (matchingOrder?.mode === 'buy' ? matchingOrder.limitPrice : undefined);
+                        const effectiveSellLimit = stock.sellLimit || (matchingOrder?.mode === 'sell' ? matchingOrder.limitPrice : undefined);
+                        const isUnderTarget = effectiveTargetPrice && stock.currentPrice > 0 && stock.currentPrice <= effectiveTargetPrice;
+                        const isOverSell = effectiveSellLimit && stock.currentPrice > 0 && stock.currentPrice >= effectiveSellLimit;
                         const stockChange = stock.previousClose ? ((stock.currentPrice - stock.previousClose) / stock.previousClose) * 100 : 0;
                         const calcState = estimateMarketState(stock.symbol, stock.currency);
                         const isMarketOpen = calcState === 'REGULAR';
@@ -1349,15 +1351,44 @@ function WatchlistTable({
                                                         <span>Bestand</span>
                                                     </span>
                                                 )}
-                                                {matchingOrder && (
-                                                    <span
-                                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shrink-0 leading-none"
-                                                        title={`Offener Auftrag im Auftragsbuch: ${matchingOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} ${matchingOrder.shares} Stk. à ${matchingOrder.limitPrice} ${matchingOrder.currency} (Gültig bis ${matchingOrder.validUntil})`}
-                                                    >
-                                                        <Clock className="size-2.5 shrink-0" />
-                                                        <span>{matchingOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {matchingOrder.shares} Stk.</span>
-                                                    </span>
-                                                )}
+                                                {matchingOrder && (() => {
+                                                    const orderLimit = matchingOrder.limitPrice;
+                                                    let orderGap: number | null = null;
+                                                    let isOrderReached = false;
+                                                    if (orderLimit > 0 && stock.currentPrice > 0) {
+                                                        if (matchingOrder.mode === 'buy') {
+                                                            orderGap = ((stock.currentPrice - orderLimit) / orderLimit * 100);
+                                                            isOrderReached = orderGap <= 0;
+                                                        } else {
+                                                            orderGap = ((stock.currentPrice - orderLimit) / orderLimit * 100);
+                                                            isOrderReached = orderGap >= 0;
+                                                        }
+                                                    }
+                                                    return (
+                                                        <span
+                                                            className={cn(
+                                                                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border shrink-0 leading-none",
+                                                                isOrderReached
+                                                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                                                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                                            )}
+                                                            title={`Offener Auftrag im Auftragsbuch: ${matchingOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} ${matchingOrder.shares} Stk. à ${formatCurrency(matchingOrder.limitPrice, matchingOrder.currency, false)}${orderGap !== null ? ` • Gap: ${orderGap > 0 ? '+' : ''}${orderGap.toFixed(1)}%` : ''} (Gültig bis ${matchingOrder.validUntil})`}
+                                                        >
+                                                            <Clock className="size-2.5 shrink-0" />
+                                                            <span>
+                                                                {matchingOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {matchingOrder.shares} Stk.
+                                                                {orderGap !== null && (
+                                                                    <span className={cn(
+                                                                        "font-mono ml-1 font-bold",
+                                                                        isOrderReached ? "text-emerald-600 dark:text-emerald-400" : "text-amber-700 dark:text-amber-300"
+                                                                    )}>
+                                                                        • Gap: {orderGap > 0 ? '+' : ''}{orderGap.toFixed(1)}%
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        </span>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
@@ -1399,11 +1430,11 @@ function WatchlistTable({
                                                 "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
                                                 isUnderTarget ? "text-green-600 dark:text-green-400" : "text-foreground"
                                             )}>
-                                                {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
+                                                {effectiveTargetPrice ? formatCurrency(effectiveTargetPrice, stock.currency, false) : '-'}
                                             </span>
                                         </div>
-                                        {stock.targetPrice ? (() => {
-                                            const buyGap = ((stock.currentPrice - stock.targetPrice) / stock.targetPrice * 100);
+                                        {effectiveTargetPrice ? (() => {
+                                            const buyGap = ((stock.currentPrice - effectiveTargetPrice) / effectiveTargetPrice * 100);
                                             const isReached = buyGap <= 0;
                                             return (
                                                 <span className={cn(
@@ -1426,11 +1457,11 @@ function WatchlistTable({
                                                 "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
                                                 isOverSell ? "text-green-600 dark:text-green-400" : "text-foreground"
                                             )}>
-                                                {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
+                                                {effectiveSellLimit ? formatCurrency(effectiveSellLimit, stock.currency, false) : '-'}
                                             </span>
                                         </div>
-                                        {stock.sellLimit ? (() => {
-                                            const sellGap = ((stock.currentPrice - stock.sellLimit) / stock.sellLimit * 100);
+                                        {effectiveSellLimit ? (() => {
+                                            const sellGap = ((stock.currentPrice - effectiveSellLimit) / effectiveSellLimit * 100);
                                             const isReached = sellGap >= 0;
                                             return (
                                                 <span className={cn(

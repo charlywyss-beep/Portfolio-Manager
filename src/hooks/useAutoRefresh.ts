@@ -17,6 +17,7 @@ export function useAutoRefresh({
 }: UseAutoRefreshOptions) {
     const intervalRef = useRef<number | null>(null);
     const onRefreshRef = useRef(onRefresh);
+    const lastRefreshTimeRef = useRef<number>(Date.now());
 
     // Update ref when onRefresh changes
     useEffect(() => {
@@ -42,8 +43,12 @@ export function useAutoRefresh({
                 }
             } else {
                 // Resume when tab becomes visible
-                // Trigger immediate refresh to prevent stale data
-                onRefreshRef.current();
+                // Only trigger refresh if at least intervalMs has elapsed since last refresh
+                const elapsed = Date.now() - lastRefreshTimeRef.current;
+                if (elapsed >= intervalMs && isTradingHours()) {
+                    lastRefreshTimeRef.current = Date.now();
+                    onRefreshRef.current();
+                }
                 startInterval();
             }
         };
@@ -58,7 +63,7 @@ export function useAutoRefresh({
             if (isTradingHours() && !document.hidden) {
                 intervalRef.current = setInterval(() => {
                     if (isTradingHours()) {
-                        // Use ref to avoid dependency loop or resetting interval when callback changes
+                        lastRefreshTimeRef.current = Date.now();
                         onRefreshRef.current();
                     } else {
                         // Stop interval if outside trading hours

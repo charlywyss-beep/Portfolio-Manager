@@ -4,6 +4,7 @@ import { X, Search, Trash2, ClipboardList, CheckCircle2, Clock, AlertCircle, Cal
 import { usePortfolio } from '../context/PortfolioContext';
 import { Logo } from './Logo';
 import { ExecuteOrderModal } from './ExecuteOrderModal';
+import { cn } from '../utils';
 import type { OrderBookEntry, ExecuteOrderParams } from '../types';
 
 interface OrderBookModalProps {
@@ -325,10 +326,22 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                 </span>
                                             )}
                                             {isOpen && (
-                                                <span className="h-[34px] px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                                                    <Clock className="size-3.5 text-amber-400" />
-                                                    Wartet auf Limite
-                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    {order.currentPrice > 0 && order.limitPrice > 0 && (
+                                                        <span className={cn(
+                                                            "h-[34px] px-2.5 rounded-lg text-xs font-bold inline-flex items-center font-mono border shadow-2xs leading-none",
+                                                            order.isLimitReached
+                                                                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 animate-pulse"
+                                                                : "bg-red-500/15 text-red-500 dark:text-red-400 border-red-500/30"
+                                                        )}>
+                                                            Gap: {order.percentDistance > 0 ? '+' : ''}{order.percentDistance.toFixed(1)}%
+                                                        </span>
+                                                    )}
+                                                    <span className="h-[34px] px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                                        <Clock className="size-3.5 text-amber-400" />
+                                                        Wartet auf Limite
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -400,7 +413,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
 
                                     {isOpen && (
                                         <div className="flex items-center justify-between gap-2 py-1.5 border-b border-border/30 text-xs">
-                                            <div className="flex items-center gap-2 text-foreground">
+                                            <div className="flex items-center gap-2 text-foreground flex-wrap">
                                                 <Clock className="size-3.5 text-amber-400 shrink-0" />
                                                 <span>
                                                     <strong>Limit:</strong> {fmtMoney(order.limitPrice, order.currency)}
@@ -408,8 +421,13 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                         <>
                                                             <span className="text-muted-foreground mx-1.5">•</span>
                                                             <span className="text-muted-foreground">Aktuell:</span> <strong>{fmtMoney(order.currentPrice, order.currency)}</strong>
-                                                            <span className={`ml-1.5 font-bold ${order.percentDistance > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                                                (noch {order.percentDistance > 0 ? '+' : ''}{order.percentDistance.toFixed(2)}%)
+                                                            <span className={cn(
+                                                                "ml-2 font-bold font-mono px-1.5 py-0.5 rounded text-xs leading-none inline-flex items-center border",
+                                                                order.isLimitReached
+                                                                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                                                                    : "bg-red-500/15 text-red-500 dark:text-red-400 border-red-500/30"
+                                                            )}>
+                                                                Gap: {order.percentDistance > 0 ? '+' : ''}{order.percentDistance.toFixed(1)}%
                                                             </span>
                                                         </>
                                                     ) : (

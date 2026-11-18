@@ -408,11 +408,44 @@ export function EditDividendPage() {
         if (sector !== undefined && (!stock || sector !== stock.sector)) {
             updates.sector = sector;
         }
-        if (targetPrice !== undefined && (!stock || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) !== stock.targetPrice)) {
-            const parsedTp = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
-            updates.targetPrice = parsedTp;
-            const isUnchangedType = stock?.targetPriceType && stock.targetPriceType !== 'manual' && stock.targetPrice && parsedTp && Math.abs(parsedTp - stock.targetPrice) <= 0.05;
-            updates.targetPriceType = parsedTp ? (isUnchangedType ? stock.targetPriceType : 'manual') : undefined;
+        if (targetPrice !== undefined) {
+            const trimmedTp = targetPrice.trim();
+            if (trimmedTp !== '') {
+                const parsedTp = parseFloat(trimmedTp.replace(',', '.'));
+                if (!isNaN(parsedTp) && parsedTp > 0) {
+                    updates.targetPrice = parsedTp;
+                    updates.targetPriceType = 'manual';
+
+                    // Synchronize manual mode in fairValueParams as well
+                    const now = new Date().toISOString();
+                    let map: Record<string, any> = {};
+                    try {
+                        const mapRaw = localStorage.getItem('fair_value_params_map');
+                        if (mapRaw) map = JSON.parse(mapRaw);
+                    } catch {}
+                    const symKey = (symbol || stock?.symbol || '').toUpperCase();
+                    const existingLocal = (symKey ? map[symKey] : null) || {};
+                    const existingParams = stock?.fairValueParams || {};
+                    const nextEntry = {
+                        ...existingParams,
+                        ...existingLocal,
+                        isCustom: true,
+                        valuationMode: 'manual' as const,
+                        manualTargetPrice: parsedTp,
+                        updatedAt: now
+                    };
+                    updates.fairValueParams = nextEntry;
+                    if (symKey) {
+                        map[symKey] = nextEntry;
+                        try {
+                            localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                        } catch {}
+                    }
+                }
+            } else {
+                updates.targetPrice = undefined;
+                updates.targetPriceType = undefined;
+            }
         }
         if (sellLimit !== undefined && (!stock || (sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined) !== stock.sellLimit)) {
             updates.sellLimit = sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined;
@@ -1001,7 +1034,11 @@ export function EditDividendPage() {
                                             mos: Math.max(25, Math.min(50, smartAutoConservative.mos + 10))
                                         };
 
-                                        const isManualFv = Boolean(activeParams?.isCustom);
+                                        const isManualFv = Boolean(
+                                            activeParams?.isCustom ||
+                                            activeParams?.valuationMode === 'manual' ||
+                                            currentStockObj?.targetPriceType === 'manual'
+                                        );
                                         const currentValuationMode: 'conservative' | 'quality' | 'risk' =
                                             activeParams?.valuationMode === 'risk'
                                                 ? 'risk'
@@ -1075,54 +1112,89 @@ export function EditDividendPage() {
                                                 (currentStockObj?.targetPriceType && currentStockObj?.targetPriceType !== 'manual')
                                             );
 
-                                            const nextMode: 'conservative' | 'quality' | 'risk' =
+                                            const nextMode: 'conservative' | 'quality' | 'risk' | 'manual' =
                                                 currentMode === 'conservative'
                                                     ? 'quality'
                                                     : currentMode === 'quality'
                                                         ? 'risk'
-                                                        : 'conservative';
+                                                        : currentMode === 'risk'
+                                                            ? 'manual'
+                                                            : 'conservative';
 
-                                            const targetSmartParams =
-                                                nextMode === 'quality'
-                                                    ? smartAutoQuality
-                                                    : nextMode === 'risk'
-                                                        ? smartAutoRisk
-                                                        : smartAutoConservative;
+                                            if (nextMode === 'manual') {
+                                                const manualBuyPrice = existingBackup?.manualTargetPrice || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) || currentStockObj?.targetPrice || (effectiveFairValue > 0 ? parseFloat((effectiveFairValue * 0.8).toFixed(2)) : undefined);
+                                                const manualFv = (existingBackup?.manualFairValue && Number(existingBackup.manualFairValue) > 0)
+                                                    ? Number(existingBackup.manualFairValue)
+                                                    : (currentStockObj?.fairValue || effectiveFairValue);
 
-                                            const manualBackupToSave = currentMode === 'manual' ? {
-                                                ...(existingBackup || activeParams || smartAutoConservative),
-                                                ...(!isNaN(parsedFv) && parsedFv > 0 ? { manualFairValue: parsedFv } : {}),
-                                                updatedAt: now
-                                            } : existingBackup;
+                                                const nextEntry = {
+                                                    ...(existingBackup || activeParams || smartAutoConservative),
+                                                    isCustom: true,
+                                                    valuationMode: 'manual' as const,
+                                                    manualFairValue: manualFv,
+                                                    manualTargetPrice: manualBuyPrice,
+                                                    customBackup: existingBackup || { manualFairValue: manualFv, manualTargetPrice: manualBuyPrice },
+                                                    updatedAt: now
+                                                };
+                                                map[symKey] = nextEntry;
+                                                try {
+                                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                                } catch {}
 
-                                            const dcfNext = calculateDcfFairValue(targetSmartParams, effectivePrice);
-                                            const newFv = parseFloat(dcfNext.fairValue.toFixed(2));
-                                            const nextEntry = {
-                                                ...targetSmartParams,
-                                                isCustom: false,
-                                                valuationMode: nextMode,
-                                                ...(manualBackupToSave ? { customBackup: manualBackupToSave } : {}),
-                                                updatedAt: now
-                                            };
-                                            map[symKey] = nextEntry;
-                                            try {
-                                                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
-                                            } catch {
-                                                // ignore
-                                            }
-                                            if (newFv > 0) {
-                                                setFairValue(newFv.toFixed(2));
-                                            }
-                                            const newNextBuyPrice = parseFloat((newFv * (1 - targetSmartParams.mos / 100)).toFixed(2));
-                                            if (shouldAutoSyncLimit && newNextBuyPrice > 0) {
-                                                setTargetPrice(newNextBuyPrice.toFixed(2));
-                                            }
-                                            if (currentStockObj) {
-                                                updateStock(currentStockObj.id, {
-                                                    ...(newFv > 0 ? { fairValue: newFv } : {}),
-                                                    ...(shouldAutoSyncLimit && newNextBuyPrice > 0 ? { targetPrice: newNextBuyPrice, targetPriceType: nextMode } : {}),
-                                                    fairValueParams: nextEntry
-                                                });
+                                                if (manualFv > 0) setFairValue(manualFv.toFixed(2));
+                                                if (manualBuyPrice && manualBuyPrice > 0) setTargetPrice(manualBuyPrice.toFixed(2));
+
+                                                if (currentStockObj) {
+                                                    updateStock(currentStockObj.id, {
+                                                        fairValueParams: nextEntry,
+                                                        ...(manualFv > 0 ? { fairValue: manualFv } : {}),
+                                                        ...(manualBuyPrice && manualBuyPrice > 0 ? { targetPrice: manualBuyPrice, targetPriceType: 'manual' } : { targetPriceType: 'manual' })
+                                                    });
+                                                }
+                                            } else {
+                                                const targetSmartParams =
+                                                    nextMode === 'quality'
+                                                        ? smartAutoQuality
+                                                        : nextMode === 'risk'
+                                                            ? smartAutoRisk
+                                                            : smartAutoConservative;
+
+                                                const manualBackupToSave = currentMode === 'manual' ? {
+                                                    ...(existingBackup || activeParams || smartAutoConservative),
+                                                    ...(!isNaN(parsedFv) && parsedFv > 0 ? { manualFairValue: parsedFv } : {}),
+                                                    ...(targetPrice ? { manualTargetPrice: parseFloat(targetPrice.replace(',', '.')) } : {}),
+                                                    updatedAt: now
+                                                } : existingBackup;
+
+                                                const dcfNext = calculateDcfFairValue(targetSmartParams, effectivePrice);
+                                                const newFv = parseFloat(dcfNext.fairValue.toFixed(2));
+                                                const nextEntry = {
+                                                    ...targetSmartParams,
+                                                    isCustom: false,
+                                                    valuationMode: nextMode,
+                                                    ...(manualBackupToSave ? { customBackup: manualBackupToSave } : {}),
+                                                    updatedAt: now
+                                                };
+                                                map[symKey] = nextEntry;
+                                                try {
+                                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                                } catch {
+                                                    // ignore
+                                                }
+                                                if (newFv > 0) {
+                                                    setFairValue(newFv.toFixed(2));
+                                                }
+                                                const newNextBuyPrice = parseFloat((newFv * (1 - targetSmartParams.mos / 100)).toFixed(2));
+                                                if (shouldAutoSyncLimit && newNextBuyPrice > 0) {
+                                                    setTargetPrice(newNextBuyPrice.toFixed(2));
+                                                }
+                                                if (currentStockObj) {
+                                                    updateStock(currentStockObj.id, {
+                                                        ...(newFv > 0 ? { fairValue: newFv } : {}),
+                                                        ...(shouldAutoSyncLimit && newNextBuyPrice > 0 ? { targetPrice: newNextBuyPrice, targetPriceType: nextMode } : {}),
+                                                        fairValueParams: nextEntry
+                                                    });
+                                                }
                                             }
                                             setFvModeTick(t => t + 1);
                                         };

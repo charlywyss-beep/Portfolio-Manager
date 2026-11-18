@@ -562,6 +562,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
             const newStocks = [...prev];
             newStocks[index] = { ...stock, ...updates };
+            try {
+                localStorage.setItem('portfolio_stocks', JSON.stringify(newStocks));
+            } catch (err) {
+                console.error('[PortfolioContext] Failed to write portfolio_stocks to localStorage:', err);
+            }
             return newStocks;
         });
 

@@ -5,9 +5,10 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info, Maximize2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { InfoHelp } from '../components/InfoHelp';
+import { DelayedDataBadge } from '../components/DelayedDataBadge';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -142,6 +143,7 @@ export function StockDetail() {
     const [timeRange, setTimeRange] = useState<TimeRange>('1D');
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isChartFullscreen, setIsChartFullscreen] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
     const [quoteDate, setQuoteDate] = useState<Date | null>(null);
     const [minutesAgo, setMinutesAgo] = useState(0);
@@ -150,6 +152,14 @@ export function StockDetail() {
     const [showPrePost, setShowPrePost] = useState<boolean>(() => {
         return localStorage.getItem('chart_show_prepost') !== 'false';
     });
+
+    // Check if stock is traded on US markets (only US stocks have Yahoo Pre/Post-Market data)
+    const isUSStock = useMemo(() => {
+        if (!stock) return false;
+        const sym = (stock.symbol || '').toUpperCase();
+        const curr = (stock.currency || '').toUpperCase();
+        return curr === 'USD' || !sym.includes('.') || sym.endsWith('.US');
+    }, [stock?.symbol, stock?.currency]);
 
     // European Indication Quote (Tradegate / Xetra early market)
     const [europeanQuote, setEuropeanQuote] = useState<EuropeanIndicationQuote | null>(null);
@@ -390,6 +400,7 @@ export function StockDetail() {
 
         const savedTargetPriceType = (stock as any).targetPriceType;
         const isManualMode = Boolean(
+            savedTargetPriceType === 'manual' ||
             activeParams?.isCustom ||
             activeParams?.valuationMode === 'manual'
         );
@@ -504,7 +515,6 @@ export function StockDetail() {
         }
         const existingLocal = map[symKey] || {};
         const existingBackup = existingLocal.customBackup || stock?.fairValueParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
-        const hasCustomBackup = Boolean(existingBackup?.isCustom || existingBackup?.manualFairValue || activeParams?.isCustom);
 
         let nextMode: 'conservative' | 'quality' | 'risk' | 'manual' = 'conservative';
         if (mode === 'conservative') {
@@ -512,7 +522,7 @@ export function StockDetail() {
         } else if (mode === 'quality') {
             nextMode = 'risk';
         } else if (mode === 'risk') {
-            nextMode = hasCustomBackup ? 'manual' : 'conservative';
+            nextMode = 'manual';
         } else {
             nextMode = 'conservative';
         }
@@ -665,7 +675,7 @@ export function StockDetail() {
             symbol,
             rangeToUse,
             undefined,
-            rangeToUse === '1D' ? { includePrePost: showPrePost } : undefined
+            rangeToUse === '1D' && isUSStock ? { includePrePost: showPrePost } : undefined
         );
 
         // FALLBACK: If 1D data is empty (common for EU stocks before first Xetra candle), try 1W and slice to the last trading day only
@@ -857,7 +867,7 @@ export function StockDetail() {
         }
         setIsRefreshing(false);
         setLastUpdate(new Date());
-    }, [timeRange, id, position?.buyDate, showPrePost]); // STABLE: only depend on id string, not stock object
+    }, [timeRange, id, position?.buyDate, isUSStock ? showPrePost : false]); // STABLE: only depend on id string, not stock object
 
     // Initial load
     useEffect(() => {
@@ -910,6 +920,11 @@ export function StockDetail() {
     if (!calculatedKgv && stock.eps && stock.eps > 0 && stock.currentPrice) {
         calculatedKgv = stock.currentPrice / stock.eps;
     }
+
+    const isStockMarketOpen = estimateMarketState(stock.symbol, stock.currency) === 'REGULAR';
+    const quoteTimestamp = stock.lastQuoteDate ? new Date(stock.lastQuoteDate).getTime() : 0;
+    const effectiveStockDate = (!isStockMarketOpen && quoteTimestamp > 0) ? new Date(quoteTimestamp) : new Date();
+    const stockDateStr = effectiveStockDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
     return (
         <div className="stock-detail-page p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10">
@@ -967,16 +982,29 @@ export function StockDetail() {
                         </button>
 
                         {/* Direct Auftragsbuch Button if active order exists and not coming from orderbook */}
-                        {activeOrder && searchParams.get('from') !== 'orderbook' && (
-                            <button
-                                onClick={() => navigate('/calculator?orderbook=true')}
-                                className="flex items-center justify-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all font-semibold rounded-lg shadow-sm border border-amber-500/30 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
-                                title="Zum Auftragsbuch wechseln"
-                            >
-                                <ClipboardList className="size-3.5 text-amber-500" />
-                                <span>Auftrag: {activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {activeOrder.shares} Stk. à {activeOrder.limitPrice.toFixed(2)} {activeOrder.currency}</span>
-                            </button>
-                        )}
+                        {activeOrder && searchParams.get('from') !== 'orderbook' && (() => {
+                            let orderGap: number | null = null;
+                            if (activeOrder.limitPrice > 0 && stock.currentPrice > 0) {
+                                orderGap = ((stock.currentPrice - activeOrder.limitPrice) / activeOrder.limitPrice) * 100;
+                            }
+                            return (
+                                <button
+                                    onClick={() => navigate('/calculator?orderbook=true')}
+                                    className="flex items-center justify-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all font-semibold rounded-lg shadow-sm border border-amber-500/30 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
+                                    title="Zum Auftragsbuch wechseln"
+                                >
+                                    <ClipboardList className="size-3.5 text-amber-500" />
+                                    <span>
+                                        Auftrag: {activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {activeOrder.shares} Stk. à {activeOrder.limitPrice.toFixed(2)} {activeOrder.currency}
+                                        {orderGap !== null && (
+                                            <span className="font-mono ml-1 font-bold">
+                                                • Gap: {orderGap > 0 ? '+' : ''}{orderGap.toFixed(1)}%
+                                            </span>
+                                        )}
+                                    </span>
+                                </button>
+                            );
+                        })()}
 
                         {/* Saisonalität Button */}
                         <button
@@ -989,23 +1017,30 @@ export function StockDetail() {
                         </button>
                     </div>
 
-                    {/* Aktualisierung Button oben rechts außerhalb des Chart-Headers */}
-                    <button
-                        onClick={loadData}
-                        disabled={isRefreshing}
-                        className={cn(
-                            "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all shadow-sm",
-                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                            "active:scale-95 shrink-0",
-                            isRefreshing && "opacity-50 cursor-not-allowed"
-                        )}
-                        title="Kursdaten aktualisieren"
-                    >
-                        <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
-                        <span className="whitespace-nowrap">
-                            {isRefreshing ? 'Laden...' : lastUpdate ? `${minutesAgo} Min` : 'Laden'}
-                        </span>
-                    </button>
+                    {/* Aktualisierung Button + Verzögerte Daten Badge überall oben rechts */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <DelayedDataBadge
+                            quoteDate={quoteDate || (stock.lastQuoteDate ? new Date(stock.lastQuoteDate) : null)}
+                            lastDataDate={chartData && chartData.length > 0 ? new Date(chartData[chartData.length - 1].date) : null}
+                            isMarketOpen={isStockMarketOpen}
+                        />
+                        <button
+                            onClick={loadData}
+                            disabled={isRefreshing}
+                            className={cn(
+                                "h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-sm",
+                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                "active:scale-95 shrink-0",
+                                isRefreshing && "opacity-50 cursor-not-allowed"
+                            )}
+                            title={lastUpdate ? `Zuletzt aktualisiert: Vor ${minutesAgo} Min (${lastUpdate.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })} Uhr). Klick zum Aktualisieren.` : 'Kursdaten aktualisieren'}
+                        >
+                            <RefreshCw className={cn("size-3.5 shrink-0", isRefreshing && "animate-spin")} />
+                            <span className="whitespace-nowrap">
+                                {isRefreshing ? 'Laden...' : lastUpdate ? `Vor ${minutesAgo} Min` : 'Laden'}
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 md:pl-12 xl:pl-0">
@@ -1274,27 +1309,38 @@ export function StockDetail() {
                         ]} />
                     </div>
 
-                    {/* Right: Action Buttons (Performance Details & Position bearbeiten) */}
-                    {position && (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => navigate('/?openPerformance=true')}
-                                className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
-                                title="Performance Details aller Positionen öffnen"
-                            >
-                                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                                <span>Performance Details</span>
-                            </button>
-                            <button
-                                onClick={() => setIsEditPositionModalOpen(true)}
-                                className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
-                                title="Position bearbeiten (Käufe, Stückzahl, Kaufpreise)"
-                            >
-                                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                                <span>Position</span>
-                            </button>
-                        </div>
-                    )}
+                    {/* Right: Action Buttons (Performance Details, Position & Vollbild) */}
+                    <div className="flex items-center gap-2">
+                        {position && (
+                            <>
+                                <button
+                                    onClick={() => navigate('/?openPerformance=true')}
+                                    className="h-7 inline-flex items-center justify-center gap-1 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 py-0 px-2.5 text-xs group active:scale-95 whitespace-nowrap leading-none"
+                                    title="Performance Details aller Positionen öffnen"
+                                >
+                                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                                    <span>Performance Details</span>
+                                </button>
+                                <button
+                                    onClick={() => setIsEditPositionModalOpen(true)}
+                                    className="h-7 inline-flex items-center justify-center gap-1 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 py-0 px-2.5 text-xs group active:scale-95 whitespace-nowrap leading-none"
+                                    title="Position bearbeiten (Käufe, Stückzahl, Kaufpreise)"
+                                >
+                                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                                    <span>Position</span>
+                                </button>
+                            </>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setIsChartFullscreen(true)}
+                            className="h-7 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border text-xs font-semibold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0"
+                            title="Vollbild / Großansicht öffnen"
+                        >
+                            <Maximize2 className="size-3.5 shrink-0" />
+                            <span>Vollbild</span>
+                        </button>
+                    </div>
                 </div>
                 {/* Price History Chart */}
                 <div className="flex-1 w-full min-h-0">
@@ -1305,8 +1351,8 @@ export function StockDetail() {
                         historyData={chartData}
                         selectedRange={timeRange}
                         onRangeChange={(range) => setTimeRange(range)}
-                        showPrePost={showPrePost}
-                        onTogglePrePost={() => setShowPrePost(prev => !prev)}
+                        showPrePost={isUSStock ? showPrePost : false}
+                        onTogglePrePost={isUSStock ? () => setShowPrePost(prev => !prev) : undefined}
                         isRealtime={true}
                         quoteDate={quoteDate}
                         previousClose={safePreviousClose || 0}
@@ -1316,12 +1362,20 @@ export function StockDetail() {
                         purchases={position?.purchases}
                         sellLimit={stock.sellLimit}
                         buyLimit={valuationData.buyPrice || stock.targetPrice}
+                        modelBuyPrice={valuationData.modelBuyPrice ?? undefined}
                         fairValue={valuationData.fairValue || stock.fairValue}
                         valuationMode={valuationData.mode}
                         buyLimitType={valuationData.resolvedTargetType}
                         onToggleValuationMode={handleToggleValuationMode}
                         stockName={stock.name}
                         stockSymbol={stock.symbol}
+                        stockLogoUrl={stock.logoUrl}
+                        stockDate={stockDateStr}
+                        onRefresh={loadData}
+                        isRefreshing={isRefreshing}
+                        minutesAgo={minutesAgo}
+                        isFullscreen={isChartFullscreen}
+                        onToggleFullscreen={setIsChartFullscreen}
                     />
                 </div>
             </div>
