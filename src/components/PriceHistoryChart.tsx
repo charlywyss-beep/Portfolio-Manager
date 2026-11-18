@@ -862,20 +862,20 @@ export function PriceHistoryChart({
         <div className={cn(
             "w-full flex flex-col relative transition-all duration-300 select-none",
             isFullscreen
-                ? "fixed inset-0 z-[9999] bg-background dark:bg-[#080d1a] pt-[max(env(safe-area-inset-top,0px),0.75rem)] pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] sm:p-6 lg:p-8 flex flex-col w-screen h-screen overflow-hidden"
+                ? "fixed inset-0 z-[9999] bg-background dark:bg-[#080d1a] pt-[max(env(safe-area-inset-top,0px),0.75rem)] pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] landscape:pt-[max(env(safe-area-inset-top,0px),0.35rem)] landscape:pb-[max(env(safe-area-inset-bottom,0px),0.35rem)] landscape:pl-[max(env(safe-area-inset-left,0px),0.5rem)] landscape:pr-[max(env(safe-area-inset-right,0px),0.5rem)] sm:portrait:p-6 lg:portrait:p-8 flex flex-col w-screen h-screen overflow-hidden"
                 : "min-h-[340px] landscape:min-h-0 h-auto flex-1 pb-0 landscape:pb-0"
         )}>
-            <div className="flex flex-wrap items-start justify-between mb-2 md:mb-3 landscape:mb-1.5 gap-2 relative">
-                <div className="flex flex-col gap-0.5 flex-1 min-w-0 pr-1 sm:pr-3">
-                    <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="flex flex-wrap landscape:flex-nowrap items-start landscape:items-center justify-between mb-2 md:mb-3 landscape:mb-1 gap-2 relative">
+                <div className="flex flex-col landscape:flex-row landscape:items-center gap-0.5 landscape:gap-2.5 flex-1 min-w-0 pr-1 sm:pr-3">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         {stockLogoUrl && isFullscreen && (
                             <div className="shrink-0 flex items-center justify-center">
                                 <Logo
                                     url={stockLogoUrl}
                                     alt={stockName || 'Aktie'}
-                                    size="size-10 sm:size-12"
+                                    size="size-8 sm:size-12 landscape:size-7"
                                     fallback={
-                                        <span className="text-sm sm:text-base font-bold">
+                                        <span className="text-xs sm:text-base font-bold">
                                             {(stockSymbol || stockName || '').slice(0, 2).toUpperCase()}
                                         </span>
                                     }
@@ -884,8 +884,8 @@ export function PriceHistoryChart({
                         )}
                         <div className="flex flex-col gap-0.5 min-w-0">
                             {stockName && (
-                                <div className="flex items-center gap-2 mb-0.5 landscape:mb-0.5">
-                                    <h4 className="text-base sm:text-2xl landscape:text-lg font-black tracking-tighter text-foreground drop-shadow-sm">
+                                <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 landscape:mb-0">
+                                    <h4 className="text-base sm:text-2xl landscape:text-sm font-black tracking-tighter text-foreground drop-shadow-sm whitespace-nowrap">
                                         <StockName name={stockName} />
                                     </h4>
                                     {isMarketOpen ? (
@@ -900,7 +900,7 @@ export function PriceHistoryChart({
                                         />
                                     )}
                                     {stockSymbol && (
-                                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest hidden sm:inline landscape:inline">
                                             {stockSymbol}
                                         </span>
                                     )}
@@ -910,31 +910,31 @@ export function PriceHistoryChart({
                     </div>
 
                     {/* Performance, Kurs, Extended Hours & Hoch/Tief mit exakter Linksbündigkeit bei H: */}
-                    <div className="relative flex flex-wrap items-end gap-x-4 sm:gap-x-5 gap-y-1.5 mt-0.5 min-h-[32px] sm:min-h-0">
+                    <div className="relative flex flex-wrap landscape:flex-nowrap items-end landscape:items-center gap-x-3 sm:gap-x-5 gap-y-1 mt-0.5 landscape:mt-0 min-h-[32px] sm:min-h-0">
                         {/* Spalte 1 (Links): Performance-Untertitel & Kurs-Zeile */}
-                        <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                <p className="text-xs sm:text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
+                        <div className="flex flex-col landscape:flex-row landscape:items-center gap-0.5 sm:gap-1 landscape:gap-2 min-w-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap landscape:hidden">
+                                <p className="text-xs sm:text-sm text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
                                 <span className="text-[11px] sm:text-xs text-muted-foreground italic select-none hidden sm:inline">
                                     · {historyData && historyData.length > 0 ? 'Marktdaten Yahoo Finance' : 'Demo-Modus'}
                                 </span>
                             </div>
-                            <div className="flex flex-wrap items-center gap-x-2.5 sm:gap-x-3 gap-y-1">
+                            <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1">
                                 {/* Current Price, Date & Performance Diff */}
                         <div className="flex items-baseline gap-1.5 sm:gap-2.5 shrink-0">
                             {(effectiveCurrentPrice > 0 || endPrice > 0) && (
-                                <span className="text-xl sm:text-2xl landscape:text-lg font-black tabular-nums text-foreground tracking-tight">
+                                <span className="text-xl sm:text-2xl landscape:text-base font-black tabular-nums text-foreground tracking-tight">
                                     {formatCurrency(effectiveCurrentPrice > 0 ? effectiveCurrentPrice : endPrice, displayCurrency, false)}
                                 </span>
                             )}
                             {effectiveDateStr && (
-                                <span className="text-xs sm:text-sm font-semibold text-muted-foreground tabular-nums whitespace-nowrap">
+                                <span className="text-xs sm:text-sm landscape:text-xs font-semibold text-muted-foreground tabular-nums whitespace-nowrap">
                                     {effectiveDateStr}
                                 </span>
                             )}
-                            <div className={cn("font-bold flex items-baseline gap-1 text-base sm:text-xl landscape:text-base tabular-nums", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
+                            <div className={cn("font-bold flex items-baseline gap-1 text-base sm:text-xl landscape:text-xs tabular-nums", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
                                 <span>{performance > 0 ? '+' : ''}{performance.toFixed(2)}%</span>
-                                <span className="ml-1.5 opacity-90 text-sm sm:text-lg landscape:text-xs">{diffNativeFormatted}</span>
+                                <span className="ml-1 opacity-90 text-sm sm:text-lg landscape:text-[11px]">{diffNativeFormatted}</span>
                             </div>
                         </div>
 
@@ -982,16 +982,18 @@ export function PriceHistoryChart({
                         </div>
 
                         {/* Spalte 2 (Rechts): Beginn des Feldes startet exakt bei H: */}
-                        <div className="flex flex-col items-start gap-1 sm:border-l sm:border-border/60 sm:pl-3.5">
+                        <div className="flex flex-col landscape:flex-row landscape:items-center items-start gap-1 landscape:gap-2 sm:border-l sm:border-border/60 sm:pl-3.5 landscape:border-l landscape:border-border/60 landscape:pl-2.5">
                             {/* Obere Zeile: Live-Kurs / Schlusskurs (Vollbild) ODER Performance Details & Position (Normalansicht) */}
                             {((isFullscreen && !isMeasureMode) || (!isFullscreen && headerActions)) && (
                                 <div className="h-7 inline-flex items-center gap-2">
                                     {isFullscreen && !isMeasureMode && (
-                                        <DelayedDataBadge
-                                            quoteDate={quoteDate}
-                                            lastDataDate={data && data.length > 0 ? new Date(data[data.length - 1].date) : null}
-                                            isMarketOpen={isMarketOpen}
-                                        />
+                                        <div className="landscape:hidden xl:landscape:inline-flex">
+                                            <DelayedDataBadge
+                                                quoteDate={quoteDate}
+                                                lastDataDate={data && data.length > 0 ? new Date(data[data.length - 1].date) : null}
+                                                isMarketOpen={isMarketOpen}
+                                            />
+                                        </div>
                                     )}
                                     {!isFullscreen && headerActions && (
                                         <div className="inline-flex items-center gap-1.5 sm:gap-2">
@@ -1208,7 +1210,7 @@ export function PriceHistoryChart({
                     </div>
                 </div>
                 {isFullscreen && (
-                    <div className="flex flex-col items-end justify-between gap-2.5 sm:gap-3.5 shrink-0 ml-auto self-stretch z-10 pb-0.5">
+                    <div className="flex flex-col landscape:flex-row items-end landscape:items-center justify-between landscape:justify-end gap-2.5 sm:gap-3.5 landscape:gap-2 shrink-0 ml-auto self-stretch landscape:self-auto z-10 pb-0.5 landscape:pb-0">
                         {onRefresh && !isMeasureMode ? (
                             <button
                                 type="button"
@@ -1227,11 +1229,11 @@ export function PriceHistoryChart({
                                     {isRefreshing ? 'Laden...' : typeof minutesAgo === 'number' ? `Vor ${minutesAgo} Min` : 'Laden'}
                                 </span>
                             </button>
-                        ) : <div />}
+                        ) : null}
                         <button
                             type="button"
                             onClick={handleToggleFullscreen}
-                            className="h-7 inline-flex items-center justify-center gap-1.5 px-3 py-0 rounded-lg border text-xs font-bold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0 mt-auto whitespace-nowrap"
+                            className="h-7 inline-flex items-center justify-center gap-1.5 px-3 py-0 rounded-lg border text-xs font-bold leading-none py-0 transition-all shadow-2xs bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-400/50 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white hover:border-amber-400 active:scale-95 cursor-pointer shrink-0 mt-auto landscape:mt-0 whitespace-nowrap"
                             title="Großansicht schließen (Esc)"
                         >
                             <Minimize2 className="size-3.5 shrink-0" />
@@ -1242,13 +1244,13 @@ export function PriceHistoryChart({
                 )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 mb-2 md:mb-4 landscape:mb-1.5 min-h-[38px]">
+            <div className="flex flex-wrap items-center gap-2 mb-2 md:mb-4 landscape:mb-1 min-h-[38px] landscape:min-h-0">
                 {(() => {
                     const toolbarToggleClass = "h-7 inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-0 rounded-lg border text-[11px] sm:text-xs font-bold leading-none transition-all shadow-sm whitespace-nowrap cursor-pointer";
                     return (
-                        <div className="flex flex-wrap items-center gap-2 w-full">
+                        <div className="flex flex-wrap landscape:flex-nowrap items-center gap-2 landscape:gap-1.5 w-full overflow-x-auto scroller-none">
                             {/* Group 1: Time range segmented bar */}
-                            <div className="flex w-full sm:w-auto bg-muted/50 p-0.5 rounded-lg items-center gap-0.5 overflow-x-auto scroller-none">
+                            <div className="flex w-full sm:w-auto bg-muted/50 p-0.5 rounded-lg items-center gap-0.5 overflow-x-auto scroller-none shrink-0">
                                 {(['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
                                     <button
                                         key={range}
@@ -1288,7 +1290,7 @@ export function PriceHistoryChart({
                             )}
 
                             {/* Group 3: Analysis Tools, Valuation Mode & Fullscreen */}
-                            <div className="flex flex-wrap items-center gap-1.5">
+                            <div className="flex flex-wrap landscape:flex-nowrap items-center gap-1.5 shrink-0">
                                 <button
                                     onClick={() => {
                                         setIsMeasureMode(prev => {

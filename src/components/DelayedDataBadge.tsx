@@ -87,10 +87,10 @@ export const DelayedDataBadge: React.FC<DelayedDataBadgeProps> = ({
                     {(isToday && isMarketOpen && isDelayed) && <path d="M12 6v6l4 2" />}
                 </svg>
                 <span className="whitespace-nowrap">
-                    <span className="sm:hidden">
-                        {label} {displayDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} {displayDate.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })}
+                    <span className="lg:hidden">
+                        {label} {isToday ? '' : `${displayDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} `}{displayDate.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <span className="hidden sm:inline">
+                    <span className="hidden lg:inline">
                         {label} {displayDate.toLocaleDateString('de-DE', {
                             day: '2-digit',
                             month: '2-digit',
