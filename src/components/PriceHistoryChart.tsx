@@ -910,9 +910,9 @@ export function PriceHistoryChart({
                     </div>
 
                     {/* Performance, Kurs, Extended Hours & Hoch/Tief mit exakter Linksbündigkeit bei H: */}
-                    <div className="relative flex flex-wrap sm:flex-nowrap items-end justify-between gap-x-2 sm:gap-x-5 gap-y-1.5 mt-0.5 min-h-[32px] sm:min-h-0 w-full">
+                    <div className="relative flex flex-wrap items-end gap-x-4 sm:gap-x-5 gap-y-1.5 mt-0.5 min-h-[32px] sm:min-h-0">
                         {/* Spalte 1 (Links): Performance-Untertitel & Kurs-Zeile */}
-                        <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 shrink-0">
+                        <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
                             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                                 <p className="text-xs sm:text-sm landscape:text-xs text-muted-foreground">Performance · {formatRangeLabel(selectedRange)}</p>
                                 <span className="text-[11px] sm:text-xs text-muted-foreground italic select-none hidden sm:inline">
@@ -981,8 +981,8 @@ export function PriceHistoryChart({
                             </div>
                         </div>
 
-                        {/* Spalte 2 (Rechts): Beginn des Feldes startet exakt bei H:, rechtsbündig in Querformat */}
-                        <div className="flex flex-col items-start gap-1 ml-auto sm:border-l sm:border-border/60 sm:pl-3.5 shrink-0">
+                        {/* Spalte 2 (Rechts): Beginn des Feldes startet exakt bei H: */}
+                        <div className="flex flex-col items-start gap-1 sm:border-l sm:border-border/60 sm:pl-3.5">
                             {/* Obere Zeile: Live-Kurs / Schlusskurs (Vollbild) ODER Performance Details & Position (Normalansicht) */}
                             {((isFullscreen && !isMeasureMode) || (!isFullscreen && headerActions)) && (
                                 <div className="h-7 inline-flex items-center gap-2">
