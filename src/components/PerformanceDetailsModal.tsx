@@ -1,5 +1,5 @@
 import { ArrowLeft, TrendingUp, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -27,6 +27,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
     const { refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio();
     const navigate = useNavigate();
+    const location = useLocation();
 
     // 0: Kurs, 1: % am DD.MM., 2: CHF am DD.MM., 3: Performance %, 4: Performance CHF
     const [assetFilter, setAssetFilter] = useState<'all' | 'stock' | 'etf'>('all');
@@ -243,7 +244,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         : 0;
 
     const handleRowClick = (stockId: string) => {
-        navigate(`/stock/${stockId}?from=performance`);
+        const fromParam = location.pathname.startsWith('/market-overview')
+            ? 'market-overview-performance'
+            : 'performance';
+        navigate(`/stock/${stockId}?from=${fromParam}`);
         onClose();
     };
 

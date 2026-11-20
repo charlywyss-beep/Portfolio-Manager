@@ -580,11 +580,11 @@ export function EditDividendPage() {
                 <button
                     type="button"
                     onClick={handleBack}
-                    className="flex items-center justify-center p-1.5 bg-white text-blue-600 border border-blue-100 shadow-md hover:bg-blue-50 transition-all font-medium rounded-lg transform active:scale-95 shrink-0"
+                    className="inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-foreground/40 hover:border-foreground/75 shadow-sm shrink-0 transition-all active:scale-95 cursor-pointer"
                     title="Zurück"
+                    aria-label="Zurück"
                 >
                     <ArrowLeft className="size-5" />
-                    <span className="hidden md:inline text-sm ml-1.5">Zurück</span>
                 </button>
                 <div className="flex-1 flex items-center gap-3 min-w-0 mr-2">
                     {logoUrl && (

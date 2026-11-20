@@ -1,7 +1,7 @@
 import { StockName } from '../components/StockName';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useCurrencyFormatter } from '../utils/currency';
 
@@ -23,6 +23,7 @@ import type { Stock, OrderBookEntry } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const {
         stocks,
         watchlists,
@@ -46,6 +47,15 @@ export function Watchlist() {
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+
+    useEffect(() => {
+        if (searchParams.get('openPerformance') === 'true') {
+            setIsPerformanceModalOpen(true);
+            const next = new URLSearchParams(searchParams);
+            next.delete('openPerformance');
+            setSearchParams(next, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
     const [modalInitialPeriod, setModalInitialPeriod] = useState<WatchlistPeriod>('1D');
     const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
     const [isOrderBookModalOpen, setIsOrderBookModalOpen] = useState(false);

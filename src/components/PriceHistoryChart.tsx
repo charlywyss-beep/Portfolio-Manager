@@ -485,30 +485,33 @@ export function PriceHistoryChart({
     }
 
     // Smart Domain Expansion for Strategy Lines (Ø Kauf, Kauflimit, Fairer Wert, Modell-Kaufpreis):
-    // Always expand domain to accommodate active strategy lines (Kauflimit, Fairer Wert & Modell-Kaufpreis) so they are NEVER hidden on any timeframe!
-    if (effectiveBuyLimit && effectiveBuyLimit > 0) {
-        calcMin = Math.min(calcMin, effectiveBuyLimit);
-        calcMax = Math.max(calcMax, effectiveBuyLimit);
-    }
-    if (effectiveModelBuyPrice && effectiveModelBuyPrice > 0) {
-        calcMin = Math.min(calcMin, effectiveModelBuyPrice);
-        calcMax = Math.max(calcMax, effectiveModelBuyPrice);
-    }
-    if (effectiveFairValue && effectiveFairValue > 0) {
-        calcMin = Math.min(calcMin, effectiveFairValue);
-        calcMax = Math.max(calcMax, effectiveFairValue);
-    }
-    if (effectivePurchasePrice && effectivePurchasePrice > 0) {
-        // Expand for purchase price if it's within a reasonable distance (so it doesn't compress intraday charts too much)
-        const activeSpan = calcMax - calcMin;
-        if (activeSpan > 0) {
-            if (effectivePurchasePrice >= calcMin - activeSpan * 0.8 && effectivePurchasePrice <= calcMax + activeSpan * 0.8) {
+    // On 1D (Tagesverlauf) and 1W (Wochenverlauf), keep the Y-axis tightly zoomed to the actual price range so short-term movements are clearly visible (like Yahoo Finance 1T / 5T).
+    // On longer timeframes (1M+), expand domain to accommodate active strategy lines so they remain visible.
+    if (selectedRange !== '1D' && selectedRange !== '1W') {
+        if (effectiveBuyLimit && effectiveBuyLimit > 0) {
+            calcMin = Math.min(calcMin, effectiveBuyLimit);
+            calcMax = Math.max(calcMax, effectiveBuyLimit);
+        }
+        if (effectiveModelBuyPrice && effectiveModelBuyPrice > 0) {
+            calcMin = Math.min(calcMin, effectiveModelBuyPrice);
+            calcMax = Math.max(calcMax, effectiveModelBuyPrice);
+        }
+        if (effectiveFairValue && effectiveFairValue > 0) {
+            calcMin = Math.min(calcMin, effectiveFairValue);
+            calcMax = Math.max(calcMax, effectiveFairValue);
+        }
+        if (effectivePurchasePrice && effectivePurchasePrice > 0) {
+            // Expand for purchase price if it's within a reasonable distance (so it doesn't compress charts too much)
+            const activeSpan = calcMax - calcMin;
+            if (activeSpan > 0) {
+                if (effectivePurchasePrice >= calcMin - activeSpan * 0.8 && effectivePurchasePrice <= calcMax + activeSpan * 0.8) {
+                    calcMin = Math.min(calcMin, effectivePurchasePrice);
+                    calcMax = Math.max(calcMax, effectivePurchasePrice);
+                }
+            } else {
                 calcMin = Math.min(calcMin, effectivePurchasePrice);
                 calcMax = Math.max(calcMax, effectivePurchasePrice);
             }
-        } else {
-            calcMin = Math.min(calcMin, effectivePurchasePrice);
-            calcMax = Math.max(calcMax, effectivePurchasePrice);
         }
     }
 
@@ -1518,66 +1521,6 @@ export function PriceHistoryChart({
                         </div>
                     );
                 })()}
-
-                {/* Desktop Dynamic Header Info (Replaces Tooltip) */}
-                {hoveredData && (
-                    <div className="hidden sm:flex items-center gap-4 text-sm animate-in fade-in duration-150 z-10 border-l border-border/50 pl-3 sm:pl-5">
-                        <div className="flex flex-col items-start leading-tight">
-                            <span className="font-bold text-sm text-foreground whitespace-nowrap">
-                                {(() => {
-                                    const d = new Date(hoveredData.date);
-                                    const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
-                                    const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                                    return `${weekday} ${dateStr}`;
-                                })()}
-                            </span>
-                            <span className="text-xs font-semibold text-foreground">
-                                {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                        </div>
-                        <div className="h-7 w-px bg-border" />
-                        <div className="flex flex-col items-start leading-tight">
-                            <div className="flex items-center gap-1.5">
-                                <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
-                                <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
-                                    {formatCurrency(hoveredData.value, displayCurrency, false)}
-                                </span>
-                            </div>
-                            <span className="text-xs font-semibold text-foreground">
-                                {hoveredData.session === 'pre'
-                                    ? 'Kurs · Vorbörse'
-                                    : hoveredData.session === 'post'
-                                        ? 'Kurs · Nachbörse'
-                                        : 'Kurs'}
-                            </span>
-                        </div>
-                        {hoveredData.sma200 && (
-                            <>
-                                <div className="h-7 w-px bg-border" />
-                                <div className="flex flex-col items-start leading-tight">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
-                                        <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
-                                            {formatCurrency(hoveredData.sma200, displayCurrency, false)}
-                                        </span>
-                                        {(() => {
-                                            const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
-                                            return (
-                                                <span className={cn(
-                                                    "font-bold text-sm tabular-nums",
-                                                    diff >= 0 ? "text-green-500" : "text-red-500"
-                                                )}>
-                                                    {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
-                                                </span>
-                                            );
-                                        })()}
-                                    </div>
-                                    <span className="text-xs text-amber-500 font-bold">SMA 200</span>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
             </div>
 
             {isMeasureMode && (
@@ -1787,11 +1730,70 @@ export function PriceHistoryChart({
             )}
 
             <div className={cn(
-                "w-full min-w-0 transition-all",
+                "relative w-full min-w-0",
                 isFullscreen
                     ? "flex-1 w-full min-h-0 min-w-0"
                     : "h-[320px] sm:h-[410px] landscape:h-[190px] min-h-[180px]"
             )}>
+                {/* Desktop Dynamic Hover Overlay (Fixed position inside chart - zero layout shift / zero flicker) */}
+                {hoveredData && (
+                    <div className="hidden sm:flex items-center gap-3.5 text-sm z-20 pointer-events-none absolute top-1.5 left-2 bg-background/90 dark:bg-[#0b1222]/90 backdrop-blur-sm border border-border/70 rounded-lg px-3 py-1.5 shadow-lg">
+                        <div className="flex flex-col items-start leading-tight">
+                            <span className="font-bold text-sm text-foreground whitespace-nowrap">
+                                {(() => {
+                                    const d = new Date(hoveredData.date);
+                                    const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
+                                    const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                                    return `${weekday} ${dateStr}`;
+                                })()}
+                            </span>
+                            <span className="text-xs font-semibold text-muted-foreground">
+                                {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                        <div className="h-7 w-px bg-border" />
+                        <div className="flex flex-col items-start leading-tight">
+                            <div className="flex items-center gap-1.5">
+                                <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
+                                <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
+                                    {formatCurrency(hoveredData.value, displayCurrency, false)}
+                                </span>
+                            </div>
+                            <span className="text-xs font-semibold text-muted-foreground">
+                                {hoveredData.session === 'pre'
+                                    ? 'Kurs · Vorbörse'
+                                    : hoveredData.session === 'post'
+                                        ? 'Kurs · Nachbörse'
+                                        : 'Kurs'}
+                            </span>
+                        </div>
+                        {hoveredData.sma200 && (
+                            <>
+                                <div className="h-7 w-px bg-border" />
+                                <div className="flex flex-col items-start leading-tight">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
+                                        <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
+                                            {formatCurrency(hoveredData.sma200, displayCurrency, false)}
+                                        </span>
+                                        {(() => {
+                                            const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
+                                            return (
+                                                <span className={cn(
+                                                    "font-bold text-sm tabular-nums",
+                                                    diff >= 0 ? "text-green-500" : "text-red-500"
+                                                )}>
+                                                    {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
+                                                </span>
+                                            );
+                                        })()}
+                                    </div>
+                                    <span className="text-xs text-amber-500 font-bold">SMA 200</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
                 {hasMounted && (
                     <ResponsiveContainer
                         key={isFullscreen ? 'fullscreen' : 'normal'}
@@ -2053,7 +2055,7 @@ export function PriceHistoryChart({
                                 orientation="right"
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickFormatter={(val) => {
-                                    if (Number.isInteger(val) || Math.abs(val - Math.round(val)) < 1e-4) {
+                                    if (yAxisInfo.step >= 1 && (Number.isInteger(val) || Math.abs(val - Math.round(val)) < 1e-4)) {
                                         return Math.round(val).toString();
                                     }
                                     const decimals = yAxisInfo.step >= 1 ? 0 : yAxisInfo.step >= 0.1 ? 1 : yAxisInfo.step >= 0.01 ? 2 : 3;

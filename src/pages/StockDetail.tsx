@@ -916,54 +916,58 @@ export function StockDetail() {
                         <button
                             onClick={() => {
                                 const from = searchParams.get('from');
-                                if (from === 'orderbook') {
+                                if (from === 'performance') {
+                                    navigate('/?openPerformance=true');
+                                } else if (from === 'market-overview-performance') {
+                                    const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
+                                    const params = new URLSearchParams();
+                                    if (tab && tab !== 'all') params.set('tab', tab);
+                                    params.set('openPerformance', 'true');
+                                    navigate(`/market-overview?${params.toString()}`);
+                                } else if (from === 'watchlist-performance') {
+                                    navigate('/watchlist?openPerformance=true');
+                                } else if (from === 'orderbook') {
                                     navigate('/calculator?orderbook=true');
                                 } else if (from === 'watchlist') {
                                     navigate('/watchlist');
                                 } else if (from === 'portfolio') {
                                     navigate('/portfolio');
+                                } else if (from === 'dividends') {
+                                    navigate('/dividends');
                                 } else if (from === 'market-overview') {
                                     const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
                                     navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
+                                } else if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+                                    navigate(-1);
                                 } else {
                                     navigate('/');
                                 }
                             }}
-                            className="h-7 flex items-center justify-center gap-1.5 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800/60 py-0 px-2 sm:px-2.5 text-xs group active:scale-95 shrink-0 whitespace-nowrap"
+                            className="h-7 w-7 inline-flex items-center justify-center leading-none rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-foreground/40 hover:border-foreground/75 shadow-sm p-0 transition-all group active:scale-95 shrink-0 cursor-pointer"
                             title={
-                                searchParams.get('from') === 'orderbook'
-                                    ? "Zurück zum Auftragsbuch"
-                                    : searchParams.get('from') === 'market-overview'
-                                        ? "Zurück zur Marktübersicht"
-                                        : searchParams.get('from') === 'portfolio'
-                                            ? "Zurück zu Positionen"
-                                            : searchParams.get('from') === 'watchlist'
-                                                ? "Zurück zur Watchlist"
-                                                : "Zurück zur Übersicht"
+                                searchParams.get('from') === 'performance' || searchParams.get('from') === 'market-overview-performance'
+                                    ? "Zurück zu Performance Details"
+                                    : searchParams.get('from') === 'watchlist-performance'
+                                        ? "Zurück zur Watchlist Performance"
+                                        : searchParams.get('from') === 'orderbook'
+                                            ? "Zurück zum Auftragsbuch"
+                                            : searchParams.get('from') === 'market-overview'
+                                                ? "Zurück zur Marktübersicht"
+                                                : searchParams.get('from') === 'portfolio'
+                                                    ? "Zurück zu Positionen"
+                                                    : searchParams.get('from') === 'watchlist'
+                                                        ? "Zurück zur Watchlist"
+                                                        : searchParams.get('from') === 'dividends'
+                                                            ? "Zurück zu Dividenden"
+                                                            : "Zurück"
                             }
+                            aria-label="Zurück"
                         >
-                            {searchParams.get('from') === 'orderbook' ? (
-                                <ClipboardList className="size-3.5 text-blue-600 dark:text-blue-400" />
-                            ) : (
-                                <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
-                            )}
-                            <span>
-                                {searchParams.get('from') === 'orderbook'
-                                    ? (activeOrder
-                                        ? `Auftragsbuch: ${activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} ${activeOrder.shares} Stk. à ${activeOrder.limitPrice.toFixed(2)} ${activeOrder.currency}`
-                                        : 'Auftragsbuch')
-                                    : searchParams.get('from') === 'market-overview'
-                                        ? 'Marktübersicht'
-                                        : searchParams.get('from') === 'portfolio'
-                                            ? 'Positionen'
-                                            : searchParams.get('from') === 'watchlist'
-                                                ? 'Watchlist'
-                                                : 'Übersicht'}
-                            </span>
+                            <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
                         </button>
 
-                        {/* Direct Auftragsbuch Button if active order exists and not coming from orderbook */}
-                        {activeOrder && searchParams.get('from') !== 'orderbook' && (() => {
+                        {/* Direct Auftragsbuch Button if active order exists */}
+                        {activeOrder && (() => {
                             let orderGap: number | null = null;
                             if (activeOrder.limitPrice > 0 && stock.currentPrice > 0) {
                                 orderGap = ((stock.currentPrice - activeOrder.limitPrice) / activeOrder.limitPrice) * 100;

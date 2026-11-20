@@ -174,6 +174,15 @@ export function MarketOverviewPage() {
     const { rates } = useExchangeRates();
     const [showPerformanceDetails, setShowPerformanceDetails] = useState(false);
 
+    useEffect(() => {
+        if (searchParams.get('openPerformance') === 'true') {
+            setShowPerformanceDetails(true);
+            const next = new URLSearchParams(searchParams);
+            next.delete('openPerformance');
+            setSearchParams(next, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
+
     const portfolioDailyGain = totals.dailyGain || 0;
     const portfolioDailyGainPercent = totals.dailyGainPercent || 0;
     const isPortfolioPositive = portfolioDailyGain >= 0;
