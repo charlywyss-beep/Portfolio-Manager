@@ -296,8 +296,8 @@ export async function fetchHistoricalClose(
     }
 
     const rangeParamMap: Record<HistoricalRange, { period: string; interval: string }> = {
-        '1W': { period: '5d', interval: '1d' },
-        '1M': { period: '1mo', interval: '1d' },
+        '1W': { period: '5d', interval: '15m' },
+        '1M': { period: '1mo', interval: '15m' },
         '3M': { period: '3mo', interval: '1d' },
         '6M': { period: '6mo', interval: '1d' },
         '1Y': { period: '1y', interval: '1d' },
@@ -305,7 +305,7 @@ export async function fetchHistoricalClose(
         '5Y': { period: '5y', interval: '1wk' }
     };
 
-    const { period, interval } = rangeParamMap[range] || { period: '5d', interval: '1d' };
+    const { period, interval } = rangeParamMap[range] || { period: '5d', interval: '15m' };
 
     try {
         const url = `/api/yahoo-finance?symbol=${encodeURIComponent(symbol)}&period=${period}&interval=${interval}&_=${Date.now()}`;
@@ -323,7 +323,7 @@ export async function fetchHistoricalClose(
         // Fallback proxy (e.g. for GitHub Pages / CORS):
         if (!data || !data.chart?.result?.[0]) {
             try {
-                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period=${period}&interval=${interval}&_=${Date.now()}`;
+                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${period}&interval=${interval}&_=${Date.now()}`;
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
                 const fallbackRes = await fetch(proxyUrl);
                 if (fallbackRes.ok) {

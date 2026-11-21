@@ -65,7 +65,9 @@ export function FairValueCalculator() {
 
     const handleBack = () => {
         const from = searchParams.get('from');
-        if (from === 'watchlist') {
+        if (from === 'watchlist-performance') {
+            navigate('/watchlist?openPerformance=true');
+        } else if (from === 'watchlist') {
             navigate('/watchlist');
         } else if (from === 'portfolio') {
             navigate('/portfolio');
