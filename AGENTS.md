@@ -12,3 +12,8 @@
 - **Erst auf explizite Anweisung (z. B. „Run Build“, „Hochladen“ oder „Push“):** Dann `npm run build` ausführen (`docs/` neu erzeugen), committen und nach `origin main` pushen.
 - **Wichtige Ausnahme für iPad & iPhone:** Sobald Änderungen die mobile Ansicht betreffen oder für iPad/iPhone getestet werden, **immer automatisch** `npm run build`, committen und direkt nach `origin main` pushen, damit der User es sofort auf den echten Mobilgeräten prüfen kann.
 
+## 4. Minimum-Schriftgrösse (`12px` / `text-xs`)
+- **Untergrenze `12px`:** Keine Schriften unter `12px` verwenden (kein `text-[9px]`, `text-[10px]` oder `text-[11px]`, keine Chart-Achsen unter `fontSize={12}`).
+- **Richtwerte:** Kompakte Labels, Badges, Buttons und Hinweise mindestens `text-xs` (`12px`); wichtige Aufschlüsselungen und Kennzahlen mindestens `text-[13px]` bzw. `text-sm` (`14px`).
+
+

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { RefreshCcw, ArrowLeftRight, X } from 'lucide-react';
+import { RefreshCcw, ArrowLeftRight, X, ArrowDown } from 'lucide-react';
 import { cn } from '../utils';
 import { fetchStockHistory } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -10,7 +10,7 @@ interface RateHistory {
     rate: number;
 }
 
-type CurrencyCode = 'CHF' | 'EUR' | 'USD' | 'GBP';
+export type CurrencyCode = 'CHF' | 'EUR' | 'USD' | 'GBP';
 type ChartTimeRange = '1W' | '1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y';
 
 const CURRENCIES: CurrencyCode[] = ['CHF', 'EUR', 'USD', 'GBP'];
@@ -22,9 +22,10 @@ function isCurrencyCode(val: string | null): val is CurrencyCode {
 
 interface Props {
     inverse?: boolean;
+    onTransferToShareCalc?: (amount: string, currency: CurrencyCode) => void;
 }
 
-export function CurrencyChart({ inverse = false }: Props) {
+export function CurrencyChart({ inverse = false, onTransferToShareCalc }: Props) {
     const storageKeyPrefix = inverse ? 'currency_chart_inverse' : 'currency_chart_direct';
     const { rates } = useExchangeRates();
 
@@ -57,9 +58,21 @@ export function CurrencyChart({ inverse = false }: Props) {
     }, []);
 
     const [currRate, setCurrRate] = useState<number | null>(null);
-    const [baseAmount, setBaseAmount] = useState<string>('1');
+    const [baseAmount, setBaseAmount] = useState<string>(() => {
+        try {
+            const saved = localStorage.getItem(`${storageKeyPrefix}_amount`);
+            if (saved !== null) return saved;
+        } catch {}
+        return '1';
+    });
     const [convertedAmount, setConvertedAmount] = useState<string>('');
     const [lastEdited, setLastEdited] = useState<'base' | 'target'>('base');
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(`${storageKeyPrefix}_amount`, baseAmount);
+        } catch {}
+    }, [storageKeyPrefix, baseAmount]);
 
     const [timeRange, setTimeRange] = useState<ChartTimeRange>(() => {
         try {
@@ -261,6 +274,9 @@ export function CurrencyChart({ inverse = false }: Props) {
             });
     }, [baseAmount, baseCurrency, targetCurrency, rates]);
 
+    const numericConverted = parseFloat(convertedAmount);
+    const canTransferBudget = Boolean(onTransferToShareCalc) && Number.isFinite(numericConverted) && numericConverted > 0;
+
     const formatXAxisDate = (date: string) => {
         if (!date) return '';
         const d = new Date(date.includes('T') ? date : date + 'T12:00:00');
@@ -421,26 +437,54 @@ export function CurrencyChart({ inverse = false }: Props) {
                             </div>
                         </div>
 
-                        {/* Quick All-4-Currencies Preview Strip (clickable to switch target currency) */}
-                        {otherCurrencies.some(o => o.value !== null) && (
-                            <div className="flex flex-wrap items-center gap-2 mb-5 px-1 text-xs">
-                                <span className="text-muted-foreground font-medium">
-                                    Entspricht auch:
-                                </span>
-                                {otherCurrencies.map(item => (
-                                    item.value !== null && (
-                                        <button
-                                            key={item.currency}
-                                            type="button"
-                                            onClick={() => handleSelectTarget(item.currency)}
-                                            className="h-7 inline-flex items-center justify-center leading-none gap-1.5 px-2.5 py-0 rounded-lg border border-border/80 bg-muted/35 hover:bg-primary/10 hover:border-primary/40 text-foreground font-mono tabular-nums font-semibold transition-colors cursor-pointer whitespace-nowrap"
-                                            title={`Klick wechselt Zielwährung auf ${item.currency} (${item.rate ? `1 ${baseCurrency} = ${item.rate.toFixed(4)} ${item.currency}` : ''})`}
-                                        >
-                                            <span>{item.value.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            <span className="text-muted-foreground font-sans font-bold">{item.currency}</span>
-                                        </button>
-                                    )
-                                ))}
+                        {/* Quick All-4-Currencies Preview Strip + Transfer to ShareCalculator */}
+                        {(otherCurrencies.some(o => o.value !== null) || Boolean(onTransferToShareCalc)) && (
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-5 px-1 text-xs">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {otherCurrencies.some(o => o.value !== null) && (
+                                        <>
+                                            <span className="text-muted-foreground font-medium">
+                                                Entspricht auch:
+                                            </span>
+                                            {otherCurrencies.map(item => (
+                                                item.value !== null && (
+                                                    <button
+                                                        key={item.currency}
+                                                        type="button"
+                                                        onClick={() => handleSelectTarget(item.currency)}
+                                                        className="h-7 inline-flex items-center justify-center leading-none gap-1.5 px-2.5 py-0 rounded-lg border border-border/80 bg-muted/35 hover:bg-primary/10 hover:border-primary/40 text-foreground font-mono tabular-nums font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                                                        title={`Klick wechselt Zielwährung auf ${item.currency}${item.rate ? ` · 1 ${baseCurrency} = ${item.rate.toFixed(4)} ${item.currency}` : ''}`}
+                                                    >
+                                                        <span>{item.value.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                        <span className="text-muted-foreground font-sans font-bold">{item.currency}</span>
+                                                    </button>
+                                                )
+                                            ))}
+                                        </>
+                                    )}
+                                </div>
+                                {onTransferToShareCalc && (
+                                    <button
+                                        type="button"
+                                        disabled={!canTransferBudget}
+                                        onClick={() => {
+                                            if (!canTransferBudget) return;
+                                            onTransferToShareCalc(numericConverted.toFixed(2), targetCurrency);
+                                        }}
+                                        title={canTransferBudget
+                                            ? `${numericConverted.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${targetCurrency} als Budget in den Aktien-Kauf Rechner übernehmen`
+                                            : 'Betrag eingeben, um ihn als Kaufbudget zu übernehmen'}
+                                        className={cn(
+                                            "h-7 inline-flex items-center justify-center leading-none gap-1.5 px-2.5 py-0 rounded-lg border text-xs font-semibold transition-all whitespace-nowrap",
+                                            canTransferBudget
+                                                ? "border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 cursor-pointer active:scale-95"
+                                                : "border-border/50 bg-muted/20 text-muted-foreground/50 cursor-not-allowed"
+                                        )}
+                                    >
+                                        <span>Als Kaufbudget</span>
+                                        <ArrowDown className="size-3.5" />
+                                    </button>
+                                )}
                             </div>
                         )}
 
@@ -520,7 +564,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                                                 textAnchor={anchor}
                                                 fill="currentColor"
                                                 opacity={0.6}
-                                                fontSize={timeRange === '1W' ? 10 : 11}
+                                                fontSize={12}
                                             >
                                                 {formatXAxisDate(payload.value)}
                                             </text>
@@ -529,7 +573,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                                 />
                                 <YAxis
                                     domain={domain}
-                                    tick={{ fontSize: 11, fill: 'currentColor', opacity: 0.5 }}
+                                    tick={{ fontSize: 12, fill: 'currentColor', opacity: 0.5 }}
                                     tickFormatter={(val) => val.toFixed(2)}
                                     tickLine={false}
                                     axisLine={false}

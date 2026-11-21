@@ -1,21 +1,89 @@
 
 import { useState, useMemo, useEffect } from 'react';
-import { Calculator } from 'lucide-react';
+import { Calculator, Wallet, Check } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '../utils';
+import { usePortfolioData } from '../hooks/usePortfolioData';
+
+const COMPOUND_STORAGE_KEY = 'finanz_rechner_compound_calc';
+
+interface SavedCompoundState {
+    initialCapital: number;
+    monthlyContribution: number;
+    years: number;
+    dividendYield: number;
+    priceAppreciation: number;
+    reinvest: boolean;
+}
+
+const loadSavedCompoundState = (): Partial<SavedCompoundState> => {
+    try {
+        const raw = localStorage.getItem(COMPOUND_STORAGE_KEY);
+        if (!raw) return {};
+        return JSON.parse(raw) || {};
+    } catch {
+        return {};
+    }
+};
+
+const preventArrowStep = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+    }
+};
 
 export function CompoundInterestProjection() {
-    const [initialCapital, setInitialCapital] = useState(10000);
-    const [monthlyContribution, setMonthlyContribution] = useState(500);
-    const [years, setYears] = useState(20);
-    const [dividendYield, setDividendYield] = useState(3.5);
-    const [priceAppreciation, setPriceAppreciation] = useState(4.0);
-    const [reinvest, setReinvest] = useState(true);
+    const { totals } = usePortfolioData();
+    const [initial] = useState<Partial<SavedCompoundState>>(() => loadSavedCompoundState());
+    const [initialCapital, setInitialCapital] = useState(
+        typeof initial.initialCapital === 'number' && Number.isFinite(initial.initialCapital) ? initial.initialCapital : 10000
+    );
+    const [monthlyContribution, setMonthlyContribution] = useState(
+        typeof initial.monthlyContribution === 'number' && Number.isFinite(initial.monthlyContribution) ? initial.monthlyContribution : 500
+    );
+    const [years, setYears] = useState(
+        typeof initial.years === 'number' && Number.isFinite(initial.years) ? initial.years : 20
+    );
+    const [dividendYield, setDividendYield] = useState(
+        typeof initial.dividendYield === 'number' && Number.isFinite(initial.dividendYield) ? initial.dividendYield : 3.5
+    );
+    const [priceAppreciation, setPriceAppreciation] = useState(
+        typeof initial.priceAppreciation === 'number' && Number.isFinite(initial.priceAppreciation) ? initial.priceAppreciation : 4.0
+    );
+    const [reinvest, setReinvest] = useState(typeof initial.reinvest === 'boolean' ? initial.reinvest : true);
     const [hasMounted, setHasMounted] = useState(false);
+    const [loadedFeedback, setLoadedFeedback] = useState(false);
+
+    useEffect(() => {
+        try {
+            const payload: SavedCompoundState = {
+                initialCapital,
+                monthlyContribution,
+                years,
+                dividendYield,
+                priceAppreciation,
+                reinvest
+            };
+            localStorage.setItem(COMPOUND_STORAGE_KEY, JSON.stringify(payload));
+        } catch {}
+    }, [initialCapital, monthlyContribution, years, dividendYield, priceAppreciation, reinvest]);
 
     useEffect(() => {
         setHasMounted(true);
     }, []);
+
+    const portfolioBaseCapital = totals.totalValueStock > 0 ? totals.totalValueStock : totals.totalValue;
+    const portfolioBaseIncome = totals.totalValueStock > 0 ? totals.projectedYearlyDividends : totals.totalProjectedIncome;
+    const portfolioYield = portfolioBaseCapital > 0 ? (portfolioBaseIncome / portfolioBaseCapital) * 100 : 0;
+    const canLoadPortfolio = portfolioBaseCapital > 0;
+
+    const handleLoadPortfolioValues = () => {
+        if (!canLoadPortfolio) return;
+        setInitialCapital(Math.round(portfolioBaseCapital));
+        setDividendYield(Number(portfolioYield.toFixed(2)));
+        setLoadedFeedback(true);
+        window.setTimeout(() => setLoadedFeedback(false), 2000);
+    };
 
     const projectionData = useMemo(() => {
         let currentCapital = initialCapital;
@@ -54,67 +122,90 @@ export function CompoundInterestProjection() {
 
     return (
         <div className="p-5 rounded-xl bg-card border border-border shadow-sm">
-            <div className="flex items-center gap-2 mb-4 text-primary">
-                <Calculator className="size-5" />
-                <h3 className="font-semibold text-lg">Zinseszins Projektion</h3>
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
+                <div className="flex items-center gap-2 text-primary">
+                    <Calculator className="size-5 shrink-0" />
+                    <h3 className="font-semibold text-lg">Zinseszins Projektion</h3>
+                </div>
+                {canLoadPortfolio && (
+                    <button
+                        type="button"
+                        onClick={handleLoadPortfolioValues}
+                        title={`Übernimmt Depotwert ${Math.round(portfolioBaseCapital).toLocaleString('de-CH')} CHF und Dividendenrendite ${portfolioYield.toFixed(2)}%`}
+                        className={cn(
+                            "h-7 inline-flex items-center justify-center leading-none gap-1.5 px-2.5 py-0 rounded-lg border text-xs font-semibold transition-all cursor-pointer whitespace-nowrap active:scale-95",
+                            loadedFeedback
+                                ? "bg-green-500/15 border-green-500/40 text-green-600 dark:text-green-400"
+                                : "bg-muted/40 hover:bg-primary/10 border-border/80 hover:border-primary/40 text-foreground hover:text-primary"
+                        )}
+                    >
+                        {loadedFeedback ? <Check className="size-3.5" /> : <Wallet className="size-3.5" />}
+                        <span>{loadedFeedback ? 'Depot-Werte geladen' : 'Depot-Werte laden'}</span>
+                    </button>
+                )}
             </div>
 
             {/* Compact Inputs for Projection */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
                 <div className="space-y-1">
-                    <label className="text-[10px] uppercase text-muted-foreground">Startkapital</label>
+                    <label className="text-xs font-medium text-muted-foreground">Startkapital</label>
                     <input
                         type="number"
                         value={initialCapital}
                         onChange={(e) => setInitialCapital(Number(e.target.value))}
+                        onKeyDown={preventArrowStep}
                         onFocus={(e) => e.target.select()}
                         className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-[10px] uppercase text-muted-foreground">Sparrate / Mt.</label>
+                    <label className="text-xs font-medium text-muted-foreground">Sparrate / Mt.</label>
                     <input
                         type="number"
                         value={monthlyContribution}
                         onChange={(e) => setMonthlyContribution(Number(e.target.value))}
+                        onKeyDown={preventArrowStep}
                         onFocus={(e) => e.target.select()}
                         className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-[10px] uppercase text-muted-foreground">Jahre</label>
+                    <label className="text-xs font-medium text-muted-foreground">Jahre</label>
                     <input
                         type="number"
                         value={years}
                         onChange={(e) => setYears(Number(e.target.value))}
+                        onKeyDown={preventArrowStep}
                         onFocus={(e) => e.target.select()}
                         className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-[10px] uppercase text-muted-foreground">Div. Rendite %</label>
+                    <label className="text-xs font-medium text-muted-foreground">Div. Rendite %</label>
                     <input
                         type="number"
                         step="0.1"
                         value={dividendYield}
                         onChange={(e) => setDividendYield(Number(e.target.value))}
+                        onKeyDown={preventArrowStep}
                         onFocus={(e) => e.target.select()}
                         className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-[10px] uppercase text-muted-foreground">Kursgewinn %</label>
+                    <label className="text-xs font-medium text-muted-foreground">Kursgewinn %</label>
                     <input
                         type="number"
                         step="0.1"
                         value={priceAppreciation}
                         onChange={(e) => setPriceAppreciation(Number(e.target.value))}
+                        onKeyDown={preventArrowStep}
                         onFocus={(e) => e.target.select()}
                         className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-[10px] uppercase text-muted-foreground">Reinvest?</label>
+                    <label className="text-xs font-medium text-muted-foreground">Reinvest?</label>
                     <button
                         onClick={() => setReinvest(!reinvest)}
                         className={cn(
@@ -138,8 +229,8 @@ export function CompoundInterestProjection() {
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                            <XAxis dataKey="year" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
+                            <XAxis dataKey="year" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                                 formatter={(val: number) => val.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}

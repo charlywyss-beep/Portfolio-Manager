@@ -1076,6 +1076,7 @@ export function DividendCalculator() {
 
     // Reactive synchronization when stock ID changes
     const lastSyncedStockIdRef = useRef<string | null>(null);
+    const hasAppliedUrlPriceRef = useRef(false);
     useEffect(() => {
         if (!selectedStockId || selectedStockId === 'new') {
             lastSyncedStockIdRef.current = null;
@@ -1100,6 +1101,14 @@ export function DividendCalculator() {
             else if (stockFreq === 'monthly') annualDiv *= 12;
             else if (stockFreq === 'semi-annually') annualDiv *= 2;
 
+            // Preserve custom limit / target price passed once from Finanz Rechner
+            const urlPriceRaw = !hasAppliedUrlPriceRef.current && searchParams.get('from') === 'exchange-rates'
+                ? searchParams.get('price')
+                : null;
+            const urlPrice = urlPriceRaw !== null ? parseFloat(urlPriceRaw) : NaN;
+            const useUrlPrice = Number.isFinite(urlPrice) && urlPrice > 0;
+            hasAppliedUrlPriceRef.current = true;
+
             updateSimulatorState({
                 simName: stock.name,
                 simSymbol: stock.symbol,
@@ -1107,7 +1116,7 @@ export function DividendCalculator() {
                 simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
                 simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
                 simFrequency: stockIsAccumulating ? undefined : stockFreq,
-                price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
+                price: useUrlPrice ? urlPrice : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice),
                 dividend: stockIsAccumulating ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
@@ -1606,6 +1615,8 @@ export function DividendCalculator() {
             navigate('/portfolio');
         } else if (from === 'fair-value') {
             navigate('/fair-value');
+        } else if (from === 'exchange-rates') {
+            navigate('/exchange-rates');
         } else if (from === 'market-overview') {
             const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
             navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');

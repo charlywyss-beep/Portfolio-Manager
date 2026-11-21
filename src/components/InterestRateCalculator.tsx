@@ -1,7 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Percent, X, RotateCcw } from 'lucide-react';
 import { cn } from '../utils';
+import { usePortfolio } from '../context/PortfolioContext';
+import { usePortfolioData } from '../hooks/usePortfolioData';
+import { useExchangeRates } from '../context/ExchangeRateContext';
+import { convertToCHF } from '../utils/currency';
+import { CalculatorPresetSelect, type PresetSelectOption } from './CalculatorPresetSelect';
 
 interface InterestRateCalculatorProps {
     className?: string;
@@ -9,28 +14,147 @@ interface InterestRateCalculatorProps {
 
 type InterestMode = 'rate' | 'capital' | 'income';
 
+const INTEREST_CALC_STORAGE_KEY = 'finanz_rechner_interest_calc';
+
+interface SavedInterestState {
+    mode: InterestMode;
+    selectedPreset: string;
+    capital: string;
+    interestIncome: string;
+    interestRate: string;
+}
+
+const loadSavedInterestState = (): Partial<SavedInterestState> => {
+    try {
+        const raw = localStorage.getItem(INTEREST_CALC_STORAGE_KEY);
+        if (!raw) return {};
+        return JSON.parse(raw) || {};
+    } catch {
+        return {};
+    }
+};
+
 const preventArrowStep = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         e.preventDefault();
     }
 };
 
+const getFrequencyFactor = (freq?: string) => {
+    switch (freq) {
+        case 'monthly': return 12;
+        case 'quarterly': return 4;
+        case 'semi-annually': return 2;
+        case 'annually': return 1;
+        default: return 1;
+    }
+};
+
 export function InterestRateCalculator({ className }: InterestRateCalculatorProps) {
-    const [mode, setMode] = useState<InterestMode>('rate');
-    const [capital, setCapital] = useState<string>('');
-    const [interestIncome, setInterestIncome] = useState<string>('');
-    const [interestRate, setInterestRate] = useState<string>('');
+    const { fixedDeposits } = usePortfolio();
+    const { positions, totals } = usePortfolioData();
+    const { rates } = useExchangeRates();
+
+    const [initial] = useState<Partial<SavedInterestState>>(() => loadSavedInterestState());
+    const [mode, setMode] = useState<InterestMode>(
+        initial.mode === 'capital' || initial.mode === 'income' ? initial.mode : 'rate'
+    );
+    const [selectedPreset, setSelectedPreset] = useState<string>(initial.selectedPreset || '');
+    const [capital, setCapital] = useState<string>(initial.capital || '');
+    const [interestIncome, setInterestIncome] = useState<string>(initial.interestIncome || '');
+    const [interestRate, setInterestRate] = useState<string>(initial.interestRate || '');
+
+    useEffect(() => {
+        try {
+            const payload: SavedInterestState = {
+                mode,
+                selectedPreset,
+                capital,
+                interestIncome,
+                interestRate
+            };
+            localStorage.setItem(INTEREST_CALC_STORAGE_KEY, JSON.stringify(payload));
+        } catch {}
+    }, [mode, selectedPreset, capital, interestIncome, interestRate]);
+
+    const dividendPositions = useMemo(() => {
+        return positions
+            .map(p => {
+                const currentValCHF = convertToCHF(p.currentValue, p.stock.currency, rates);
+                let divNative = 0;
+                if (p.stock.dividendAmount) {
+                    divNative = p.stock.dividendAmount * p.shares * getFrequencyFactor(p.stock.dividendFrequency);
+                } else if (p.stock.dividendYield) {
+                    divNative = p.currentValue * (p.stock.dividendYield / 100);
+                }
+                const divCurrency = p.stock.dividendCurrency || p.stock.currency;
+                const annualDivCHF = convertToCHF(divNative, divCurrency, rates);
+                return {
+                    id: p.id,
+                    name: p.stock.name,
+                    symbol: p.stock.symbol,
+                    capitalCHF: currentValCHF,
+                    annualDivCHF,
+                    yieldPct: currentValCHF > 0 ? (annualDivCHF / currentValCHF) * 100 : 0
+                };
+            })
+            .filter(item => item.capitalCHF > 0 && item.annualDivCHF > 0)
+            .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    }, [positions, rates]);
+
+    const activeDeposits = useMemo(() => {
+        return (fixedDeposits || [])
+            .filter(fd => fd.amount > 0)
+            .sort((a, b) => a.bankName.localeCompare(b.bankName, 'de'));
+    }, [fixedDeposits]);
+
+    const handleSelectPreset = (val: string) => {
+        setSelectedPreset(val);
+        if (!val) return;
+
+        if (val === 'portfolio:all') {
+            const cap = totals.totalValueStock;
+            const inc = totals.projectedYearlyDividends;
+            const pct = cap > 0 ? (inc / cap) * 100 : 0;
+            setCapital(cap.toFixed(2));
+            setInterestIncome(inc.toFixed(2));
+            setInterestRate(pct.toFixed(2));
+            return;
+        }
+
+        if (val.startsWith('pos:')) {
+            const posId = val.slice(4);
+            const item = dividendPositions.find(p => p.id === posId);
+            if (!item) return;
+            setCapital(item.capitalCHF.toFixed(2));
+            setInterestIncome(item.annualDivCHF.toFixed(2));
+            setInterestRate(item.yieldPct.toFixed(2));
+            return;
+        }
+
+        if (val.startsWith('fd:')) {
+            const fdId = val.slice(3);
+            const fd = activeDeposits.find(d => d.id === fdId);
+            if (!fd) return;
+            const annualInterest = (fd.amount * fd.interestRate) / 100;
+            setCapital(fd.amount.toFixed(2));
+            setInterestRate(fd.interestRate.toFixed(2));
+            setInterestIncome(annualInterest.toFixed(2));
+        }
+    };
 
     const kNum = parseFloat(capital);
     const zNum = parseFloat(interestIncome);
     const pNum = parseFloat(interestRate);
 
     const hasAnyValue =
+        selectedPreset !== '' ||
         (mode === 'rate' && (capital !== '' || interestIncome !== '')) ||
         (mode === 'capital' && (interestIncome !== '' || interestRate !== '')) ||
         (mode === 'income' && (capital !== '' || interestRate !== ''));
 
     const handleClear = () => {
+        setSelectedPreset('');
         setCapital('');
         setInterestIncome('');
         setInterestRate('');
@@ -82,9 +206,42 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
         }
     }
 
+    const presetOptions = useMemo<PresetSelectOption[]>(() => {
+        const list: PresetSelectOption[] = [];
+        if (totals.totalValueStock > 0) {
+            const totalYield = (totals.projectedYearlyDividends / totals.totalValueStock) * 100;
+            list.push({
+                value: 'portfolio:all',
+                label: 'Gesamtes Depot',
+                sublabel: 'CHF',
+                meta: `${totalYield.toFixed(2)}%`,
+                group: 'Übersicht'
+            });
+        }
+        dividendPositions.forEach(item => {
+            list.push({
+                value: `pos:${item.id}`,
+                label: item.name,
+                sublabel: item.symbol,
+                meta: `${item.yieldPct.toFixed(2)}%`,
+                group: 'Bestand · Dividende CHF'
+            });
+        });
+        activeDeposits.forEach(fd => {
+            list.push({
+                value: `fd:${fd.id}`,
+                label: fd.bankName,
+                sublabel: fd.currency,
+                meta: `${fd.interestRate.toFixed(2)}%`,
+                group: 'Festgeld & Konten'
+            });
+        });
+        return list;
+    }, [totals.totalValueStock, totals.projectedYearlyDividends, dividendPositions, activeDeposits]);
+
     return (
         <div className={cn("bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col", className)}>
-            <div className="flex items-center justify-between gap-2 h-[42px] mb-4 shrink-0">
+            <div className="flex items-center justify-between gap-2 h-[42px] mb-3 shrink-0">
                 <div className="flex items-center gap-2.5 min-w-0">
                     <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
                         <Percent className="size-4" />
@@ -131,13 +288,26 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
                 </div>
             </div>
 
+            {/* Optional Portfolio / Fixed Deposit Quick-Select */}
+            <div className="flex items-center gap-1.5 h-8 mb-3 shrink-0">
+                <CalculatorPresetSelect
+                    value={selectedPreset}
+                    onChange={handleSelectPreset}
+                    options={presetOptions}
+                    placeholder="Depot / Festgeld laden · optional"
+                    ariaLabel="Depot oder Festgeld laden"
+                />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
                 {/* Inputs */}
                 <div className="space-y-3">
                     {mode === 'rate' && (
                         <>
                             <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                                <label className="text-xs leading-4 font-medium text-muted-foreground mb-1.5 block tracking-tight">Kapital</label>
+                                <div className="h-5 mb-1.5 flex items-center justify-between gap-1">
+                                    <label className="text-xs leading-5 font-medium text-muted-foreground truncate tracking-tight">Kapital</label>
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -163,7 +333,9 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
                             </div>
 
                             <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                                <label className="text-xs leading-4 font-medium text-muted-foreground mb-1.5 block tracking-tight">Zins-Ertrag</label>
+                                <div className="h-5 mb-1.5 flex items-center justify-between gap-1">
+                                    <label className="text-xs leading-5 font-medium text-muted-foreground truncate tracking-tight">Zins-Ertrag</label>
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -193,7 +365,9 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
                     {mode === 'capital' && (
                         <>
                             <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                                <label className="text-xs leading-4 font-medium text-muted-foreground mb-1.5 block tracking-tight">Gewünschter Zins-Ertrag</label>
+                                <div className="h-5 mb-1.5 flex items-center justify-between gap-1">
+                                    <label className="text-xs leading-5 font-medium text-muted-foreground truncate tracking-tight">Gewünschter Zins-Ertrag</label>
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -219,7 +393,9 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
                             </div>
 
                             <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                                <label className="text-xs leading-4 font-medium text-muted-foreground mb-1.5 block tracking-tight">Zinssatz %</label>
+                                <div className="h-5 mb-1.5 flex items-center justify-between gap-1">
+                                    <label className="text-xs leading-5 font-medium text-muted-foreground truncate tracking-tight">Zinssatz %</label>
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -249,7 +425,9 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
                     {mode === 'income' && (
                         <>
                             <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                                <label className="text-xs leading-4 font-medium text-muted-foreground mb-1.5 block tracking-tight">Kapital</label>
+                                <div className="h-5 mb-1.5 flex items-center justify-between gap-1">
+                                    <label className="text-xs leading-5 font-medium text-muted-foreground truncate tracking-tight">Kapital</label>
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -275,7 +453,9 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
                             </div>
 
                             <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                                <label className="text-xs leading-4 font-medium text-muted-foreground mb-1.5 block tracking-tight">Zinssatz %</label>
+                                <div className="h-5 mb-1.5 flex items-center justify-between gap-1">
+                                    <label className="text-xs leading-5 font-medium text-muted-foreground truncate tracking-tight">Zinssatz %</label>
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -313,9 +493,11 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
             </div>
 
             {/* Hint */}
-            <div className="mt-4 flex items-start gap-2 p-2.5 bg-muted/20 rounded-lg text-[10px] text-muted-foreground leading-relaxed">
-                <span className="font-bold text-primary shrink-0">INFO:</span>
-                <p>{infoFormula}</p>
+            <div className="mt-auto pt-4">
+                <div className="min-h-[36px] flex items-center gap-2 px-3 py-1.5 bg-muted/20 rounded-lg text-xs text-muted-foreground leading-snug">
+                    <span className="font-bold text-primary shrink-0">INFO:</span>
+                    <p>{infoFormula}</p>
+                </div>
             </div>
         </div>
     );
