@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { RefreshCcw, ArrowLeftRight } from 'lucide-react';
+import { RefreshCcw, ArrowLeftRight, X } from 'lucide-react';
 import { cn } from '../utils';
 import { fetchStockHistory } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -328,15 +328,30 @@ export function CurrencyChart({ inverse = false }: Props) {
                                 <div className="relative">
                                     <input
                                         type="number"
+                                        inputMode="decimal"
                                         value={baseAmount}
                                         onChange={(e) => handleBaseAmountChange(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
                                         onFocus={(e) => e.target.select()}
-                                        className="w-full pl-3.5 pr-14 py-2.5 text-xl sm:text-2xl font-bold font-mono tabular-nums rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/25"
+                                        className="w-full h-11 pl-3.5 pr-20 py-2 text-lg sm:text-xl font-bold font-mono tabular-nums rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/25 no-spinner"
                                         placeholder="0.00"
                                     />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">
-                                        {baseCurrency}
-                                    </span>
+                                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                                        {baseAmount !== '' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleBaseAmountChange('')}
+                                                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                                                title="Betrag leeren"
+                                                aria-label="Betrag leeren"
+                                            >
+                                                <X className="size-3.5" />
+                                            </button>
+                                        )}
+                                        <span className="text-xs font-bold text-muted-foreground pointer-events-none">
+                                            {baseCurrency}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -378,15 +393,30 @@ export function CurrencyChart({ inverse = false }: Props) {
                                 <div className="relative">
                                     <input
                                         type="number"
+                                        inputMode="decimal"
                                         value={convertedAmount}
                                         onChange={(e) => handleConvertedAmountChange(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
                                         onFocus={(e) => e.target.select()}
-                                        className="w-full pl-3.5 pr-14 py-2.5 text-xl sm:text-2xl font-bold font-mono tabular-nums rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/25"
+                                        className="w-full h-11 pl-3.5 pr-20 py-2 text-lg sm:text-xl font-bold font-mono tabular-nums rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/25 no-spinner"
                                         placeholder="0.00"
                                     />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">
-                                        {targetCurrency}
-                                    </span>
+                                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                                        {convertedAmount !== '' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleConvertedAmountChange('')}
+                                                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                                                title="Betrag leeren"
+                                                aria-label="Betrag leeren"
+                                            >
+                                                <X className="size-3.5" />
+                                            </button>
+                                        )}
+                                        <span className="text-xs font-bold text-muted-foreground pointer-events-none">
+                                            {targetCurrency}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -29,18 +29,19 @@ export function ExchangeRates() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-6">
                 {/* Full Width for Interest Projection */}
-                <div className="lg:col-span-2">
-                    <CompoundInterestProjection />
+                <CompoundInterestProjection />
+
+                {/* Single Full-Width Free-Choice Exchange Rate Card */}
+                <CurrencyChart />
+
+                {/* 3 Compact Calculators cleanly side-by-side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <CurrencyGainCalculator />
+                    <ShareCalculator />
+                    <InterestRateCalculator />
                 </div>
-
-                <CurrencyChart inverse={false} />
-                <CurrencyChart inverse={true} />
-
-                <CurrencyGainCalculator />
-                <ShareCalculator />
-                <InterestRateCalculator />
             </div>
         </div>
     );
