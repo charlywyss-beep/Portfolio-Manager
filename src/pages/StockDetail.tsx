@@ -386,14 +386,16 @@ export function StockDetail() {
             null,
             stock,
             symKey,
-            'conservative'
+            'conservative',
+            rates
         );
         const smartAutoQuality = computeSmartAutoParams(
             { price: effectivePrice, dividendYield: stock.dividendYield },
             null,
             stock,
             symKey,
-            'quality'
+            'quality',
+            rates
         );
         const smartAutoRisk = applyRiskModeParams(smartAutoConservative);
 

@@ -1,14 +1,14 @@
 import { StockName } from '../components/StockName';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, Target } from 'lucide-react';
+import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, Target, Lock } from 'lucide-react';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { fetchStockQuote, fetchStockAnalysis, searchStocks } from '../services/yahoo-finance';
-import { computeSmartAutoParams, applyRiskModeParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, ETF_PRESETS, getEtfDistributionType, isEtfAsset, isOilEnergyStock, calculateDcfFairValue, computeStockSupportZones } from '../utils/fairValue';
+import { computeSmartAutoParams, applyRiskModeParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, ETF_PRESETS, resolveEtfPresetEps, getEtfDistributionType, isEtfAsset, isOilEnergyStock, calculateDcfFairValue, computeStockSupportZones } from '../utils/fairValue';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { translateSector } from '../utils/sectorTranslation';
 
@@ -147,7 +147,7 @@ export function FairValueCalculator() {
     const computeSmartAutoParamsFx = (q: any, a: any, s: any, sym: string, m: any) => {
         const adj = adjustForReportingCurrency(q, a, fxRates as any, sym);
         const baseMode = m === 'risk' ? 'conservative' : m;
-        const result = computeSmartAutoParams(adj.quote, adj.analysis, s, sym, baseMode);
+        const result = computeSmartAutoParams(adj.quote, adj.analysis, s, sym, baseMode, fxRates as any);
         if (m === 'risk') {
             return {
                 ...applyRiskModeParams(result),
@@ -406,8 +406,9 @@ export function FairValueCalculator() {
         const etfPreset = ETF_PRESETS[symUpper];
         if (etfPreset) {
             const expectedGrowth = params.valuationMode === 'quality' ? etfPreset.growthB : etfPreset.growthA;
+            const resolvedPreset = resolveEtfPresetEps(etfPreset, matchedStockForOil?.currency || etfPreset.quoteCurrency, fxRates as any);
             if (
-                Math.abs(Number(params.eps) - etfPreset.eps) > 0.05 ||
+                Math.abs(Number(params.eps) - resolvedPreset.eps) > 0.08 ||
                 (params.valuationMode !== 'risk' && Math.abs(Number(params.growthRate) - expectedGrowth) > 0.25) ||
                 (etfPreset.distribution === 'accumulating' && Number(params.dividendYield || 0) > 0.05) ||
                 (etfPreset.distribution === 'distributing' && Number(params.dividendYield || 0) === 0 && (etfPreset.fallbackDiv || 0) > 0)
@@ -2055,57 +2056,154 @@ export function FairValueCalculator() {
                                 </div>
 
                                 {/* EPS */}
-                                <div className="space-y-1">
-                                    <label className="text-xs sm:text-sm font-medium flex items-center justify-between gap-2">
-                                        <span className="shrink-0 whitespace-nowrap">Gewinn pro Aktie (EPS)</span>
-                                        <span className="text-xs text-muted-foreground font-light whitespace-nowrap truncate">{epsSourceLabel}</span>
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={eps}
-                                            onChange={(e) => {
-                                                setEps(e.target.value);
-                                                setEpsSourceLabel('Manuell / Gespeichert');
-                                                setIsSavedForStock(true);
-                                            }}
-                                            className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
-                                        />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency === 'GBp' ? 'GBP' : (quote.currency || 'USD')}</span>
-                                    </div>
-                                    <div className="flex gap-3 mt-1 text-[12px] flex-wrap items-center">
-                                        <a
-                                            href={`https://finance.yahoo.com/quote/${selectedSymbol}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-primary font-medium hover:underline flex items-center gap-1"
-                                        >
-                                            <ExternalLink className="size-3" />
-                                            Yahoo Summary
-                                        </a>
-                                        <a
-                                            href={quote?.isin ? `https://www.finanzen.ch/suchergebnisse?_search=${quote.isin}` : `https://www.finanzen.ch/fundamentalanalyse/${getCleanSearchName(quote?.name || selectedSymbol).toLowerCase().replace(/\s+/g, '-')}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-primary font-medium hover:underline flex items-center gap-1"
-                                            title={quote?.isin ? "Suche via ISIN" : "Direkt zur Fundamentalanalyse"}
-                                        >
-                                            <ExternalLink className="size-3" />
-                                            finanzen.ch
-                                        </a>
-                                        <a
-                                            href="https://boerse.raiffeisen.ch/"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-primary font-medium hover:underline flex items-center gap-1"
-                                            title="Raiffeisen Börse: Aktuelle Börsenkurse & globale Märkte"
-                                        >
-                                            <ExternalLink className="size-3" />
-                                            Raiffeisen Börse
-                                        </a>
-                                    </div>
-                                </div>
+                                {(() => {
+                                    const symUpper = (selectedSymbol || '').toUpperCase();
+                                    const matchedStock = stocks.find(s => s.symbol.toLowerCase() === symUpper.toLowerCase());
+                                    const isCurEtf = isEtfAsset(matchedStock, quote, selectedSymbol);
+                                    const curEtfPreset = isCurEtf ? ETF_PRESETS[symUpper] : undefined;
+                                    const curPresetResolved = curEtfPreset
+                                        ? resolveEtfPresetEps(curEtfPreset, quote?.currency || matchedStock?.currency, fxRates as any)
+                                        : null;
+                                    const pStatus = curPresetResolved?.status;
+                                    const isUnanchoredEtf = isCurEtf && !curEtfPreset && !isSavedForStock;
+
+                                    const handleFreezeEtfAnchor = () => {
+                                        if (!selectedSymbol) return;
+                                        const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
+                                        if (numEps <= 0) return;
+                                        const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : Number(growthRate) || 0;
+                                        const numPe = typeof pe === 'string' ? parseFloat(pe) || 0 : Number(pe) || 0;
+                                        const numDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : Number(dividendYield) || 0;
+                                        const numDisc = typeof discountRate === 'string' ? parseFloat(discountRate) || 8 : Number(discountRate) || 8;
+                                        const numMos = typeof mos === 'string' ? parseFloat(mos) || 15 : Number(mos) || 15;
+                                        saveSymbolParamsToLocal(selectedSymbol, {
+                                            eps: numEps,
+                                            growthRate: numGrowth,
+                                            pe: numPe,
+                                            dividendYield: numDiv,
+                                            discountRate: numDisc,
+                                            mos: numMos,
+                                            isCustom: true,
+                                            valuationMode: valuationProfile,
+                                            peHorizon: selectedPeHorizon
+                                        });
+                                        if (matchedStock) {
+                                            updateStock(matchedStock.id, {
+                                                fairValueParams: {
+                                                    eps: numEps,
+                                                    growthRate: numGrowth,
+                                                    pe: numPe,
+                                                    dividendYield: numDiv,
+                                                    discountRate: numDisc,
+                                                    mos: numMos,
+                                                    isCustom: true,
+                                                    updatedAt: new Date().toISOString()
+                                                }
+                                            });
+                                        }
+                                        setEpsSourceLabel('Basis-Anker eingefroren');
+                                        setIsSavedForStock(true);
+                                    };
+
+                                    return (
+                                        <div className="space-y-1">
+                                            <label className="text-xs sm:text-sm font-medium flex items-center justify-between gap-2 flex-wrap">
+                                                <span className="shrink-0 whitespace-nowrap">Gewinn pro Aktie (EPS)</span>
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <span className="text-xs text-muted-foreground font-light whitespace-nowrap truncate">{epsSourceLabel}</span>
+                                                    {isCurEtf && pStatus?.asOfLabel && (
+                                                        <span
+                                                            title={
+                                                                pStatus.isGrowthCapped
+                                                                    ? `${pStatus.asOfLabel} · Automatische EPS-Fortschreibung nach 12 Monaten gestoppt – bitte Index-KGV prüfen`
+                                                                    : pStatus.isStaleWarning
+                                                                        ? `${pStatus.asOfLabel} · Preset älter als 6 Monate – Abgleich mit aktuellem Factsheet empfohlen`
+                                                                        : `${pStatus.asOfLabel}${pStatus.fxConverted ? ` · Basis ${pStatus.baseCurrency} live in ${pStatus.quoteCurrency} umgerechnet` : ''} · Gedämpfte Fortschreibung (max. 12 M)`
+                                                            }
+                                                            className={cn(
+                                                                "text-xs font-semibold px-1.5 py-0.5 rounded border leading-none whitespace-nowrap shrink-0",
+                                                                pStatus.isStaleWarning || pStatus.isGrowthCapped
+                                                                    ? "bg-amber-500/15 text-amber-400 border-amber-500/40"
+                                                                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                                                            )}
+                                                        >
+                                                            {pStatus.asOfLabel}{pStatus.isGrowthCapped ? ' · Deckel 12M' : ''}
+                                                        </span>
+                                                    )}
+                                                    {isUnanchoredEtf && (
+                                                        <span
+                                                            title="Kein festes Index-Preset hinterlegt: EPS wird aktuell dynamisch aus Kurs / Index-KGV abgeleitet"
+                                                            className="text-xs font-semibold px-1.5 py-0.5 rounded border leading-none whitespace-nowrap shrink-0 bg-amber-500/15 text-amber-400 border-amber-500/40"
+                                                        >
+                                                            Kein fester Anker
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={eps}
+                                                    onChange={(e) => {
+                                                        setEps(e.target.value);
+                                                        setEpsSourceLabel('Manuell / Gespeichert');
+                                                        setIsSavedForStock(true);
+                                                    }}
+                                                    className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency === 'GBp' ? 'GBP' : (quote.currency || 'USD')}</span>
+                                            </div>
+                                            {isUnanchoredEtf && (
+                                                <div className="mt-1 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2 text-xs">
+                                                    <span className="text-amber-300/95 leading-snug">
+                                                        <strong>Ohne Preset:</strong> <code className="font-mono">Kurs / Index-KGV</code> wandert mit dem Kurs mit.
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleFreezeEtfAnchor}
+                                                        className="h-7 inline-flex items-center justify-center leading-none gap-1 px-2.5 py-0 rounded-md bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border border-amber-400/40 font-semibold whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+                                                        title="Aktuelles EPS einmalig als festen Basis-Anker speichern, damit Kursrückgänge korrekt zu BUY führen"
+                                                    >
+                                                        <Lock className="size-3 shrink-0" />
+                                                        <span>Als Basis-Anker einfrieren</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <div className="flex gap-3 mt-1 text-[12px] flex-wrap items-center">
+                                                <a
+                                                    href={`https://finance.yahoo.com/quote/${selectedSymbol}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary font-medium hover:underline flex items-center gap-1"
+                                                >
+                                                    <ExternalLink className="size-3" />
+                                                    Yahoo Summary
+                                                </a>
+                                                <a
+                                                    href={quote?.isin ? `https://www.finanzen.ch/suchergebnisse?_search=${quote.isin}` : `https://www.finanzen.ch/fundamentalanalyse/${getCleanSearchName(quote?.name || selectedSymbol).toLowerCase().replace(/\s+/g, '-')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary font-medium hover:underline flex items-center gap-1"
+                                                    title={quote?.isin ? "Suche via ISIN" : "Direkt zur Fundamentalanalyse"}
+                                                >
+                                                    <ExternalLink className="size-3" />
+                                                    finanzen.ch
+                                                </a>
+                                                <a
+                                                    href="https://boerse.raiffeisen.ch/"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary font-medium hover:underline flex items-center gap-1"
+                                                    title="Raiffeisen Börse: Aktuelle Börsenkurse & globale Märkte"
+                                                >
+                                                    <ExternalLink className="size-3" />
+                                                    Raiffeisen Börse
+                                                </a>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
 
                                 {/* GROWTH */}
                                 <div className="space-y-1">

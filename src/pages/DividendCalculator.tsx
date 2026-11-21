@@ -27,7 +27,7 @@ const getStampDutyForStock = (stock: { currency?: string; symbol?: string; isin?
     return 0.075;
 };
 
-const getStockLimits = (stock: any) => {
+const getStockLimits = (stock: any, fxRates?: Record<string, number> | null) => {
     if (!stock) return { limitA: null, limitB: null, manualLimit: null, activeType: null, targetPrice: null };
 
     const symKey = (stock.symbol || '').trim().toUpperCase();
@@ -47,7 +47,7 @@ const getStockLimits = (stock: any) => {
 
     if (effectivePrice > 0 && symKey) {
         try {
-            const smartC = computeSmartAutoParams({ price: effectivePrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'conservative');
+            const smartC = computeSmartAutoParams({ price: effectivePrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'conservative', fxRates);
             const dcfC = calculateDcfFairValue(
                 activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && (activeParams?.eps ?? 0) > 0
                     ? activeParams
@@ -62,7 +62,7 @@ const getStockLimits = (stock: any) => {
         }
 
         try {
-            const smartQ = computeSmartAutoParams({ price: effectivePrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'quality');
+            const smartQ = computeSmartAutoParams({ price: effectivePrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'quality', fxRates);
             const dcfQ = calculateDcfFairValue(
                 activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && (activeParams?.eps ?? 0) > 0
                     ? activeParams
@@ -1373,7 +1373,7 @@ export function DividendCalculator() {
             const q: any = await fetchStockQuote(s);
             const priceNow = (q && q.price) || price;
             if (!priceNow || priceNow <= 0) return null;
-            const smart = computeSmartAutoParams({ ...(q || {}), price: priceNow }, null, null, s, 'conservative');
+            const smart = computeSmartAutoParams({ ...(q || {}), price: priceNow }, null, null, s, 'conservative', rates);
             const dcf = calculateDcfFairValue(smart, priceNow);
             const fv = parseFloat(dcf.fairValue.toFixed(2));
             if (!(fv > 0)) return null;
@@ -2179,7 +2179,7 @@ export function DividendCalculator() {
                                     const stock = stocks.find(s => s.id === selectedStockId);
                                     if (!stock?.targetPrice && !stock?.symbol) return null;
                                     const limitCurr = (stock?.currency === 'GBp' || stock?.currency === 'GBP') ? 'GBp' : (stock?.currency || 'CHF');
-                                    const limits = getStockLimits(stock);
+                                    const limits = getStockLimits(stock, rates);
                                     return (
                                         <div className="flex items-center justify-center gap-2 -mt-2 mb-3 flex-wrap">
                                             {stock?.targetPrice ? (
@@ -2263,7 +2263,7 @@ export function DividendCalculator() {
 
                                     {(() => {
                                         const stock = stocks.find(s => s.id === selectedStockId);
-                                        const limits = getStockLimits(stock);
+                                        const limits = getStockLimits(stock, rates);
                                         const priceClass = getPriceClassification(price, stock?.currentPrice || (stock as any)?.price, limits, simCurrency || stock?.currency);
                                         return (
                                             <div className="space-y-1">

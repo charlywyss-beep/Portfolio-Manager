@@ -43,7 +43,7 @@ export function WatchlistPerformanceModal({
     initialPeriod = '1D',
     initialAssetFilter = 'stock'
 }: WatchlistPerformanceModalProps) {
-    const { convertToCHF, formatCurrency } = useCurrencyFormatter();
+    const { convertToCHF, formatCurrency, rates } = useCurrencyFormatter();
     const { stocks, watchlists, positions, orderBook, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
     const navigate = useNavigate();
 
@@ -380,14 +380,16 @@ export function WatchlistPerformanceModal({
                 null,
                 stock,
                 symKey,
-                'conservative'
+                'conservative',
+                rates
             );
             const smartQuality = computeSmartAutoParams(
                 { price: effectivePrice, dividendYield: stock.dividendYield },
                 null,
                 stock,
                 symKey,
-                'quality'
+                'quality',
+                rates
             );
             const smartRisk = applyRiskModeParams(smartConservative);
 

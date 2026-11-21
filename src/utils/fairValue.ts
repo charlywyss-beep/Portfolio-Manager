@@ -55,6 +55,9 @@ export type EtfDistributionType = 'accumulating' | 'distributing';
 export interface EtfPreset {
     distribution: EtfDistributionType;
     eps: number;
+    baseCurrency?: 'USD' | 'EUR' | 'CHF' | 'GBP';
+    quoteCurrency?: 'USD' | 'EUR' | 'CHF' | 'GBP';
+    asOf?: string; // YYYY-MM (z.B. '2026-11')
     growthA: number;
     growthB: number;
     peA: number;
@@ -65,62 +68,148 @@ export interface EtfPreset {
     label: string;
 }
 
+export interface EtfPresetStatus {
+    hasPreset: boolean;
+    asOfLabel?: string; // z.B. 'Stand 11.2026'
+    ageMonths?: number;
+    isStaleWarning?: boolean; // >= 6 Monate
+    isGrowthCapped?: boolean; // >= 12 Monate (Wachstums-Deckel erreicht)
+    baseCurrency?: string;
+    quoteCurrency?: string;
+    fxConverted?: boolean;
+}
+
+const ETF_PRESET_DEFAULT_AS_OF = '2026-11';
+// Echter Live-Referenzkurs am Kalibrierungstag (Stand 11.2026: 1 CHF = 1.1865 USD bzw. 1 USD = 0.8428 CHF; 1 CHF = 1.084 EUR)
+// Damit ergibt die Rückrechnung USD -> CHF am Kalibrierungstag exakt den kalibrierten CHF-Kurs (z.B. USDV.SW = 4.50 CHF -> Kauflimit 68.41 CHF).
+const ETF_PRESET_BASE_USD_PER_CHF = 1.1865;
+const ETF_PRESET_BASE_EUR_PER_CHF = 1.084;
+
 // Curated 2026 Index-EPS & Distribution Profiles for ETFs (prevents circular price/18 drift and properly separates Dist vs. Acc)
+// For CHF/EUR-traded ETFs whose underlying index earns in USD, `eps` is stored in `baseCurrency: 'USD'` and converted live via `rates`.
 export const ETF_PRESETS: Record<string, EtfPreset> = {
-    // Vanguard FTSE All-World High Dividend Yield (Distributing)
-    'VHYL.SW': { distribution: 'distributing', eps: 4.85, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
-    'VHYL.AS': { distribution: 'distributing', eps: 5.20, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
-    'VHYL.L':  { distribution: 'distributing', eps: 5.20, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
-    'VHYL':    { distribution: 'distributing', eps: 5.20, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
+    // Vanguard FTSE All-World High Dividend Yield (Distributing) - Index in USD
+    'VHYL.SW': { distribution: 'distributing', eps: parseFloat((4.85 * ETF_PRESET_BASE_USD_PER_CHF).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'CHF', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
+    'VHYL.AS': { distribution: 'distributing', eps: parseFloat((5.20 * (ETF_PRESET_BASE_USD_PER_CHF / ETF_PRESET_BASE_EUR_PER_CHF)).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'EUR', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
+    'VHYL.L':  { distribution: 'distributing', eps: 5.20, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
+    'VHYL':    { distribution: 'distributing', eps: 5.20, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
 
-    // Vanguard FTSE All-World (Accumulating / Distributing)
-    'VWRA.L':  { distribution: 'accumulating', eps: 9.05, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
-    'VWRA.SW': { distribution: 'accumulating', eps: 7.60, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
-    'VWRA':    { distribution: 'accumulating', eps: 9.05, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
-    'VWRL.SW': { distribution: 'distributing', eps: 7.35, growthA: 6.5, growthB: 7.0, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, fallbackDiv: 1.8, label: 'FTSE All-World Index-EPS' },
+    // Vanguard FTSE All-World (Accumulating / Distributing) - Index in USD
+    'VWRA.L':  { distribution: 'accumulating', eps: 9.05, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
+    'VWRA.SW': { distribution: 'accumulating', eps: parseFloat((7.60 * ETF_PRESET_BASE_USD_PER_CHF).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'CHF', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
+    'VWRA':    { distribution: 'accumulating', eps: 9.05, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
+    'VWRL.SW': { distribution: 'distributing', eps: parseFloat((7.35 * ETF_PRESET_BASE_USD_PER_CHF).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'CHF', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 6.5, growthB: 7.0, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, fallbackDiv: 1.8, label: 'FTSE All-World Index-EPS' },
 
-    // VanEck Morningstar Developed Markets Dividend Leaders (Distributing)
-    'TDIV.SW': { distribution: 'distributing', eps: 3.91, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
-    'TDIV.AS': { distribution: 'distributing', eps: 4.25, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
-    'TDIV':    { distribution: 'distributing', eps: 4.25, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
+    // VanEck Morningstar Developed Markets Dividend Leaders (Distributing) - Fondsbasis EUR (TDIV.SW = 3.91 CHF bei 1 CHF = 1.084 EUR -> 4.24 EUR)
+    'TDIV.SW': { distribution: 'distributing', eps: parseFloat((3.91 * ETF_PRESET_BASE_EUR_PER_CHF).toFixed(3)), baseCurrency: 'EUR', quoteCurrency: 'CHF', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
+    'TDIV.AS': { distribution: 'distributing', eps: 4.25, baseCurrency: 'EUR', quoteCurrency: 'EUR', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
+    'TDIV':    { distribution: 'distributing', eps: 4.25, baseCurrency: 'EUR', quoteCurrency: 'EUR', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
 
-    // US Dividend Quality / Aristocrats (Distributing)
-    'SCHD':    { distribution: 'distributing', eps: 1.95, growthA: 5.5, growthB: 6.5, peA: 15.0, peB: 16.5, pe5A: 16.0, pe5B: 17.5, fallbackDiv: 3.6, label: 'Dow Jones US Div 100 EPS' },
-    'FUSD.SW': { distribution: 'distributing', eps: 0.77, growthA: 6.5, growthB: 7.5, peA: 16.0, peB: 17.5, pe5A: 17.0, pe5B: 18.5, fallbackDiv: 2.3, label: 'US Quality Income Index-EPS' },
-    'USDV.SW': { distribution: 'distributing', eps: 4.50, growthA: 5.5, growthB: 6.5, peA: 15.0, peB: 16.5, pe5A: 16.0, pe5B: 17.5, fallbackDiv: 2.6, label: 'US Dividend Aristocrats EPS' },
+    // US Dividend Quality / Aristocrats (Distributing) - Index in USD
+    'SCHD':    { distribution: 'distributing', eps: 1.95, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 5.5, growthB: 6.5, peA: 15.0, peB: 16.5, pe5A: 16.0, pe5B: 17.5, fallbackDiv: 3.6, label: 'Dow Jones US Div 100 EPS' },
+    'FUSD.SW': { distribution: 'distributing', eps: 0.77, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 6.5, growthB: 7.5, peA: 16.0, peB: 17.5, pe5A: 17.0, pe5B: 18.5, fallbackDiv: 2.3, label: 'US Quality Income Index-EPS' },
+    'USDV.SW': { distribution: 'distributing', eps: parseFloat((4.50 * ETF_PRESET_BASE_USD_PER_CHF).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'CHF', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 5.5, growthB: 6.5, peA: 15.0, peB: 16.5, pe5A: 16.0, pe5B: 17.5, fallbackDiv: 2.6, label: 'US Dividend Aristocrats EPS' },
 
-    // L&G Global Quality Dividends (Accumulating)
-    'LDGA.SW': { distribution: 'accumulating', eps: 0.75, growthA: 8.0, growthB: 8.5, peA: 14.5, peB: 16.0, pe5A: 15.5, pe5B: 17.0, label: 'Global Quality Div Index-EPS' },
-    'LDGL.SW': { distribution: 'accumulating', eps: 0.75, growthA: 8.0, growthB: 8.5, peA: 14.5, peB: 16.0, pe5A: 15.5, pe5B: 17.0, label: 'Global Quality Div Index-EPS' },
+    // L&G Global Quality Dividends (Accumulating) - Index in USD
+    'LDGA.SW': { distribution: 'accumulating', eps: 0.75, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 14.5, peB: 16.0, pe5A: 15.5, pe5B: 17.0, label: 'Global Quality Div Index-EPS' },
+    'LDGL.SW': { distribution: 'accumulating', eps: 0.75, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 14.5, peB: 16.0, pe5A: 15.5, pe5B: 17.0, label: 'Global Quality Div Index-EPS' },
 
-    // HSBC MSCI World (Distributing)
-    'HMWO.SW': { distribution: 'distributing', eps: 1.80, growthA: 6.5, growthB: 7.0, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, fallbackDiv: 1.5, label: 'MSCI World Index-EPS' },
-    'HMWO.L':  { distribution: 'distributing', eps: 1.80, growthA: 6.5, growthB: 7.0, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, fallbackDiv: 1.5, label: 'MSCI World Index-EPS' },
+    // HSBC MSCI World (Distributing) - Index in USD
+    'HMWO.SW': { distribution: 'distributing', eps: 1.80, baseCurrency: 'USD', quoteCurrency: 'CHF', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 6.5, growthB: 7.0, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, fallbackDiv: 1.5, label: 'MSCI World Index-EPS' },
+    'HMWO.L':  { distribution: 'distributing', eps: 1.80, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 6.5, growthB: 7.0, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, fallbackDiv: 1.5, label: 'MSCI World Index-EPS' },
 
     // iShares World Equity High Income Active (Distributing Option-Income / Covered Call)
-    'WINC.AS': { distribution: 'distributing', eps: 0.31, growthA: 1.0, growthB: 1.5, peA: 15.0, peB: 16.0, pe5A: 16.0, pe5B: 17.0, fallbackDiv: 8.5, label: 'Option-Income Portfolio-EPS' },
-    'WINC.L':  { distribution: 'distributing', eps: 0.31, growthA: 1.0, growthB: 1.5, peA: 15.0, peB: 16.0, pe5A: 16.0, pe5B: 17.0, fallbackDiv: 8.5, label: 'Option-Income Portfolio-EPS' },
+    'WINC.AS': { distribution: 'distributing', eps: 0.31, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 1.0, growthB: 1.5, peA: 15.0, peB: 16.0, pe5A: 16.0, pe5B: 17.0, fallbackDiv: 8.5, label: 'Option-Income Portfolio-EPS' },
+    'WINC.L':  { distribution: 'distributing', eps: 0.31, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 1.0, growthB: 1.5, peA: 15.0, peB: 16.0, pe5A: 16.0, pe5B: 17.0, fallbackDiv: 8.5, label: 'Option-Income Portfolio-EPS' },
 
-    // iShares Core MSCI World (Accumulating)
-    'SWDA.SW': { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
-    'IWDA.L':  { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
-    'IWDA.AS': { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
-    'SWDA.L':  { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
+    // iShares Core MSCI World (Accumulating) - Index in USD
+    'SWDA.SW': { distribution: 'accumulating', eps: 6.75, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
+    'IWDA.L':  { distribution: 'accumulating', eps: 6.75, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
+    'IWDA.AS': { distribution: 'accumulating', eps: parseFloat((6.75 * (ETF_PRESET_BASE_USD_PER_CHF / ETF_PRESET_BASE_EUR_PER_CHF)).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'EUR', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
+    'SWDA.L':  { distribution: 'accumulating', eps: 6.75, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
 
-    // iShares S&P 500 Energy Sector (Accumulating)
-    'IUES.L':  { distribution: 'accumulating', eps: 0.96, growthA: 7.5, growthB: 8.0, peA: 12.5, peB: 14.0, pe5A: 13.5, pe5B: 15.0, label: 'S&P 500 Energy Mid-Cycle EPS' },
-    'IUES.SW': { distribution: 'accumulating', eps: 0.96, growthA: 7.5, growthB: 8.0, peA: 12.5, peB: 14.0, pe5A: 13.5, pe5B: 15.0, label: 'S&P 500 Energy Mid-Cycle EPS' },
+    // iShares S&P 500 Energy Sector (Accumulating) - Index in USD
+    'IUES.L':  { distribution: 'accumulating', eps: 0.96, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 7.5, growthB: 8.0, peA: 12.5, peB: 14.0, pe5A: 13.5, pe5B: 15.0, label: 'S&P 500 Energy Mid-Cycle EPS' },
+    'IUES.SW': { distribution: 'accumulating', eps: 0.96, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 7.5, growthB: 8.0, peA: 12.5, peB: 14.0, pe5A: 13.5, pe5B: 15.0, label: 'S&P 500 Energy Mid-Cycle EPS' },
 
-    // S&P 500 ETFs (Distributing / Accumulating)
-    'VOO':     { distribution: 'distributing', eps: 30.25, growthA: 7.5, growthB: 8.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, fallbackDiv: 1.2, label: 'S&P 500 Index-EPS' },
-    'VUSA.SW': { distribution: 'distributing', eps: 5.35, growthA: 7.5, growthB: 8.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, fallbackDiv: 1.2, label: 'S&P 500 Index-EPS' },
-    'CSSPX.SW':{ distribution: 'accumulating', eps: 36.30, growthA: 8.5, growthB: 9.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, label: 'S&P 500 Index-EPS' },
+    // S&P 500 ETFs (Distributing / Accumulating) - Index in USD
+    'VOO':     { distribution: 'distributing', eps: 30.25, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 7.5, growthB: 8.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, fallbackDiv: 1.2, label: 'S&P 500 Index-EPS' },
+    'VUSA.SW': { distribution: 'distributing', eps: parseFloat((5.35 * ETF_PRESET_BASE_USD_PER_CHF).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'CHF', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 7.5, growthB: 8.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, fallbackDiv: 1.2, label: 'S&P 500 Index-EPS' },
+    'CSSPX.SW':{ distribution: 'accumulating', eps: 36.30, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.5, growthB: 9.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, label: 'S&P 500 Index-EPS' },
 
-    // NASDAQ 100 ETFs (Accumulating / Distributing)
-    'CSNDX.SW':{ distribution: 'accumulating', eps: 60.25, growthA: 10.5, growthB: 11.5, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, label: 'NASDAQ-100 Index-EPS' },
-    'EQQQ.SW': { distribution: 'distributing', eps: 26.75, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
-    'QQQ':     { distribution: 'distributing', eps: 25.90, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
+    // NASDAQ 100 ETFs (Accumulating / Distributing) - Index in USD
+    'CSNDX.SW':{ distribution: 'accumulating', eps: 60.25, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 10.5, growthB: 11.5, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, label: 'NASDAQ-100 Index-EPS' },
+    'EQQQ.SW': { distribution: 'distributing', eps: 26.75, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
+    'QQQ':     { distribution: 'distributing', eps: 25.90, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
 };
+
+/**
+ * Resolves an ETF preset's EPS dynamically:
+ * 1. Applies damped automatic growth (min(growthA, 5% p.a.)), strictly capped at max 12 months since `asOf`.
+ * 2. Converts from `baseCurrency` (e.g. USD) to `targetQuoteCurrency` (e.g. CHF) using live CHF-based `rates`.
+ * 3. Computes freshness metadata (`asOfLabel`, `ageMonths`, `isStaleWarning >= 6M`, `isGrowthCapped >= 12M`).
+ */
+export function resolveEtfPresetEps(
+    preset: EtfPreset,
+    targetQuoteCurrency?: string | null,
+    rates?: Record<string, number> | null
+): { eps: number; status: EtfPresetStatus } {
+    const asOf = preset.asOf || ETF_PRESET_DEFAULT_AS_OF;
+    const [yearStr, monthStr] = asOf.split('-');
+    const asOfYear = parseInt(yearStr, 10) || 2026;
+    const asOfMonth = parseInt(monthStr, 10) || 11;
+    const asOfLabel = `Stand ${String(asOfMonth).padStart(2, '0')}.${asOfYear}`;
+
+    const now = new Date();
+    const rawMonths = (now.getFullYear() - asOfYear) * 12 + ((now.getMonth() + 1) - asOfMonth);
+    const ageMonths = Math.max(0, rawMonths);
+    const effectiveGrowthMonths = Math.min(12, ageMonths); // Strictly capped at 12 months!
+    const isStaleWarning = ageMonths >= 6;
+    const isGrowthCapped = ageMonths >= 12;
+
+    // Conservative damped growth rate for auto-progression (max 5.0% p.a.)
+    const dampedAnnualGrowthPct = Math.min(preset.growthA, 5.0);
+    const growthFactor = effectiveGrowthMonths > 0
+        ? Math.pow(1 + dampedAnnualGrowthPct / 100, effectiveGrowthMonths / 12)
+        : 1;
+
+    let workingEps = preset.eps * growthFactor;
+
+    const baseCur = (preset.baseCurrency || 'USD').toUpperCase();
+    const rawTarget = (targetQuoteCurrency || preset.quoteCurrency || baseCur).toUpperCase();
+    const quoteCur = (rawTarget === 'GBP' || rawTarget === 'GBX') ? 'GBP' : rawTarget;
+
+    // Preserve special HMWO.SW calibration if quote is around ~35 CHF (1.80 was calibrated directly in CHF)
+    let fxConverted = false;
+    if (baseCur !== quoteCur && !(preset.label === 'MSCI World Index-EPS' && preset.eps === 1.80)) {
+        const effectiveRates: Record<string, number> = {
+            CHF: 1.0,
+            USD: rates?.USD && rates.USD > 0 ? rates.USD : ETF_PRESET_BASE_USD_PER_CHF,
+            EUR: rates?.EUR && rates.EUR > 0 ? rates.EUR : ETF_PRESET_BASE_EUR_PER_CHF,
+            GBP: rates?.GBP && rates.GBP > 0 ? rates.GBP : 0.90,
+        };
+        const rBase = effectiveRates[baseCur];
+        const rQuote = effectiveRates[quoteCur];
+        if (rBase && rQuote && rBase > 0) {
+            workingEps = workingEps * (rQuote / rBase);
+            fxConverted = true;
+        }
+    }
+
+    return {
+        eps: parseFloat(workingEps.toFixed(2)),
+        status: {
+            hasPreset: true,
+            asOfLabel,
+            ageMonths,
+            isStaleWarning,
+            isGrowthCapped,
+            baseCurrency: baseCur,
+            quoteCurrency: quoteCur,
+            fxConverted
+        }
+    };
+}
 
 const KNOWN_ACC_ETF_PREFIXES = new Set([
     'VWRA', 'VWCE', 'IWDA', 'SWDA', 'EUNL', 'CSPX', 'CSSPX', 'VUAA', 'CSNDX', 'CNDX', 'SXRV', 'LDGA', 'LDGL', 'IUES', 'VHYA'
@@ -199,7 +288,8 @@ export function computeSmartAutoParams(
     aData: any,
     stockObj: any,
     symbolStr: string,
-    valuationMode: 'conservative' | 'quality' = 'conservative'
+    valuationMode: 'conservative' | 'quality' = 'conservative',
+    fxRates?: Record<string, number> | null
 ) {
     const symUpper = (symbolStr || '').toUpperCase();
     const nameStr = (stockObj?.name || qData?.shortName || qData?.longName || '').toLowerCase();
@@ -241,7 +331,7 @@ export function computeSmartAutoParams(
     autoDiv = parseFloat(Math.min(Math.max(autoDiv, 0), 25).toFixed(2));
 
     // Dedicated ETF Valuation Branch: cleanly separates Distributing vs. Accumulating ETFs
-    // and uses stable Index-EPS presets so Fair Value does not drift circularly with short-term market drops.
+    // and uses stable Index-EPS presets (with base-currency FX conversion + 12M-capped damped growth).
     if (isEtf) {
         const etfPreset = ETF_PRESETS[symUpper];
         const etfDistribution = etfPreset
@@ -258,13 +348,24 @@ export function computeSmartAutoParams(
             ? Number(etfForwardPe)
             : (etfTrailingPe && etfTrailingPe >= 6 && etfTrailingPe <= 45 ? Number(etfTrailingPe) : null);
 
-        let etfEps = etfPreset?.eps ?? 0;
-        let etfEpsLabel = etfPreset ? etfPreset.label : (validIndexPe ? 'Index-KGV abgeleitet' : 'Index-Schätzung');
+        const quoteCurrency = qData?.currency || stockObj?.currency || etfPreset?.quoteCurrency || 'USD';
+        const resolvedPreset = etfPreset
+            ? resolveEtfPresetEps(etfPreset, quoteCurrency, fxRates)
+            : null;
+
+        let etfEps = resolvedPreset ? resolvedPreset.eps : 0;
+        let etfEpsLabel = etfPreset
+            ? etfPreset.label
+            : (validIndexPe ? 'Ohne Preset · Index-KGV abgeleitet' : 'Ohne Preset · Kurs / Index-KGV');
         if (!etfPreset && price > 0) {
             const fallbackIndexPe = validIndexPe
                 ?? (resolvedDiv >= 7.0 ? 16.0 : resolvedDiv >= 3.0 ? 15.0 : 19.0);
             etfEps = parseFloat((price / fallbackIndexPe).toFixed(2));
         }
+
+        const etfPresetStatus: EtfPresetStatus = resolvedPreset
+            ? resolvedPreset.status
+            : { hasPreset: false };
 
         const etfGrowth = etfPreset
             ? (isQualityMode ? etfPreset.growthB : etfPreset.growthA)
@@ -306,6 +407,7 @@ export function computeSmartAutoParams(
             valuationMode,
             isEtf: true,
             etfDistribution,
+            etfPresetStatus,
             isOilEnergy: false
         };
     }
@@ -600,6 +702,7 @@ export function computeSmartAutoParams(
         valuationMode,
         isEtf,
         etfDistribution: undefined as EtfDistributionType | undefined,
+        etfPresetStatus: undefined as EtfPresetStatus | undefined,
         isOilEnergy
     };
 }

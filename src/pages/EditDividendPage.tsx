@@ -50,6 +50,7 @@ export function EditDividendPage() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
+    const { rates, formatCurrency } = useCurrencyFormatter();
 
     // Scroll directly to target section if requested via query or hash
     useEffect(() => {
@@ -180,7 +181,7 @@ export function EditDividendPage() {
                         if (dcf.fairValue > 0) resolvedFv = dcf.fairValue.toFixed(2);
                     }
                 } else if (effPrice > 0) {
-                    const autoP = computeSmartAutoParams({ price: effPrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'conservative');
+                    const autoP = computeSmartAutoParams({ price: effPrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'conservative', rates);
                     const dcf = calculateDcfFairValue(autoP, effPrice);
                     if (dcf.fairValue > 0) resolvedFv = dcf.fairValue.toFixed(2);
                 }
@@ -527,8 +528,6 @@ export function EditDividendPage() {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     });
-
-    const { rates, formatCurrency } = useCurrencyFormatter();
 
     const convertAmount = (val: number, from: Currency | string, to: Currency | string) => {
         if (!rates || from === to) return val;
@@ -1018,14 +1017,16 @@ export function EditDividendPage() {
                                             null,
                                             currentStockObj,
                                             symKey,
-                                            'conservative'
+                                            'conservative',
+                                            rates
                                         );
                                         const smartAutoQuality = computeSmartAutoParams(
                                             { price: effectivePrice, dividendYield: effectiveYield },
                                             null,
                                             currentStockObj,
                                             symKey,
-                                            'quality'
+                                            'quality',
+                                            rates
                                         );
                                         const smartAutoRisk = applyRiskModeParams(smartAutoConservative);
 
