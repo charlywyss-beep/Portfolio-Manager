@@ -6,8 +6,9 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { Logo } from './Logo';
 import { estimateMarketState } from '../utils/market';
 import { translateSector } from '../utils/sectorTranslation';
-import { Edit, Trash2, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
+import { AddToWatchlistModal } from './AddToWatchlistModal';
 import { useState, useRef, useMemo } from 'react';
 import { useEuropeanQuotes, getEuropeanTicker } from '../utils/europeanMarket';
 import { InfoHelp } from './InfoHelp';
@@ -37,7 +38,7 @@ export function PositionTable({
     sortConfig,
     onSort
 }: PositionTableProps) {
-    const { deletePosition } = usePortfolio();
+    const { deletePosition, watchlists } = usePortfolio();
     const navigate = useNavigate();
     const { formatCurrency, convertToCHF, rates } = useCurrencyFormatter();
     const [showTradegate, setShowTradegate] = useState(true);
@@ -46,6 +47,7 @@ export function PositionTable({
         return data.some(p => Boolean(getEuropeanTicker(p.stock?.symbol, p.stock?.europeanSymbol)));
     }, [data]);
     const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, posId: string | null, name: string }>({ isOpen: false, posId: null, name: '' });
+    const [watchlistStockId, setWatchlistStockId] = useState<string | null>(null);
 
     // 0: Anzahl, 1: Ø Kauf, 2: Invest, 3: Kurs, 4: Wert, 5: %, 6: +/-, 7: Aktion
     const [mobileColIndex, setMobileColIndex] = useState(4); // Default to Wert
@@ -467,7 +469,7 @@ export function PositionTable({
                                 {/* 8. Aktion */}
                                 <th
                                     className={cn(
-                                        "pl-1 pr-3.5 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 md:sticky md:top-0 md:-right-px bg-card z-30 md:z-40 md:w-[80px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
+                                        "pl-1 pr-3.5 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center sticky top-0 md:sticky md:top-0 md:-right-px bg-card z-30 md:z-40 md:w-[106px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
                                         mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -681,17 +683,41 @@ export function PositionTable({
 
                                         {/* 8. Aktion */}
                                         <td className={cn(
-                                            "text-center py-1.5 md:py-2 pl-1 pr-3.5 md:px-1 h-[60px] md:h-auto md:w-[80px] md:min-w-[80px] md:max-w-[80px] md:sticky md:-right-px z-10 md:z-20 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
+                                            "text-center py-1.5 md:py-2 pl-1 pr-3.5 md:px-1 h-[60px] md:h-auto md:w-[106px] md:min-w-[106px] md:max-w-[106px] md:sticky md:-right-px z-10 md:z-20 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
                                             mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                         )}>
                                             <div className="absolute inset-0 bg-card -z-10" />
-                                            <div className="relative flex items-center justify-center gap-1">
+                                            <div className="relative flex items-center justify-center gap-0.5">
+                                                {(() => {
+                                                    const memberLists = watchlists.filter(w => w.stockIds.includes(pos.stock.id));
+                                                    const isInAnyList = memberLists.length > 0;
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setWatchlistStockId(pos.stock.id);
+                                                            }}
+                                                            className={cn(
+                                                                "p-1.5 rounded-lg transition-colors cursor-pointer",
+                                                                isInAnyList
+                                                                    ? "text-amber-400 hover:bg-amber-500/15"
+                                                                    : "text-muted-foreground hover:text-amber-400 hover:bg-muted"
+                                                            )}
+                                                            title={isInAnyList
+                                                                ? `In Watchlists: ${memberLists.map(w => w.name).join(', ')} · Klick zum Bearbeiten`
+                                                                : 'In Watchlist aufnehmen zum Vergleichen'}
+                                                        >
+                                                            <Star className={cn("size-3.5", isInAnyList && "fill-amber-400")} />
+                                                        </button>
+                                                    );
+                                                })()}
                                                 <button
                                                     onClick={() => {
                                                         setSelectedPosition(pos);
                                                         setIsEditModalOpen(true);
                                                     }}
-                                                    className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                                                    className="p-1.5 hover:bg-muted rounded-lg text-primary transition-colors cursor-pointer"
                                                     title="Position bearbeiten (Kauf/Verkauf/Korrektur)"
                                                 >
                                                     <Edit className="size-3.5" />
@@ -700,7 +726,7 @@ export function PositionTable({
                                                     onClick={() => {
                                                         setConfirmDelete({ isOpen: true, posId: pos.id, name: pos.stock.name });
                                                     }}
-                                                    className="p-1.5 sm:p-2 hover:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
                                                     title="Position löschen"
                                                 >
                                                     <Trash2 className="size-4" />
@@ -731,6 +757,11 @@ export function PositionTable({
                 }}
                 title="Position löschen"
                 message={`Möchten Sie die Position "${confirmDelete.name}" wirklich aus Ihrem Portfolio löschen?`}
+            />
+            <AddToWatchlistModal
+                isOpen={Boolean(watchlistStockId)}
+                onClose={() => setWatchlistStockId(null)}
+                stockId={watchlistStockId || ''}
             />
         </div>
     );

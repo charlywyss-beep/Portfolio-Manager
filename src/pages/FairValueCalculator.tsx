@@ -8,7 +8,7 @@ import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { fetchStockQuote, fetchStockAnalysis, searchStocks } from '../services/yahoo-finance';
-import { computeSmartAutoParams, applyRiskModeParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, isEtfAsset, isOilEnergyStock, calculateDcfFairValue, computeStockSupportZones } from '../utils/fairValue';
+import { computeSmartAutoParams, applyRiskModeParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, ETF_PRESETS, getEtfDistributionType, isEtfAsset, isOilEnergyStock, calculateDcfFairValue, computeStockSupportZones } from '../utils/fairValue';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { translateSector } from '../utils/sectorTranslation';
 
@@ -400,6 +400,25 @@ export function FairValueCalculator() {
         const matchedStockForOil = stocks.find(s => s.symbol.toLowerCase() === sym.toLowerCase());
         if (isOilEnergyStock(matchedStockForOil, null, sym) && params.peHorizon !== '10Y') {
             return true;
+        }
+
+        // Auto-heal stale default params for ETFs (upgrade old price/18 or missing Acc/Dist split)
+        const etfPreset = ETF_PRESETS[symUpper];
+        if (etfPreset) {
+            const expectedGrowth = params.valuationMode === 'quality' ? etfPreset.growthB : etfPreset.growthA;
+            if (
+                Math.abs(Number(params.eps) - etfPreset.eps) > 0.05 ||
+                (params.valuationMode !== 'risk' && Math.abs(Number(params.growthRate) - expectedGrowth) > 0.25) ||
+                (etfPreset.distribution === 'accumulating' && Number(params.dividendYield || 0) > 0.05) ||
+                (etfPreset.distribution === 'distributing' && Number(params.dividendYield || 0) === 0 && (etfPreset.fallbackDiv || 0) > 0)
+            ) {
+                return true;
+            }
+        } else if (isEtfAsset(matchedStockForOil, null, sym)) {
+            const etfDist = getEtfDistributionType(matchedStockForOil, null, sym, Number(params.dividendYield || 0));
+            if (etfDist === 'accumulating' && params.valuationMode !== 'risk' && Number(params.growthRate) < 7.5) {
+                return true;
+            }
         }
 
         // Auto-heal stale default params for stocks with curated fundamental fallbacks (e.g. old Yahoo raw EPS or 0% dividend)
@@ -1091,9 +1110,10 @@ export function FairValueCalculator() {
         };
     }, [dividendYield, eps, quote?.price, quote?.trailingPE, pe, discountRate, growthRate]);
 
-    // Wachstums-Check & Plausibilitäts-Fazit (PEG-Ratio)
+    // Wachstums-Check & Plausibilitäts-Fazit (PEG / PEGY / Substanz-Check)
     const growthCheck = useMemo(() => {
         const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : Number(growthRate) || 0;
+        const numDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : Number(dividendYield) || 0;
         const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
         const curP = quote?.price || 0;
         const curPe = (curP > 0 && numEps > 0) ? (curP / numEps) : (quote?.trailingPE || 0);
@@ -1107,51 +1127,110 @@ export function FairValueCalculator() {
         // Als Referenz-KGV für die Wachstumsplausibilität: Bevorzugt Forward-KGV (Zukunftsbewertung der Aktie), sonst curPe oder exitPe
         const refPe = forwardPe > 0 ? forwardPe : (curPe > 0 ? curPe : exitPe);
 
-        // Dynamischer PEG basierend auf aktuellem Wachstums-Input und Referenz-KGV
-        let peg: number | null = null;
-        if (numGrowth > 0 && refPe > 0) {
-            peg = parseFloat((refPe / numGrowth).toFixed(2));
-        } else if (analysis?.pegRatio && analysis.pegRatio > 0 && analysis.pegRatio < 20) {
-            peg = parseFloat(Number(analysis.pegRatio).toFixed(2));
+        const symUpper = (selectedSymbol || '').toUpperCase();
+        const matchedStockObj = stocks.find(s => s.symbol.toLowerCase() === (selectedSymbol || '').toLowerCase());
+        const isCurrentEtf = isEtfAsset(matchedStockObj, quote, selectedSymbol);
+        const isBerkshire = symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK';
+        const usePegy = !isBerkshire && !isCurrentEtf && numDiv >= 1.0;
+        const driverRate = usePegy ? (numGrowth + numDiv) : numGrowth;
+
+        // Spezialfall ETF (Ausschüttend vs. Thesaurierend)
+        if (isCurrentEtf && refPe > 0) {
+            const etfDist = getEtfDistributionType(matchedStockObj, quote, selectedSymbol, numDiv);
+            const isAcc = etfDist === 'accumulating';
+            return {
+                peg: numGrowth > 0 ? (refPe / (isAcc ? numGrowth : Math.max(0.5, numGrowth + numDiv))).toFixed(2) : '-',
+                icon: '🌐',
+                title: isAcc
+                    ? `ETF-Check · Thesaurierend · Index-KGV ${refPe.toFixed(1)}`
+                    : `ETF-Check · Ausschüttend · Index-KGV ${refPe.toFixed(1)}`,
+                badgeColor: isAcc ? 'text-blue-400' : 'text-emerald-400',
+                text: isAcc
+                    ? `Dividenden werden intern reinvestiert (0 % Ausschüttung) und stecken im Total-Return-Wachstum von ${numGrowth.toFixed(1)} % p.a. Sinnvolle Nachkaufzone bei Markt-Korrekturen: -10 % in Qualität B bis -15 % in Sicherheit A.`
+                    : `Die Ausschüttung von ${numDiv.toFixed(1)} % wird separat über 5 Jahre addiert; ${numGrowth.toFixed(1)} % bildet das reine Kurswachstum ohne Wiederanlage ab. Sinnvolle Nachkaufzone: -10 % in Qualität B bis -15 % in Sicherheit A.`
+            };
         }
 
-        if (!peg || peg <= 0 || numGrowth <= 0) return null;
-
-        if (peg < 1.0) {
+        // Spezialfall Substanz-Holding (Berkshire Hathaway): PEG < 1.5 gilt hier fachlich nicht
+        if (isBerkshire && refPe > 0 && numGrowth > 0) {
+            const brkPeg = parseFloat((refPe / numGrowth).toFixed(2));
+            if (refPe <= 19.0) {
+                return {
+                    peg: brkPeg.toFixed(2),
+                    icon: '⭐',
+                    title: `Substanz-Check · KGV ${refPe.toFixed(1)}`,
+                    badgeColor: 'text-emerald-400',
+                    text: `Attraktive Substanz-Bewertung: Das Look-Through-KGV von ${refPe.toFixed(1)} liegt in der historischen Kauf- & Rückkaufzone. Buchwert & Cash-Reserve bieten starken Schutz nach unten.`
+                };
+            }
+            if (refPe <= 23.5) {
+                return {
+                    peg: brkPeg.toFixed(2),
+                    icon: '🏛️',
+                    title: `Substanz-Check · KGV ${refPe.toFixed(1)} · PEG ${brkPeg.toFixed(2)}`,
+                    badgeColor: 'text-amber-400',
+                    text: `Fair bis leicht erhöht bewertet: Die Wachstumsaktien-Regel PEG unter 1.5 gilt für Berkshire nicht — Buchwert & Cash-Berg stützen den Kurs. Bestände entspannt halten; Neukäufe eher Richtung KGV 18–20.`
+                };
+            }
             return {
-                peg: peg.toFixed(2),
+                peg: brkPeg.toFixed(2),
+                icon: '⚠️',
+                title: `Substanz-Check · KGV ${refPe.toFixed(1)} · PEG ${brkPeg.toFixed(2)}`,
+                badgeColor: 'text-rose-400',
+                text: `Deutlicher Bewertungsaufschlag: Selbst für eine erstklassige Substanz-Holding ist ein Look-Through-KGV von ${refPe.toFixed(1)} ambitioniert — für Neukäufe auf Rücksetzer warten.`
+            };
+        }
+
+        // Dynamischer PEG / PEGY basierend auf aktuellem Wachstums-Input (+ Dividende bei Dividendenwerten) und Referenz-KGV
+        let ratio: number | null = null;
+        if (driverRate > 0 && refPe > 0) {
+            ratio = parseFloat((refPe / driverRate).toFixed(2));
+        } else if (!usePegy && analysis?.pegRatio && analysis.pegRatio > 0 && analysis.pegRatio < 20) {
+            ratio = parseFloat(Number(analysis.pegRatio).toFixed(2));
+        }
+
+        if (!ratio || ratio <= 0 || driverRate <= 0) return null;
+
+        const metricLabel = usePegy ? 'PEGY' : 'PEG';
+        const driverDesc = usePegy
+            ? `${driverRate.toFixed(1)} % Gesamtertrag (${numGrowth.toFixed(1)} % Wachstum + ${numDiv.toFixed(1)} % Dividende)`
+            : `${numGrowth.toFixed(1)} % EPS-Wachstum p.a.`;
+
+        if (ratio < 1.0) {
+            return {
+                peg: ratio.toFixed(2),
                 icon: '⭐',
-                title: `Wachstums-Check (PEG ${peg.toFixed(2)})`,
+                title: `Wachstums-Check · ${metricLabel} ${ratio.toFixed(2)}`,
                 badgeColor: 'text-emerald-400',
-                text: `Seltenes Wachstums-Schnäppchen: Das erwartete Gewinnwachstum von ${numGrowth.toFixed(1)} % p.a. übertrifft das Bewertungs-KGV (${refPe.toFixed(1)}). Exzellentes Chance/Risiko-Profil.`
+                text: `Seltenes Schnäppchen: ${driverDesc} übertrifft das Bewertungs-KGV (${refPe.toFixed(1)}). Exzellentes Chance/Risiko-Profil.`
             };
         }
-        if (peg <= 1.5) {
+        if (ratio <= 1.5) {
             return {
-                peg: peg.toFixed(2),
+                peg: ratio.toFixed(2),
                 icon: '💡',
-                title: `Wachstums-Check (PEG ${peg.toFixed(2)})`,
+                title: `Wachstums-Check · ${metricLabel} ${ratio.toFixed(2)}`,
                 badgeColor: 'text-emerald-400',
-                text: `Gesunde Wachstumsprämie: Das KGV von ${refPe.toFixed(1)} wird durch das starke EPS-Wachstum von ${numGrowth.toFixed(1)} % p.a. fundamental getragen (unter 1.5 gilt als faire Wachstumsprämie).`
+                text: `Gesunde Bewertung: Das KGV von ${refPe.toFixed(1)} wird durch ${driverDesc} fundamental getragen (unter 1.5 gilt als gesund).`
             };
         }
-        if (peg <= 2.0) {
+        if (ratio <= 2.0) {
             return {
-                peg: peg.toFixed(2),
+                peg: ratio.toFixed(2),
                 icon: '⚖️',
-                title: `Wachstums-Check (PEG ${peg.toFixed(2)})`,
+                title: `Wachstums-Check · ${metricLabel} ${ratio.toFixed(2)}`,
                 badgeColor: 'text-amber-400',
-                text: `Ambitionierte Bewertung: Das KGV von ${refPe.toFixed(1)} verlangt anhaltend hohes Wachstum von ${numGrowth.toFixed(1)} % p.a. ohne nennenswerte Fehltritte.`
+                text: `Ambitionierte Bewertung: Das KGV von ${refPe.toFixed(1)} verlangt verlässliche ${driverDesc} ohne nennenswerte Fehltritte.`
             };
         }
         return {
-            peg: peg.toFixed(2),
+            peg: ratio.toFixed(2),
             icon: '⚠️',
-            title: `Wachstums-Check (PEG ${peg.toFixed(2)})`,
+            title: `Wachstums-Check · ${metricLabel} ${ratio.toFixed(2)}`,
             badgeColor: 'text-rose-400',
-            text: `Erhöhtes Bewertungsrisiko: Das KGV von ${refPe.toFixed(1)} ist gegenüber dem Wachstum von ${numGrowth.toFixed(1)} % p.a. überdehnt (hohes Rückschlagpotenzial bei Wachstumsdellen).`
+            text: `Erhöhtes Bewertungsrisiko: Das KGV von ${refPe.toFixed(1)} ist gegenüber ${driverDesc} überdehnt (höheres Rückschlagpotenzial bei Dellen).`
         };
-    }, [growthRate, eps, quote?.price, quote?.trailingPE, quote?.forwardPE, analysis?.forwardPE, analysis?.pegRatio, pe]);
+    }, [selectedSymbol, stocks, quote, growthRate, dividendYield, eps, analysis?.forwardPE, analysis?.pegRatio, pe]);
 
     // 4. AUTO-SYNC: Save Fair Value AND Fair Value Parameters to Stock
     useEffect(() => {
@@ -1772,17 +1851,33 @@ export function FairValueCalculator() {
                                 >
                                     <StockName name={stocks.find(s => s.symbol?.toUpperCase() === selectedSymbol?.toUpperCase() || s.id === selectedSymbol)?.name || quote?.name || selectedSymbol} />
                                 </Link>
-                                <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5 text-xs">
+                                <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5 text-xs flex-wrap">
                                     <span className="font-bold text-foreground">{selectedSymbol}</span>
                                     {(() => {
-                                        const stockSect = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol?.toLowerCase())?.sector;
+                                        const matchedStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol?.toLowerCase());
+                                        const isCurEtf = isEtfAsset(matchedStock, quote, selectedSymbol);
+                                        const etfDist = isCurEtf ? getEtfDistributionType(matchedStock, quote, selectedSymbol, typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : Number(dividendYield) || 0) : null;
+                                        const stockSect = matchedStock?.sector;
                                         const rawSec = quote?.sector || stockSect;
-                                        if (!rawSec || rawSec === 'Simuliert') return null;
-                                        const displaySec = translateSector(rawSec);
+                                        const displaySec = rawSec && rawSec !== 'Simuliert' ? translateSector(rawSec) : null;
                                         return (
                                             <>
-                                                <span>•</span>
-                                                <span>{displaySec}</span>
+                                                {isCurEtf && etfDist && (
+                                                    <span className={cn(
+                                                        "text-[10px] font-bold px-1.5 py-0.5 rounded border leading-none",
+                                                        etfDist === 'accumulating'
+                                                            ? "bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/35"
+                                                            : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/35"
+                                                    )}>
+                                                        {etfDist === 'accumulating' ? 'ETF · Thesaurierend' : 'ETF · Ausschüttend'}
+                                                    </span>
+                                                )}
+                                                {displaySec && (
+                                                    <>
+                                                        <span>•</span>
+                                                        <span>{displaySec}</span>
+                                                    </>
+                                                )}
                                             </>
                                         );
                                     })()}
@@ -2249,6 +2344,14 @@ export function FairValueCalculator() {
                                     {(() => {
                                         const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
                                         const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : Number(growthRate) || 0;
+                                        const numDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : Number(dividendYield) || 0;
+                                        const symUpper = (selectedSymbol || '').toUpperCase();
+                                        const isCurEtf = isEtfAsset(currentStock, quote, selectedSymbol);
+                                        const etfDist = isCurEtf ? getEtfDistributionType(currentStock, quote, selectedSymbol, numDiv) : null;
+                                        const isBerkshire = symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK';
+                                        const usePegy = !isBerkshire && numDiv >= 1.0;
+                                        const driverRate = usePegy ? (numGrowth + numDiv) : numGrowth;
+
                                         const trailingPeVal = (quote?.trailingPE && quote.trailingPE > 3 && quote.trailingPE < 250)
                                             ? quote.trailingPE
                                             : (quote?.price && numEps > 0 ? quote.price / numEps : null);
@@ -2258,9 +2361,35 @@ export function FairValueCalculator() {
                                                 ? analysis.forwardPE
                                                 : (quote?.price && numEps > 0 ? quote.price / numEps : null));
                                         const activePe = forwardPeVal || (typeof pe === 'string' ? parseFloat(pe) : Number(pe)) || trailingPeVal;
-                                        const pegVal = (numGrowth > 0 && activePe && activePe > 0)
-                                            ? parseFloat((activePe / numGrowth).toFixed(2))
-                                            : (analysis?.pegRatio && analysis.pegRatio > 0 && analysis.pegRatio < 20 ? parseFloat(Number(analysis.pegRatio).toFixed(2)) : null);
+                                        const pegVal = (driverRate > 0 && activePe && activePe > 0)
+                                            ? parseFloat((activePe / driverRate).toFixed(2))
+                                            : (!usePegy && analysis?.pegRatio && analysis.pegRatio > 0 && analysis.pegRatio < 20 ? parseFloat(Number(analysis.pegRatio).toFixed(2)) : null);
+
+                                        const pegTooltip = pegVal === null
+                                            ? 'Price/Earnings-to-Growth Verhältnis'
+                                            : isCurEtf
+                                                ? (etfDist === 'accumulating'
+                                                    ? `ETF-PEG ${pegVal.toFixed(2)}: Index-KGV (${activePe ? activePe.toFixed(1) : '-'}) geteilt durch ${numGrowth.toFixed(1)} % Total-Return-Wachstum (Thesaurierend inkl. Wiederanlage). Breite Markt-ETFs notieren typischerweise bei 1.8–2.5.`
+                                                    : `ETF-PEGY ${pegVal.toFixed(2)}: Index-KGV (${activePe ? activePe.toFixed(1) : '-'}) geteilt durch ${driverRate.toFixed(1)} % Gesamtertrag (${numGrowth.toFixed(1)} % Kurswachstum + ${numDiv.toFixed(1)} % Ausschüttung). Breite Dividenden-/Markt-ETFs notieren typischerweise bei 1.6–2.4.`)
+                                                : isBerkshire
+                                                    ? `PEG ${pegVal.toFixed(2)}: KGV (${activePe ? activePe.toFixed(1) : '-'}) geteilt durch ${numGrowth.toFixed(1)} % Wachstum. Hinweis für Berkshire: Die Faustregel „unter 1.5“ gilt nur für Wachstumsaktien — Substanz-Holdings mit hohem Buchwert & Cash-Berg notieren typischerweise bei PEG 2.0–2.6 (fairer Bereich: KGV 18–21).`
+                                                    : usePegy
+                                                        ? `PEGY ${pegVal.toFixed(2)}: KGV (${activePe ? activePe.toFixed(1) : '-'}) geteilt durch ${driverRate.toFixed(1)} % Gesamtertrag (${numGrowth.toFixed(1)} % Wachstum + ${numDiv.toFixed(1)} % Dividende). Unter 1.5 gilt als gesund.`
+                                                        : `PEG ${pegVal.toFixed(2)}: KGV (${activePe ? activePe.toFixed(1) : '-'}) geteilt durch ${numGrowth.toFixed(1)} % EPS-Wachstum. Unter 1.5 gilt als gesunde Wachstumsprämie.`;
+
+                                        const pegColorClass = pegVal === null
+                                            ? "text-foreground"
+                                            : isCurEtf
+                                                ? (pegVal <= 2.2 ? "text-emerald-400" : pegVal <= 2.8 ? "text-amber-400" : "text-rose-400")
+                                                : isBerkshire
+                                                    ? ((activePe && activePe <= 19.0) ? "text-emerald-400" : (activePe && activePe <= 23.5) ? "text-amber-400" : "text-rose-400")
+                                                    : pegVal < 1.0
+                                                        ? "text-emerald-400"
+                                                        : pegVal <= 1.5
+                                                            ? "text-emerald-300"
+                                                            : pegVal <= 2.0
+                                                                ? "text-amber-400"
+                                                                : "text-rose-400";
 
                                         return (
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:gap-1.5 text-[11px] lg:text-[10px] text-muted-foreground bg-muted/40 p-1.5 lg:p-1 rounded-lg border border-border/50">
@@ -2276,15 +2405,11 @@ export function FairValueCalculator() {
                                                         {forwardPeVal !== null ? forwardPeVal.toFixed(1) : '-'}
                                                     </span>
                                                 </div>
-                                                <div title={pegVal !== null ? ('PEG ' + pegVal.toFixed(2) + ': KGV (' + (activePe ? activePe.toFixed(1) : '-') + ') geteilt durch ' + numGrowth.toFixed(1) + ' % EPS-Wachstum. Unter 1.5 gilt als gesunde Wachstumsprämie.') : 'Price/Earnings-to-Growth Verhältnis'}>
-                                                    <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">PEG-Ratio:</span>
-                                                    <span className={cn(
-                                                        "font-mono font-bold",
-                                                        pegVal === null ? "text-foreground" :
-                                                        pegVal < 1.0 ? "text-emerald-400" :
-                                                        pegVal <= 1.5 ? "text-emerald-300" :
-                                                        pegVal <= 2.0 ? "text-amber-400" : "text-rose-400"
-                                                    )}>
+                                                <div title={pegTooltip}>
+                                                    <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">
+                                                        {usePegy ? 'PEGY-Ratio:' : 'PEG-Ratio:'}
+                                                    </span>
+                                                    <span className={cn("font-mono font-bold", pegColorClass)}>
                                                         {pegVal !== null ? pegVal.toFixed(2) : '-'}
                                                     </span>
                                                 </div>

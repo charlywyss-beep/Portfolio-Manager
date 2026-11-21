@@ -15,8 +15,8 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'SREN': { eps: 16.42, growth: 2.5, pe: 9.5, pe10: 9.0, div: 4.82, mos: 20, label: 'Konsens EPS' },
     'ZURN.SW': { eps: 35.0, growth: 4.0, pe: 11.5, pe10: 10.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
     'ZURN': { eps: 35.0, growth: 4.0, pe: 11.5, pe10: 10.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
-    'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Operativer Gewinn' },
-    'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Operativer Gewinn' },
+    'BRK-B': { eps: 25.0, growth: 7.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Look-Through EPS 2026' },
+    'BRK.B': { eps: 25.0, growth: 7.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Look-Through EPS 2026' },
     'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, pe10: 30.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
     'NVDA': { eps: 4.80, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0, mos: 20, label: 'Konsens EPS (Forward FY26)' },
     'NVD.DE': { eps: 4.45, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0, mos: 20, label: 'Konsens EPS in EUR' },
@@ -50,11 +50,107 @@ export const WIDE_MOAT_QUALITY = new Set([
     'BRK-B', 'BRK.B', 'BRK-A', 'BRK.A'
 ]);
 
+export type EtfDistributionType = 'accumulating' | 'distributing';
+
+export interface EtfPreset {
+    distribution: EtfDistributionType;
+    eps: number;
+    growthA: number;
+    growthB: number;
+    peA: number;
+    peB: number;
+    pe5A: number;
+    pe5B: number;
+    fallbackDiv?: number;
+    label: string;
+}
+
+// Curated 2026 Index-EPS & Distribution Profiles for ETFs (prevents circular price/18 drift and properly separates Dist vs. Acc)
+export const ETF_PRESETS: Record<string, EtfPreset> = {
+    // Vanguard FTSE All-World High Dividend Yield (Distributing)
+    'VHYL.SW': { distribution: 'distributing', eps: 4.85, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
+    'VHYL.AS': { distribution: 'distributing', eps: 5.20, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
+    'VHYL.L':  { distribution: 'distributing', eps: 5.20, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
+    'VHYL':    { distribution: 'distributing', eps: 5.20, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
+
+    // Vanguard FTSE All-World (Accumulating)
+    'VWRA.L':  { distribution: 'accumulating', eps: 9.05, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
+    'VWRA':    { distribution: 'accumulating', eps: 9.05, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
+
+    // VanEck Morningstar Developed Markets Dividend Leaders (Distributing)
+    'TDIV.AS': { distribution: 'distributing', eps: 4.25, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
+    'TDIV':    { distribution: 'distributing', eps: 4.25, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
+
+    // Schwab US Dividend Equity (Distributing)
+    'SCHD':    { distribution: 'distributing', eps: 1.95, growthA: 5.5, growthB: 6.5, peA: 15.0, peB: 16.5, pe5A: 16.0, pe5B: 17.5, fallbackDiv: 3.6, label: 'Dow Jones US Div 100 EPS' },
+
+    // L&G Global Quality Dividends (Accumulating)
+    'LDGA.SW': { distribution: 'accumulating', eps: 0.75, growthA: 8.0, growthB: 8.5, peA: 14.5, peB: 16.0, pe5A: 15.5, pe5B: 17.0, label: 'Global Quality Div Index-EPS' },
+    'LDGL.SW': { distribution: 'accumulating', eps: 0.75, growthA: 8.0, growthB: 8.5, peA: 14.5, peB: 16.0, pe5A: 15.5, pe5B: 17.0, label: 'Global Quality Div Index-EPS' },
+
+    // HSBC MSCI World (Distributing)
+    'HMWO.SW': { distribution: 'distributing', eps: 1.80, growthA: 6.5, growthB: 7.0, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, fallbackDiv: 1.5, label: 'MSCI World Index-EPS' },
+    'HMWO.L':  { distribution: 'distributing', eps: 1.80, growthA: 6.5, growthB: 7.0, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, fallbackDiv: 1.5, label: 'MSCI World Index-EPS' },
+
+    // iShares World Equity High Income Active (Distributing Option-Income / Covered Call)
+    'WINC.AS': { distribution: 'distributing', eps: 0.31, growthA: 1.0, growthB: 1.5, peA: 15.0, peB: 16.0, pe5A: 16.0, pe5B: 17.0, fallbackDiv: 8.5, label: 'Option-Income Portfolio-EPS' },
+    'WINC.L':  { distribution: 'distributing', eps: 0.31, growthA: 1.0, growthB: 1.5, peA: 15.0, peB: 16.0, pe5A: 16.0, pe5B: 17.0, fallbackDiv: 8.5, label: 'Option-Income Portfolio-EPS' },
+
+    // iShares Core MSCI World (Accumulating)
+    'IWDA.L':  { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
+    'IWDA.AS': { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
+    'SWDA.L':  { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
+
+    // iShares S&P 500 Energy Sector (Accumulating)
+    'IUES.L':  { distribution: 'accumulating', eps: 0.96, growthA: 7.5, growthB: 8.0, peA: 12.5, peB: 14.0, pe5A: 13.5, pe5B: 15.0, label: 'S&P 500 Energy Mid-Cycle EPS' },
+    'IUES.SW': { distribution: 'accumulating', eps: 0.96, growthA: 7.5, growthB: 8.0, peA: 12.5, peB: 14.0, pe5A: 13.5, pe5B: 15.0, label: 'S&P 500 Energy Mid-Cycle EPS' },
+
+    // Vanguard S&P 500 (Distributing)
+    'VOO':     { distribution: 'distributing', eps: 30.25, growthA: 7.5, growthB: 8.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, fallbackDiv: 1.2, label: 'S&P 500 Index-EPS' },
+
+    // iShares NASDAQ 100 (Accumulating)
+    'CSNDX.SW':{ distribution: 'accumulating', eps: 60.25, growthA: 10.5, growthB: 11.5, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, label: 'NASDAQ-100 Index-EPS' },
+
+    // Invesco QQQ Trust (Distributing)
+    'QQQ':     { distribution: 'distributing', eps: 25.90, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
+};
+
+const KNOWN_ACC_ETF_PREFIXES = new Set([
+    'VWRA', 'VWCE', 'IWDA', 'SWDA', 'EUNL', 'CSPX', 'VUAA', 'CSNDX', 'CNDX', 'SXRV', 'LDGA', 'LDGL', 'IUES', 'VHYA'
+]);
+
+export function getEtfDistributionType(
+    stockObj?: any,
+    qData?: any,
+    symbolStr?: string | null,
+    dividendYield?: number
+): EtfDistributionType {
+    const symUpper = (symbolStr || stockObj?.symbol || qData?.symbol || '').toUpperCase();
+    if (ETF_PRESETS[symUpper]) {
+        return ETF_PRESETS[symUpper].distribution;
+    }
+    const baseSym = symUpper.split('.')[0];
+    if (KNOWN_ACC_ETF_PREFIXES.has(baseSym)) {
+        return 'accumulating';
+    }
+    const name = (stockObj?.name || qData?.shortName || qData?.longName || qData?.name || '').toLowerCase();
+    if (/\b(acc|accumulating|thesaurierend)\b/.test(name) || name.includes('(acc)')) {
+        return 'accumulating';
+    }
+    if (/\b(dist|distributing|ausschüttend|inc|income)\b/.test(name) || name.includes('(dist)')) {
+        return 'distributing';
+    }
+    const effDiv = dividendYield ?? stockObj?.dividendYield ?? qData?.dividendYield ?? 0;
+    return Number(effDiv) > 0.2 ? 'distributing' : 'accumulating';
+}
+
 export function isEtfAsset(stockObj?: any, qData?: any, symbolStr?: string | null): boolean {
     if (stockObj?.type === 'etf') return true;
     if (qData?.quoteType === 'ETF' || qData?.type === 'etf') return true;
+    const symUpper = (symbolStr || stockObj?.symbol || qData?.symbol || '').toUpperCase();
+    if (ETF_PRESETS[symUpper]) return true;
     const name = (stockObj?.name || qData?.name || '').toLowerCase();
-    const sym = (symbolStr || stockObj?.symbol || qData?.symbol || '').toLowerCase();
+    const sym = symUpper.toLowerCase();
     if (name.includes('etf') || name.includes('ucits') || name.includes('ishares') || name.includes('vanguard ftse')) return true;
     if (sym.includes('etf')) return true;
     return false;
@@ -137,6 +233,76 @@ export function computeSmartAutoParams(
 
     autoDiv = parseFloat(Math.min(Math.max(autoDiv, 0), 25).toFixed(2));
 
+    // Dedicated ETF Valuation Branch: cleanly separates Distributing vs. Accumulating ETFs
+    // and uses stable Index-EPS presets so Fair Value does not drift circularly with short-term market drops.
+    if (isEtf) {
+        const etfPreset = ETF_PRESETS[symUpper];
+        const etfDistribution = etfPreset
+            ? etfPreset.distribution
+            : getEtfDistributionType(stockObj, qData, symbolStr, autoDiv);
+
+        const resolvedDiv = etfDistribution === 'accumulating'
+            ? 0
+            : (autoDiv > 0 ? autoDiv : (etfPreset?.fallbackDiv ?? 0));
+
+        const etfTrailingPe = qData?.trailingPE || stockObj?.trailingPE || null;
+        const etfForwardPe = qData?.forwardPE || aData?.forwardPE || stockObj?.forwardPE || null;
+        const validIndexPe = (etfForwardPe && etfForwardPe >= 6 && etfForwardPe <= 45)
+            ? Number(etfForwardPe)
+            : (etfTrailingPe && etfTrailingPe >= 6 && etfTrailingPe <= 45 ? Number(etfTrailingPe) : null);
+
+        let etfEps = etfPreset?.eps ?? 0;
+        let etfEpsLabel = etfPreset ? etfPreset.label : (validIndexPe ? 'Index-KGV abgeleitet' : 'Index-Schätzung');
+        if (!etfPreset && price > 0) {
+            const fallbackIndexPe = validIndexPe
+                ?? (resolvedDiv >= 7.0 ? 16.0 : resolvedDiv >= 3.0 ? 15.0 : 19.0);
+            etfEps = parseFloat((price / fallbackIndexPe).toFixed(2));
+        }
+
+        const etfGrowth = etfPreset
+            ? (isQualityMode ? etfPreset.growthB : etfPreset.growthA)
+            : etfDistribution === 'accumulating'
+                ? (isQualityMode ? 8.5 : 8.0)
+                : resolvedDiv >= 7.0
+                    ? (isQualityMode ? 1.5 : 1.0)
+                    : resolvedDiv >= 3.0
+                        ? (isQualityMode ? 5.0 : 4.5)
+                        : (isQualityMode ? 7.0 : 6.5);
+
+        const etfPe10 = etfPreset
+            ? (isQualityMode ? etfPreset.peB : etfPreset.peA)
+            : (resolvedDiv >= 3.0 && resolvedDiv < 7.0)
+                ? (isQualityMode ? 14.5 : 13.5)
+                : (isQualityMode ? 19.0 : 17.5);
+
+        const etfPe5 = etfPreset
+            ? (isQualityMode ? etfPreset.pe5B : etfPreset.pe5A)
+            : parseFloat((etfPe10 + 1.0).toFixed(1));
+
+        const etfMos = isQualityMode ? 10 : 15;
+        const etfGrowthLabel = etfDistribution === 'accumulating'
+            ? 'Total Return inkl. Wiederanlage'
+            : (resolvedDiv >= 7.0 ? 'Option-Income Kurswachstum' : 'Kurswachstum ohne Dividende');
+
+        return {
+            eps: parseFloat(Number(etfEps).toFixed(2)),
+            growthRate: etfGrowth,
+            pe: etfPe10,
+            pe5: etfPe5,
+            pe10: etfPe10,
+            peHorizon: '10Y' as const,
+            dividendYield: parseFloat(Number(resolvedDiv).toFixed(2)),
+            discountRate: 8,
+            mos: etfMos,
+            epsLabel: etfEpsLabel,
+            growthLabel: etfGrowthLabel,
+            valuationMode,
+            isEtf: true,
+            etfDistribution,
+            isOilEnergy: false
+        };
+    }
+
     // 2. Smart EPS (protect against negative/zero or restructuring-depressed GAAP/IFRS TTM EPS)
     let trailingPE = qData?.trailingPE || stockObj?.trailingPE || null;
     let forwardPE = qData?.forwardPE || aData?.forwardPE || stockObj?.forwardPE || null;
@@ -182,8 +348,8 @@ export function computeSmartAutoParams(
     let epsLabel = qData?.epsSource || 'TTM';
 
     if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
-        autoEps = preset?.eps || 21.0;
-        epsLabel = 'Operativer Gewinn (Buffett)';
+        autoEps = preset?.eps || 25.0;
+        epsLabel = 'Look-Through EPS (Buffett)';
     } else if (preset) {
         autoEps = preset.eps;
         epsLabel = preset.label;
@@ -326,7 +492,7 @@ export function computeSmartAutoParams(
             } else if (symUpper === 'TSLA') {
                 rawExitPe = 48.0;
             } else if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
-                rawExitPe = 21.0;
+                rawExitPe = 20.0;
             } else if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
                 rawExitPe = 18.5;
             } else if (symUpper === 'ROG.SW') {
@@ -426,6 +592,7 @@ export function computeSmartAutoParams(
         growthLabel: isQualityMode ? `${growthLabel} (Markt)` : `${growthLabel} (Sicherheit)`,
         valuationMode,
         isEtf,
+        etfDistribution: undefined as EtfDistributionType | undefined,
         isOilEnergy
     };
 }

@@ -413,6 +413,12 @@ export function StockDetail() {
             currentMode = 'manual';
         }
 
+        const isEtfItem = Boolean(smartAutoConservative.isEtf);
+        const withHorizon = <T extends { pe: number; pe5?: number; pe10?: number }>(smart: T): T =>
+            activeParams?.peHorizon === '5Y' && smart.pe5
+                ? { ...smart, pe: smart.pe5 }
+                : smart;
+
         let fairValue = 0;
         let buyPrice: number | null = null;
         let futurePrice: number | null = null;
@@ -435,21 +441,21 @@ export function StockDetail() {
                         : (fairValue > 0 ? parseFloat((fairValue * (1 - (mos / 100))).toFixed(2)) : null);
             futurePrice = manualDcf?.futurePrice ?? null;
         } else if (currentMode === 'quality') {
-            const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoQuality;
+            const qParams = (!isEtfItem && activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : withHorizon(smartAutoQuality);
             const dcf = calculateDcfFairValue(qParams, effectivePrice);
             fairValue = dcf.fairValue;
             buyPrice = dcf.buyPrice;
             futurePrice = (dcf as any)?.futurePrice ?? null;
             mos = dcf.mos;
         } else if (currentMode === 'risk') {
-            const rParams = (activeParams?.valuationMode === 'risk' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoRisk;
+            const rParams = (!isEtfItem && activeParams?.valuationMode === 'risk' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : withHorizon(smartAutoRisk);
             const dcf = calculateDcfFairValue(rParams, effectivePrice);
             fairValue = dcf.fairValue;
             buyPrice = dcf.buyPrice;
             futurePrice = (dcf as any)?.futurePrice ?? null;
             mos = dcf.mos;
         } else {
-            const cParams = (activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoConservative;
+            const cParams = (!isEtfItem && activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : withHorizon(smartAutoConservative);
             const dcf = calculateDcfFairValue(cParams, effectivePrice);
             fairValue = dcf.fairValue;
             buyPrice = dcf.buyPrice;
@@ -1337,6 +1343,8 @@ export function StockDetail() {
                         isMarketOpen={estimateMarketState(stock.symbol, stock.currency) === 'REGULAR'}
                         purchasePrice={position?.buyPriceAvg}
                         purchaseDate={buyDateRef}
+                        positionShares={position?.shares}
+                        averageEntryFxRate={position?.averageEntryFxRate}
                         purchases={position?.purchases}
                         sellLimit={stock.sellLimit}
                         buyLimit={valuationData.buyPrice || stock.targetPrice}

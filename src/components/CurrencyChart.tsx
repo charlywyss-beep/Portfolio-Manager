@@ -1,20 +1,24 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { RefreshCcw } from 'lucide-react';
+import { RefreshCcw, ArrowLeftRight } from 'lucide-react';
 import { cn } from '../utils';
+import { fetchStockHistory } from '../services/yahoo-finance';
+import { useExchangeRates } from '../context/ExchangeRateContext';
 
 interface RateHistory {
     date: string;
     rate: number;
 }
 
-type Currency = 'EUR' | 'USD' | 'GBP';
+type CurrencyCode = 'CHF' | 'EUR' | 'USD' | 'GBP';
 type ChartTimeRange = '1W' | '1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y';
 
-import { fetchStockHistory } from '../services/yahoo-finance';
+const CURRENCIES: CurrencyCode[] = ['CHF', 'EUR', 'USD', 'GBP'];
+const VALID_RANGES: ChartTimeRange[] = ['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y'];
 
-// Helper to get date string YYYY-MM-DD
-
+function isCurrencyCode(val: string | null): val is CurrencyCode {
+    return val === 'CHF' || val === 'EUR' || val === 'USD' || val === 'GBP';
+}
 
 interface Props {
     inverse?: boolean;
@@ -22,13 +26,26 @@ interface Props {
 
 export function CurrencyChart({ inverse = false }: Props) {
     const storageKeyPrefix = inverse ? 'currency_chart_inverse' : 'currency_chart_direct';
+    const { rates } = useExchangeRates();
 
-    const [selectedCurrency, setSelectedCurrency] = useState<Currency>(() => {
+    const [baseCurrency, setBaseCurrency] = useState<CurrencyCode>(() => {
         try {
-            const saved = localStorage.getItem(`${storageKeyPrefix}_currency`);
-            if (saved === 'EUR' || saved === 'USD' || saved === 'GBP') return saved as Currency;
+            const savedBase = localStorage.getItem(`${storageKeyPrefix}_base`);
+            if (isCurrencyCode(savedBase)) return savedBase;
+            const legacyCur = localStorage.getItem(`${storageKeyPrefix}_currency`);
+            if (inverse && isCurrencyCode(legacyCur) && legacyCur !== 'CHF') return legacyCur;
         } catch {}
-        return inverse ? 'GBP' : 'EUR';
+        return inverse ? 'GBP' : 'CHF';
+    });
+
+    const [targetCurrency, setTargetCurrency] = useState<CurrencyCode>(() => {
+        try {
+            const savedTarget = localStorage.getItem(`${storageKeyPrefix}_target`);
+            if (isCurrencyCode(savedTarget)) return savedTarget;
+            const legacyCur = localStorage.getItem(`${storageKeyPrefix}_currency`);
+            if (!inverse && isCurrencyCode(legacyCur) && legacyCur !== 'CHF') return legacyCur;
+        } catch {}
+        return inverse ? 'CHF' : 'USD';
     });
 
     const [historyData, setHistoryData] = useState<RateHistory[]>([]);
@@ -38,29 +55,63 @@ export function CurrencyChart({ inverse = false }: Props) {
     useEffect(() => {
         setHasMounted(true);
     }, []);
+
     const [currRate, setCurrRate] = useState<number | null>(null);
     const [baseAmount, setBaseAmount] = useState<string>('1');
     const [convertedAmount, setConvertedAmount] = useState<string>('');
-
-    // Derived values based on mode
-    const baseCurrency = inverse ? selectedCurrency : 'CHF';
-    const targetCurrency = inverse ? 'CHF' : selectedCurrency;
+    const [lastEdited, setLastEdited] = useState<'base' | 'target'>('base');
 
     const [timeRange, setTimeRange] = useState<ChartTimeRange>(() => {
         try {
             const saved = localStorage.getItem(`${storageKeyPrefix}_range`);
-            if (saved && ['1W', '1M', '3M', '6M', '1Y', '5Y'].includes(saved)) {
+            if (saved && VALID_RANGES.includes(saved as ChartTimeRange)) {
                 return saved as ChartTimeRange;
             }
         } catch {}
         return '1Y';
     });
 
-    const handleSelectCurrency = (cur: Currency) => {
-        setSelectedCurrency(cur);
+    // Cross-rate from ExchangeRateContext (used as instant fallback & for the other 2 currencies strip)
+    const getCrossRate = (from: CurrencyCode, to: CurrencyCode): number | null => {
+        if (from === to) return 1;
+        const rFrom = rates[from];
+        const rTo = rates[to];
+        if (!rFrom || !rTo || rFrom <= 0) return null;
+        return rTo / rFrom;
+    };
+
+    const persistPair = (nextBase: CurrencyCode, nextTarget: CurrencyCode) => {
         try {
-            localStorage.setItem(`${storageKeyPrefix}_currency`, cur);
+            localStorage.setItem(`${storageKeyPrefix}_base`, nextBase);
+            localStorage.setItem(`${storageKeyPrefix}_target`, nextTarget);
         } catch {}
+    };
+
+    const handleSelectBase = (cur: CurrencyCode) => {
+        if (cur === baseCurrency) return;
+        const nextTarget = cur === targetCurrency ? baseCurrency : targetCurrency;
+        setBaseCurrency(cur);
+        setTargetCurrency(nextTarget);
+        setLastEdited('base');
+        persistPair(cur, nextTarget);
+    };
+
+    const handleSelectTarget = (cur: CurrencyCode) => {
+        if (cur === targetCurrency) return;
+        const nextBase = cur === baseCurrency ? targetCurrency : baseCurrency;
+        setBaseCurrency(nextBase);
+        setTargetCurrency(cur);
+        setLastEdited('base');
+        persistPair(nextBase, cur);
+    };
+
+    const handleSwapCurrencies = () => {
+        const nextBase = targetCurrency;
+        const nextTarget = baseCurrency;
+        setBaseCurrency(nextBase);
+        setTargetCurrency(nextTarget);
+        setLastEdited('base');
+        persistPair(nextBase, nextTarget);
     };
 
     const handleSelectTimeRange = (range: ChartTimeRange) => {
@@ -71,54 +122,74 @@ export function CurrencyChart({ inverse = false }: Props) {
     };
 
     useEffect(() => {
+        let isCancelled = false;
+
         const fetchHistory = async () => {
             setIsLoading(true);
             try {
-                // Use our existing Yahoo Finance integration that handles proxying/CORS properly
                 const symbol = `${baseCurrency}${targetCurrency}=X`;
-                const { data } = await fetchStockHistory(symbol, timeRange as any);
-                
+                let { data } = await fetchStockHistory(symbol, timeRange as any);
+                let inverted = false;
+
+                // Automatic inverse fallback if direct Yahoo FX pair returns empty
+                if (!data || data.length === 0) {
+                    const invSymbol = `${targetCurrency}${baseCurrency}=X`;
+                    const invRes = await fetchStockHistory(invSymbol, timeRange as any);
+                    if (invRes.data && invRes.data.length > 0) {
+                        data = invRes.data;
+                        inverted = true;
+                    }
+                }
+
+                if (isCancelled) return;
+
                 if (data && data.length > 0) {
-                    const transformed = data.map((p: any) => {
-                        // Extract just the YYYY-MM-DD from ISO string
-                        const dateOnly = p.date.split('T')[0];
-                        return {
-                            date: dateOnly,
-                            rate: p.value
-                        };
-                    });
-                    
-                    // Filter out duplicates: keep the latest rate of each day (closing/current rate)
                     const mapByDate = new Map<string, number>();
-                    transformed.forEach((t: any) => {
-                        mapByDate.set(t.date, t.rate);
+                    data.forEach((p: any) => {
+                        const dateOnly = p.date.split('T')[0];
+                        const val = inverted ? (p.value > 0 ? 1 / p.value : 0) : p.value;
+                        if (val > 0 && isFinite(val)) {
+                            mapByDate.set(dateOnly, val);
+                        }
                     });
                     const filtered = Array.from(mapByDate.entries()).map(([date, rate]) => ({ date, rate }));
-
                     setHistoryData(filtered);
-
                     if (filtered.length > 0) {
                         setCurrRate(filtered[filtered.length - 1].rate);
                     }
                 } else {
                     setHistoryData([]);
+                    const fallbackRate = getCrossRate(baseCurrency, targetCurrency);
+                    if (fallbackRate) setCurrRate(fallbackRate);
                 }
             } catch (error) {
                 console.error("Failed to fetch currency history from Yahoo Finance:", error);
+                if (!isCancelled) {
+                    const fallbackRate = getCrossRate(baseCurrency, targetCurrency);
+                    if (fallbackRate) setCurrRate(fallbackRate);
+                }
             } finally {
-                setIsLoading(false);
+                if (!isCancelled) {
+                    setIsLoading(false);
+                }
             }
         };
 
         fetchHistory();
-    }, [selectedCurrency, inverse, timeRange]);
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [baseCurrency, targetCurrency, timeRange]);
+
+    const effectiveRate = currRate ?? getCrossRate(baseCurrency, targetCurrency);
 
     // Calculate min/max for Y-Axis domain to make chart look dynamic
     const domain = useMemo(() => {
         if (historyData.length === 0) return [0, 1];
-        const rates = historyData.map(d => d.rate);
-        const min = Math.min(...rates) * 0.99; // 1% buffer
-        const max = Math.max(...rates) * 1.01;
+        const rateVals = historyData.map(d => d.rate);
+        const min = Math.min(...rateVals) * 0.99;
+        const max = Math.max(...rateVals) * 1.01;
         return [min, max];
     }, [historyData]);
 
@@ -126,35 +197,69 @@ export function CurrencyChart({ inverse = false }: Props) {
         if (historyData.length < 2) return 0;
         const first = historyData[0].rate;
         const last = historyData[historyData.length - 1].rate;
-        return ((last - first) / first) * 100;
+        return first > 0 ? ((last - first) / first) * 100 : 0;
     }, [historyData]);
 
-    // Update converted amount when rate or base amount changes
+    // Sync converted amount when rate changes
     useEffect(() => {
-        if (currRate && baseAmount) {
-            const base = parseFloat(baseAmount) || 0;
-            const converted = base * currRate;
-            setConvertedAmount(converted.toFixed(2));
+        if (!effectiveRate) return;
+        if (lastEdited === 'base') {
+            if (baseAmount === '') {
+                setConvertedAmount('');
+            } else {
+                const base = parseFloat(baseAmount) || 0;
+                setConvertedAmount((base * effectiveRate).toFixed(2));
+            }
+        } else {
+            if (convertedAmount === '') {
+                setBaseAmount('');
+            } else {
+                const conv = parseFloat(convertedAmount) || 0;
+                setBaseAmount((conv / effectiveRate).toFixed(2));
+            }
         }
-    }, [currRate, baseAmount]);
+    }, [effectiveRate]);
 
     const handleBaseAmountChange = (value: string) => {
+        setLastEdited('base');
         setBaseAmount(value);
-        if (currRate && value) {
+        if (value === '') {
+            setConvertedAmount('');
+            return;
+        }
+        if (effectiveRate) {
             const base = parseFloat(value) || 0;
-            const converted = base * currRate;
-            setConvertedAmount(converted.toFixed(2));
+            setConvertedAmount((base * effectiveRate).toFixed(2));
         }
     };
 
     const handleConvertedAmountChange = (value: string) => {
+        setLastEdited('target');
         setConvertedAmount(value);
-        if (currRate && value) {
+        if (value === '') {
+            setBaseAmount('');
+            return;
+        }
+        if (effectiveRate) {
             const converted = parseFloat(value) || 0;
-            const base = converted / currRate;
-            setBaseAmount(base.toFixed(2));
+            setBaseAmount((converted / effectiveRate).toFixed(2));
         }
     };
+
+    // Quick conversions for the remaining 2 currencies
+    const otherCurrencies = useMemo(() => {
+        const amount = parseFloat(baseAmount);
+        const numericBase = isFinite(amount) ? amount : 0;
+        return CURRENCIES.filter(c => c !== baseCurrency && c !== targetCurrency)
+            .map(cur => {
+                const cross = getCrossRate(baseCurrency, cur);
+                return {
+                    currency: cur,
+                    rate: cross,
+                    value: cross !== null ? numericBase * cross : null
+                };
+            });
+    }, [baseAmount, baseCurrency, targetCurrency, rates]);
 
     const formatXAxisDate = (date: string) => {
         if (!date) return '';
@@ -175,95 +280,169 @@ export function CurrencyChart({ inverse = false }: Props) {
     };
 
     return (
-        <div className="p-6 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 md:gap-0">
-                <div className="flex items-center gap-3">
+        <div className="p-5 sm:p-6 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+                <div className="flex items-center gap-3 min-w-0">
                     <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 shrink-0">
-                        <RefreshCcw className="size-6" />
+                        <RefreshCcw className="size-5" />
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold">{inverse ? 'Kurs in CHF' : 'Wechselkurse'}</h3>
-                        <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary mt-1 whitespace-nowrap">
-                            Basis: 1 {baseCurrency}
+                    <div className="min-w-0">
+                        <h3 className="text-base sm:text-lg font-bold leading-tight truncate">
+                            Wechselkurs {baseCurrency} / {targetCurrency}
+                        </h3>
+                        <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary mt-1 whitespace-nowrap font-mono tabular-nums">
+                            {effectiveRate ? `1 ${baseCurrency} = ${effectiveRate.toFixed(4)} ${targetCurrency}` : `Basis 1 ${baseCurrency}`}
                         </div>
                     </div>
-                </div>
-
-                {/* Currency Tabs */}
-                <div className="flex bg-muted/50 rounded-lg p-1 self-start md:self-auto">
-                    {(['EUR', 'USD', 'GBP'] as Currency[]).map((cur) => (
-                        <button
-                            key={cur}
-                            onClick={() => handleSelectCurrency(cur)}
-                            className={cn(
-                                "px-3 py-1 text-xs font-medium rounded-md transition-all",
-                                selectedCurrency === cur
-                                    ? "bg-background text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            {cur}
-                        </button>
-                    ))}
                 </div>
             </div>
 
             <div className="mb-4">
-                {currRate ? (
+                {effectiveRate ? (
                     <>
-                        {/* Currency Converter */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div className="bg-muted/30 rounded-xl p-6 border border-border/50">
-                                <label className="text-sm font-medium text-muted-foreground mb-2 block">{baseCurrency}</label>
-                                <input
-                                    type="number"
-                                    value={baseAmount}
-                                    onChange={(e) => handleBaseAmountChange(e.target.value)}
-                                    onFocus={(e) => e.target.select()}
-                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                    placeholder="0.00"
-                                />
+                        {/* Bidirectional Free-Choice Currency Converter */}
+                        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-2.5 sm:gap-3 items-center mb-3">
+                            {/* Base (Von) */}
+                            <div className="bg-muted/30 rounded-xl p-3.5 sm:p-4 border border-border/60 space-y-2.5">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Von</span>
+                                    <div className="inline-flex items-center bg-muted/70 rounded-lg p-0.5 gap-0.5">
+                                        {CURRENCIES.map((cur) => (
+                                            <button
+                                                key={cur}
+                                                type="button"
+                                                onClick={() => handleSelectBase(cur)}
+                                                className={cn(
+                                                    "h-7 inline-flex items-center justify-center leading-none px-2 py-0 text-xs font-bold rounded-md transition-all cursor-pointer whitespace-nowrap",
+                                                    baseCurrency === cur
+                                                        ? "bg-background text-foreground shadow-sm border border-border/70"
+                                                        : "text-muted-foreground hover:text-foreground border border-transparent"
+                                                )}
+                                            >
+                                                {cur}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={baseAmount}
+                                        onChange={(e) => handleBaseAmountChange(e.target.value)}
+                                        onFocus={(e) => e.target.select()}
+                                        className="w-full pl-3.5 pr-14 py-2.5 text-xl sm:text-2xl font-bold font-mono tabular-nums rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/25"
+                                        placeholder="0.00"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">
+                                        {baseCurrency}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="bg-muted/30 rounded-xl p-6 border border-border/50">
-                                <label className="text-sm font-medium text-muted-foreground mb-2 block">{targetCurrency}</label>
-                                <input
-                                    type="number"
-                                    value={convertedAmount}
-                                    onChange={(e) => handleConvertedAmountChange(e.target.value)}
-                                    onFocus={(e) => e.target.select()}
-                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                    placeholder="0.00"
-                                />
+
+                            {/* Swap Button */}
+                            <div className="flex justify-center">
+                                <button
+                                    type="button"
+                                    onClick={handleSwapCurrencies}
+                                    className="size-9 inline-flex items-center justify-center rounded-xl border border-border bg-card hover:bg-primary/10 hover:text-primary hover:border-primary/40 text-muted-foreground shadow-xs transition-all active:scale-95 cursor-pointer"
+                                    title={`${baseCurrency} und ${targetCurrency} tauschen`}
+                                    aria-label="Währungen tauschen"
+                                >
+                                    <ArrowLeftRight className="size-4" />
+                                </button>
+                            </div>
+
+                            {/* Target (Nach) */}
+                            <div className="bg-muted/30 rounded-xl p-3.5 sm:p-4 border border-border/60 space-y-2.5">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nach</span>
+                                    <div className="inline-flex items-center bg-muted/70 rounded-lg p-0.5 gap-0.5">
+                                        {CURRENCIES.map((cur) => (
+                                            <button
+                                                key={cur}
+                                                type="button"
+                                                onClick={() => handleSelectTarget(cur)}
+                                                className={cn(
+                                                    "h-7 inline-flex items-center justify-center leading-none px-2 py-0 text-xs font-bold rounded-md transition-all cursor-pointer whitespace-nowrap",
+                                                    targetCurrency === cur
+                                                        ? "bg-background text-foreground shadow-sm border border-border/70"
+                                                        : "text-muted-foreground hover:text-foreground border border-transparent"
+                                                )}
+                                            >
+                                                {cur}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={convertedAmount}
+                                        onChange={(e) => handleConvertedAmountChange(e.target.value)}
+                                        onFocus={(e) => e.target.select()}
+                                        className="w-full pl-3.5 pr-14 py-2.5 text-xl sm:text-2xl font-bold font-mono tabular-nums rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/25"
+                                        placeholder="0.00"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">
+                                        {targetCurrency}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
+                        {/* Quick All-4-Currencies Preview Strip (clickable to switch target currency) */}
+                        {otherCurrencies.some(o => o.value !== null) && (
+                            <div className="flex flex-wrap items-center gap-2 mb-5 px-1 text-xs">
+                                <span className="text-muted-foreground font-medium">
+                                    Entspricht auch:
+                                </span>
+                                {otherCurrencies.map(item => (
+                                    item.value !== null && (
+                                        <button
+                                            key={item.currency}
+                                            type="button"
+                                            onClick={() => handleSelectTarget(item.currency)}
+                                            className="h-7 inline-flex items-center justify-center leading-none gap-1.5 px-2.5 py-0 rounded-lg border border-border/80 bg-muted/35 hover:bg-primary/10 hover:border-primary/40 text-foreground font-mono tabular-nums font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                                            title={`Klick wechselt Zielwährung auf ${item.currency} (${item.rate ? `1 ${baseCurrency} = ${item.rate.toFixed(4)} ${item.currency}` : ''})`}
+                                        >
+                                            <span>{item.value.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                            <span className="text-muted-foreground font-sans font-bold">{item.currency}</span>
+                                        </button>
+                                    )
+                                ))}
+                            </div>
+                        )}
+
                         {/* Chart Header & Info */}
-                        <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 gap-4">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 gap-3">
                             <div>
-                                <h4 className="text-2xl font-bold tracking-tight mb-1">
-                                    {currRate.toFixed(4)} <span className="text-sm text-muted-foreground font-medium">{targetCurrency}</span>
+                                <h4 className="text-2xl font-bold tracking-tight font-mono tabular-nums mb-0.5">
+                                    {effectiveRate.toFixed(4)} <span className="text-sm text-muted-foreground font-sans font-medium">{targetCurrency}</span>
                                 </h4>
                                 <div className={cn(
-                                    "inline-flex items-center text-sm font-bold",
+                                    "inline-flex items-center gap-1.5 text-sm font-bold font-mono tabular-nums",
                                     percentageChange >= 0
                                         ? "text-green-600 dark:text-green-400"
                                         : "text-red-600 dark:text-red-400"
                                 )}>
-                                    {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}% <span className="text-muted-foreground ml-1 font-normal">({timeRange.replace('Y', 'J')})</span>
+                                    <span>{percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%</span>
+                                    <span className="text-muted-foreground font-sans font-medium text-xs">{timeRange.replace('Y', 'J')}</span>
                                 </div>
                             </div>
 
                             {/* Timeframe Selector */}
-                            <div className="flex bg-muted/50 p-1 rounded-lg">
-                                {(['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y'] as const).map((range) => (
+                            <div className="inline-flex items-center bg-muted/50 p-0.5 rounded-lg gap-0.5 self-start md:self-auto">
+                                {VALID_RANGES.map((range) => (
                                     <button
                                         key={range}
+                                        type="button"
                                         onClick={() => handleSelectTimeRange(range)}
                                         className={cn(
-                                            "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                                            "h-7 inline-flex items-center justify-center leading-none px-2.5 py-0 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap",
                                             timeRange === range
-                                                ? "bg-background shadow-sm text-foreground"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                                ? "bg-background shadow-sm text-foreground border border-border/70"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/50 border border-transparent"
                                         )}
                                     >
                                         {range.replace('Y', 'J')}

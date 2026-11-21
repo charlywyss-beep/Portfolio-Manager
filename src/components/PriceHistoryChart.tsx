@@ -66,6 +66,8 @@ interface PriceHistoryChartProps {
     isMarketOpen?: boolean;
     purchasePrice?: number;
     purchaseDate?: string;
+    positionShares?: number;
+    averageEntryFxRate?: number;
     purchases?: Array<{
         id?: string;
         date: string;
@@ -114,6 +116,8 @@ export function PriceHistoryChart({
     isMarketOpen = true,
     purchasePrice,
     purchaseDate,
+    positionShares,
+    averageEntryFxRate,
     purchases,
     sellLimit,
     buyLimit,
@@ -443,6 +447,48 @@ export function PriceHistoryChart({
 
     // Format native difference
     const diffNativeFormatted = (diffNative > 0 ? '+' : '') + formatCurrency(diffNative, displayCurrency, false);
+
+    // Position / Bestand metrics for owned stocks & ETFs (reacts to selectedRange and CHF toggle)
+    const positionMetrics = useMemo(() => {
+        if (!positionShares || positionShares <= 0) return null;
+        const unitPrice = effectiveCurrentPrice > 0 ? effectiveCurrentPrice : endPrice;
+        if (!unitPrice || unitPrice <= 0) return null;
+
+        const positionValue = unitPrice * positionShares;
+        const hasBuyCost = Boolean(purchasePrice && purchasePrice > 0);
+        const purchaseCostNative = hasBuyCost ? purchasePrice! * positionShares : 0;
+        const entryFx = (showInCHF && currency !== 'CHF' && averageEntryFxRate && averageEntryFxRate > 0)
+            ? averageEntryFxRate
+            : conversionRate;
+        const purchaseCostDisplay = purchaseCostNative * entryFx;
+
+        const totalGain = hasBuyCost ? (positionValue - purchaseCostDisplay) : null;
+        const totalGainPct = (hasBuyCost && purchaseCostDisplay > 0 && totalGain !== null)
+            ? (totalGain / purchaseCostDisplay) * 100
+            : null;
+
+        const isBuyRange = selectedRange === 'BUY';
+        const periodGain = isBuyRange && totalGain !== null
+            ? totalGain
+            : diffNative * positionShares;
+        const periodGainPct = isBuyRange && totalGainPct !== null
+            ? totalGainPct
+            : performance;
+
+        const formattedShares = Number.isInteger(positionShares)
+            ? positionShares.toLocaleString('de-CH')
+            : positionShares.toLocaleString('de-CH', { maximumFractionDigits: 4 });
+
+        return {
+            formattedShares,
+            positionValue,
+            periodGain,
+            periodGainPct,
+            totalGain,
+            totalGainPct,
+            isBuyRange
+        };
+    }, [positionShares, effectiveCurrentPrice, endPrice, purchasePrice, showInCHF, currency, averageEntryFxRate, conversionRate, selectedRange, diffNative, performance]);
 
     const effectiveDateStr = useMemo(() => {
         if (stockDate) return stockDate;
@@ -1518,6 +1564,86 @@ export function PriceHistoryChart({
                                     </button>
                                 )}
                             </div>
+
+                            {/* Group 4: Bestand & Gewinn/Verlust auf Bestand (nur für Bestandes-Aktien / ETFs) */}
+                            {positionMetrics && (
+                                <div
+                                    className="h-7 inline-flex items-center leading-none py-0 px-2.5 sm:px-3 rounded-lg border border-border/80 bg-muted/40 text-[11px] sm:text-xs font-mono tabular-nums shrink-0 whitespace-nowrap gap-2 sm:gap-2.5 sm:ml-auto shadow-2xs"
+                                    title={(() => {
+                                        const periodLabel = positionMetrics.periodGain >= 0 ? 'Gewinn' : 'Verlust';
+                                        const parts = [
+                                            `Bestand: ${positionMetrics.formattedShares} Stk. · ${formatCurrency(positionMetrics.positionValue, displayCurrency, false)}`,
+                                            `${periodLabel} ${formatRangeLabel(selectedRange)}: ${positionMetrics.periodGain >= 0 ? '+' : ''}${formatCurrency(positionMetrics.periodGain, displayCurrency, false)}`
+                                        ];
+                                        if (!positionMetrics.isBuyRange && positionMetrics.totalGain !== null && positionMetrics.totalGainPct !== null) {
+                                            const totalLabel = positionMetrics.totalGain >= 0 ? 'Gewinn' : 'Verlust';
+                                            parts.push(`${totalLabel} Gesamt: ${positionMetrics.totalGainPct >= 0 ? '+' : ''}${positionMetrics.totalGainPct.toFixed(1)}% · ${positionMetrics.totalGain >= 0 ? '+' : ''}${formatCurrency(positionMetrics.totalGain, displayCurrency, false)}`);
+                                        }
+                                        return parts.join(' | ');
+                                    })()}
+                                >
+                                    <div className="inline-flex items-center gap-1.5 leading-none">
+                                        <span className="font-sans font-semibold text-muted-foreground hidden md:inline">Bestand</span>
+                                        <span className="font-bold text-foreground">{positionMetrics.formattedShares} Stk.</span>
+                                        <span className="text-muted-foreground/60">·</span>
+                                        <span className="font-bold text-foreground">
+                                            {formatCurrency(positionMetrics.positionValue, displayCurrency, false)}
+                                        </span>
+                                    </div>
+                                    <span className="h-3.5 w-px bg-border/80 shrink-0" />
+                                    <div className="inline-flex items-center gap-1.5 leading-none">
+                                        <span className={cn(
+                                            "font-sans font-bold",
+                                            positionMetrics.periodGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"
+                                        )}>
+                                            {positionMetrics.periodGain >= 0 ? 'Gewinn' : 'Verlust'}
+                                        </span>
+                                        <span className="font-sans font-semibold text-muted-foreground">
+                                            {formatRangeLabel(selectedRange)}
+                                        </span>
+                                        {positionMetrics.isBuyRange && positionMetrics.periodGainPct !== null && (
+                                            <span className={cn(
+                                                "font-bold",
+                                                positionMetrics.periodGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"
+                                            )}>
+                                                {positionMetrics.periodGainPct >= 0 ? '+' : ''}{positionMetrics.periodGainPct.toFixed(1)}%
+                                            </span>
+                                        )}
+                                        <span className={cn(
+                                            "font-bold",
+                                            positionMetrics.periodGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"
+                                        )}>
+                                            {positionMetrics.periodGain >= 0 ? '+' : ''}{formatCurrency(positionMetrics.periodGain, displayCurrency, false)}
+                                        </span>
+                                    </div>
+                                    {!positionMetrics.isBuyRange && positionMetrics.totalGain !== null && positionMetrics.totalGainPct !== null && (
+                                        <>
+                                            <span className="hidden xl:inline-block h-3.5 w-px bg-border/80 shrink-0" />
+                                            <div className="hidden xl:inline-flex items-center gap-1.5 leading-none">
+                                                <span className={cn(
+                                                    "font-sans font-bold",
+                                                    positionMetrics.totalGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"
+                                                )}>
+                                                    {positionMetrics.totalGain >= 0 ? 'Gewinn' : 'Verlust'}
+                                                </span>
+                                                <span className="font-sans font-semibold text-muted-foreground">Gesamt</span>
+                                                <span className={cn(
+                                                    "font-bold",
+                                                    positionMetrics.totalGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"
+                                                )}>
+                                                    {positionMetrics.totalGainPct >= 0 ? '+' : ''}{positionMetrics.totalGainPct.toFixed(1)}%
+                                                </span>
+                                                <span className={cn(
+                                                    "font-bold",
+                                                    positionMetrics.totalGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"
+                                                )}>
+                                                    {positionMetrics.totalGain >= 0 ? '+' : ''}{formatCurrency(positionMetrics.totalGain, displayCurrency, false)}
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })()}

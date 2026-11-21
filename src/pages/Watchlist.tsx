@@ -7,15 +7,17 @@ import { useCurrencyFormatter } from '../utils/currency';
 
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
-import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronRight, ChevronLeft, PieChart, Trophy, Clock, ArrowUpDown, ClipboardList } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronRight, ChevronLeft, PieChart, Trophy, Clock, ArrowUpDown, ClipboardList, Star } from 'lucide-react';
 
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
 import { estimateMarketState } from '../utils/market';
 import { translateSector } from '../utils/sectorTranslation';
+import { isEtfAsset } from '../utils/fairValue';
 
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
 import { EditPositionModal } from '../components/EditPositionModal';
+import { AddToWatchlistModal } from '../components/AddToWatchlistModal';
 import { WatchlistPerformanceModal, type WatchlistPeriod } from '../components/WatchlistPerformanceModal';
 import { WatchlistReorderModal, type WatchlistTabItem } from '../components/WatchlistReorderModal';
 import { OrderBookModal } from '../components/OrderBookModal';
@@ -46,6 +48,7 @@ export function Watchlist() {
     const { formatCurrency } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
+    const [assignWatchlistStockId, setAssignWatchlistStockId] = useState<string | null>(null);
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
 
     useEffect(() => {
@@ -94,10 +97,32 @@ export function Watchlist() {
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap' | 'price', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
-    const ownedStockIds = useMemo(
-        () => new Set(positions.map(p => String(p.stockId))),
-        [positions]
-    );
+    const ownedStockIds = useMemo(() => {
+        const directIds = new Set(positions.map(p => String(p.stockId)));
+        const ownedIsins = new Set<string>();
+        const ownedEtfBaseSymbols = new Set<string>();
+
+        positions.forEach(p => {
+            const st = stocks.find(s => String(s.id) === String(p.stockId));
+            if (!st) return;
+            if (st.isin) ownedIsins.add(st.isin.trim().toUpperCase());
+            if (isEtfAsset(st) && st.symbol) {
+                ownedEtfBaseSymbols.add(st.symbol.split('.')[0].toUpperCase());
+            }
+        });
+
+        stocks.forEach(s => {
+            if (directIds.has(String(s.id))) return;
+            if (s.isin && ownedIsins.has(s.isin.trim().toUpperCase())) {
+                directIds.add(String(s.id));
+                return;
+            }
+            if (isEtfAsset(s) && s.symbol && ownedEtfBaseSymbols.has(s.symbol.split('.')[0].toUpperCase())) {
+                directIds.add(String(s.id));
+            }
+        });
+        return directIds;
+    }, [positions, stocks]);
 
     // Open Orders from orderBook
     const openOrders = useMemo(() => {
@@ -765,6 +790,8 @@ export function Watchlist() {
                     onBuy={(stock) => handleBuy(stock)}
                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                     onRemove={handleRemoveStock}
+                    onAssignWatchlists={(id) => setAssignWatchlistStockId(id)}
+                    watchlists={watchlists}
                     formatCurrency={formatCurrency}
                     emptyMessage={
                         activeWatchlistId === 'orders'
@@ -789,6 +816,13 @@ export function Watchlist() {
                         preSelectedStock={buyStock}
                     />
                 )}
+
+                {/* AddToWatchlistModal for assigning stock/ETF to other watchlists */}
+                <AddToWatchlistModal
+                    isOpen={Boolean(assignWatchlistStockId)}
+                    onClose={() => setAssignWatchlistStockId(null)}
+                    stockId={assignWatchlistStockId || ''}
+                />
 
                 {/* EditPositionModal for editing owned stocks from watchlist */}
                 {editPosition && (
@@ -848,6 +882,8 @@ interface WatchlistTableProps {
     onBuy: (stock: Stock) => void;
     onEdit: (id: string) => void;
     onRemove: (id: string) => void;
+    onAssignWatchlists: (id: string) => void;
+    watchlists: Array<{ id: string; name: string; stockIds: string[] }>;
     formatCurrency: any;
     emptyMessage: string;
     orderBook?: OrderBookEntry[];
@@ -863,6 +899,8 @@ function WatchlistTable({
     onBuy,
     onEdit,
     onRemove,
+    onAssignWatchlists,
+    watchlists,
     formatCurrency,
     emptyMessage,
     orderBook
@@ -1534,6 +1572,30 @@ function WatchlistTable({
                                 <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:pl-12 xl:sticky xl:-right-px z-10 group-hover:bg-muted/30 transition-colors xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobilePage === 3 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="absolute inset-0 bg-card -z-10" />
                                     <div className="flex items-center justify-center gap-1.5 relative">
+                                        {(() => {
+                                            const memberLists = watchlists.filter(w => w.stockIds.includes(stock.id));
+                                            const isInAnyList = memberLists.length > 0;
+                                            return (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onAssignWatchlists(stock.id);
+                                                    }}
+                                                    className={cn(
+                                                        "p-1.5 rounded-lg transition-colors cursor-pointer",
+                                                        isInAnyList
+                                                            ? "text-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
+                                                            : "text-muted-foreground bg-muted/50 hover:text-amber-500 hover:bg-amber-500/10"
+                                                    )}
+                                                    title={isInAnyList
+                                                        ? `In Watchlists: ${memberLists.map(w => w.name).join(', ')} · Klick zum Bearbeiten`
+                                                        : 'In andere Watchlists aufnehmen zum Vergleichen'}
+                                                >
+                                                    <Star className={cn("size-4", isInAnyList && "fill-amber-500")} />
+                                                </button>
+                                            );
+                                        })()}
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();

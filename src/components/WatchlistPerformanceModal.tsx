@@ -1,14 +1,15 @@
 import { StockName } from './StockName';
-import { ArrowLeft, TrendingUp, RefreshCw, ShoppingBag, Trophy, Flame, Target, ChevronUp, ChevronDown, TrendingDown, PieChart, Layers, Telescope, Info, BookOpen, X } from 'lucide-react';
+import { ArrowLeft, TrendingUp, RefreshCw, ShoppingBag, Trophy, Flame, Target, ChevronUp, ChevronDown, TrendingDown, PieChart, Layers, Telescope, Info, BookOpen, X, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
+import { AddToWatchlistModal } from './AddToWatchlistModal';
 import { estimateMarketState, hasMarketOpenedToday, isAnyStockMarketActiveToday, getMarketOpeningTimeHint } from '../utils/market';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchMultipleHistoricalCloses, type HistoricalRange } from '../services/yahoo-finance';
-import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue } from '../utils/fairValue';
+import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue, isEtfAsset } from '../utils/fairValue';
 
 export type WatchlistPeriod = '1D' | HistoricalRange | 'BUY';
 type SortKey = 'rank' | 'name' | 'dividend' | 'price' | 'gain' | 'dailyChf' | 'fairValue' | 'gap' | 'total';
@@ -58,6 +59,7 @@ export function WatchlistPerformanceModal({
 
     const [opportunityFilter, setOpportunityFilter] = useState<OpportunityFilter>('all');
     const [showGuide, setShowGuide] = useState(false);
+    const [watchlistModalStockId, setWatchlistModalStockId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!showGuide) return;
@@ -82,13 +84,6 @@ export function WatchlistPerformanceModal({
             setCurrentWatchlistId(activeWatchlistId);
         }
     }, [activeWatchlistId]);
-
-    // Reset 'BUY' (Seit Kauf) period if switching away from Bestand (owned)
-    useEffect(() => {
-        if (currentWatchlistId !== 'owned' && selectedPeriod === 'BUY') {
-            setSelectedPeriod('1M');
-        }
-    }, [currentWatchlistId, selectedPeriod]);
 
     // Get stock IDs based on the active watchlist
     const activeWatchlist = currentWatchlistId && currentWatchlistId !== 'owned' && currentWatchlistId !== 'orders'
@@ -287,7 +282,24 @@ export function WatchlistPerformanceModal({
         }
 
         return filteredStocks.map(stock => {
-            const pos = positions.find(p => String(p.stockId) === String(stock.id));
+            const directPos = positions.find(p => String(p.stockId) === String(stock.id));
+            const matchedPos = directPos || positions.find(p => {
+                const pStock = stocks.find(s => String(s.id) === String(p.stockId));
+                if (!pStock) return false;
+                if (stock.isin && pStock.isin && stock.isin.trim().toUpperCase() === pStock.isin.trim().toUpperCase()) {
+                    return true;
+                }
+                if (isEtfAsset(stock) && isEtfAsset(pStock) && stock.symbol && pStock.symbol) {
+                    return stock.symbol.split('.')[0].toUpperCase() === pStock.symbol.split('.')[0].toUpperCase();
+                }
+                return false;
+            });
+            const pos = matchedPos;
+            const posStock = pos
+                ? (stocks.find(s => String(s.id) === String(pos.stockId)) || stock)
+                : stock;
+            const matchedViaSymbol = (pos && !directPos) ? posStock.symbol : undefined;
+
             const hasOpenedToday = hasMarketOpenedToday(stock.symbol, stock.currency);
             const shouldCalcDaily = !isAnyActiveToday || hasOpenedToday;
 
@@ -299,7 +311,8 @@ export function WatchlistPerformanceModal({
             if (shouldCalcDaily) {
                 dailyChange = stock.currentPrice - (stock.previousClose || stock.currentPrice);
                 dailyGainPercent = stock.previousClose ? (dailyChange / stock.previousClose) * 100 : 0;
-                dailyGainCHF = pos ? dailyChange * pos.shares : 0;
+                const posDailyChange = posStock.currentPrice - (posStock.previousClose || posStock.currentPrice);
+                dailyGainCHF = pos ? posDailyChange * pos.shares : 0;
             }
 
             // Period Data (1W, 1M, 3M, 6M, 1Y, 3Y, 5Y, BUY)
@@ -317,8 +330,8 @@ export function WatchlistPerformanceModal({
             })();
 
             const buyPriceAvg = pos?.buyPriceAvg && pos.buyPriceAvg > 0 ? pos.buyPriceAvg : 0;
-            const buyModeGainPercent = (buyPriceAvg > 0 && stock.currentPrice > 0)
-                ? ((stock.currentPrice - buyPriceAvg) / buyPriceAvg) * 100
+            const buyModeGainPercent = (buyPriceAvg > 0 && posStock.currentPrice > 0)
+                ? ((posStock.currentPrice - buyPriceAvg) / buyPriceAvg) * 100
                 : 0;
 
             const effectiveGainPercent = isBuyMode
@@ -327,22 +340,23 @@ export function WatchlistPerformanceModal({
                     ? (pData?.gainPercent ?? 0)
                     : dailyGainPercent;
             const baselinePrice = isBuyMode
-                ? (buyPriceAvg || stock.currentPrice)
+                ? (buyPriceAvg || posStock.currentPrice)
                 : isPeriod
                     ? (pData?.baselinePrice ?? stock.currentPrice)
                     : (stock.previousClose || stock.currentPrice);
             const resolvedStartDate = isBuyMode ? earliestPurchaseDate : pData?.startDate;
 
-            // Total Performance if owned (FX-aware)
+            // Total Performance if owned (FX-aware, always using the actual held posStock)
             let totalGainPercent = 0;
             let totalGainCHF = 0;
             if (pos) {
-                const currentValue = pos.shares * stock.currentPrice;
-                const purchaseValue = (pos.purchases || []).reduce((sum: number, purchase: any) =>
-                    sum + (purchase.shares * purchase.price), 0);
-                const currentValueCHF = convertToCHF(currentValue, stock.currency);
+                const currentValue = pos.shares * posStock.currentPrice;
+                const purchaseValue = (pos.purchases && pos.purchases.length > 0)
+                    ? pos.purchases.reduce((sum: number, purchase: any) => sum + (purchase.shares * purchase.price), 0)
+                    : (pos.shares * (pos.buyPriceAvg || 0));
+                const currentValueCHF = convertToCHF(currentValue, posStock.currency);
                 const entryFxRate = pos.averageEntryFxRate || 1;
-                const purchaseValueCHF = stock.currency !== 'CHF'
+                const purchaseValueCHF = posStock.currency !== 'CHF'
                     ? purchaseValue * entryFxRate
                     : purchaseValue;
                 totalGainCHF = currentValueCHF - purchaseValueCHF;
@@ -393,6 +407,12 @@ export function WatchlistPerformanceModal({
                 fairValueMode = 'manual';
             }
 
+            const isEtfItem = Boolean(smartConservative.isEtf);
+            const withHorizon = <T extends { pe: number; pe5?: number; pe10?: number }>(smart: T): T =>
+                activeParams?.peHorizon === '5Y' && smart.pe5
+                    ? { ...smart, pe: smart.pe5 }
+                    : smart;
+
             let fairValue = 0;
             if (fairValueMode === 'manual') {
                 const manualDcf = (activeParams && Number(activeParams.eps) > 0)
@@ -402,19 +422,19 @@ export function WatchlistPerformanceModal({
                     ? Number(activeParams.manualFairValue)
                     : (manualDcf ? manualDcf.fairValue : (stock.fairValue || 0));
             } else if (fairValueMode === 'quality') {
-                const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && Number(activeParams?.eps) > 0)
+                const qParams = (!isEtfItem && activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && Number(activeParams?.eps) > 0)
                     ? activeParams
-                    : smartQuality;
+                    : withHorizon(smartQuality);
                 fairValue = calculateDcfFairValue(qParams, effectivePrice).fairValue;
             } else if (fairValueMode === 'risk') {
-                const rParams = (activeParams?.valuationMode === 'risk' && !activeParams?.isCustom && Number(activeParams?.eps) > 0)
+                const rParams = (!isEtfItem && activeParams?.valuationMode === 'risk' && !activeParams?.isCustom && Number(activeParams?.eps) > 0)
                     ? activeParams
-                    : smartRisk;
+                    : withHorizon(smartRisk);
                 fairValue = calculateDcfFairValue(rParams, effectivePrice).fairValue;
             } else {
-                const cParams = (activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && Number(activeParams?.eps) > 0)
+                const cParams = (!isEtfItem && activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && Number(activeParams?.eps) > 0)
                     ? activeParams
-                    : smartConservative;
+                    : withHorizon(smartConservative);
                 fairValue = calculateDcfFairValue(cParams, effectivePrice).fairValue;
             }
 
@@ -453,7 +473,7 @@ export function WatchlistPerformanceModal({
                 ? stock.dividendYield
                 : computedDividendYield;
 
-            const dailyGainChfConverted = pos ? convertToCHF(dailyGainCHF, stock.currency) : null;
+            const dailyGainChfConverted = pos ? convertToCHF(dailyGainCHF, posStock.currency) : null;
             const hasPeriodData = !isPeriod || isBuyMode || Boolean(pData);
             const periodGainChfConverted = (() => {
                 if (!pos) return null;
@@ -467,12 +487,14 @@ export function WatchlistPerformanceModal({
                 stock,
                 pos,
                 isOwned: !!pos,
+                matchedViaSymbol,
                 dailyChange,
                 dailyGainPercent,
                 dailyGainCHF,
                 dailyGainChfConverted,
                 periodGainChfConverted,
                 baselinePrice,
+                baselineCurrency: isBuyMode ? posStock.currency : stock.currency,
                 effectiveGainPercent,
                 hasPeriodData,
                 periodStartDate: resolvedStartDate,
@@ -490,7 +512,19 @@ export function WatchlistPerformanceModal({
                 isNearLimit
             };
         });
-    }, [filteredStocks, positions, periodData, selectedPeriod, isAnyActiveToday, convertToCHF]);
+    }, [filteredStocks, stocks, positions, periodData, selectedPeriod, isAnyActiveToday, convertToCHF]);
+
+    const hasAnyOwnedInTab = useMemo(
+        () => enrichedData.some(d => d.isOwned),
+        [enrichedData]
+    );
+
+    // Reset 'BUY' (Seit Kauf) period if the active tab has no owned stocks/ETFs
+    useEffect(() => {
+        if (currentWatchlistId !== 'owned' && !hasAnyOwnedInTab && selectedPeriod === 'BUY') {
+            setSelectedPeriod('1M');
+        }
+    }, [currentWatchlistId, hasAnyOwnedInTab, selectedPeriod]);
 
     const undervaluedCount = useMemo(
         () => enrichedData.filter(d => d.isUndervalued).length,
@@ -527,7 +561,12 @@ export function WatchlistPerformanceModal({
             }
 
             const dir = sortConfig.direction === 'desc' ? -1 : 1;
-            if (sortConfig.key === 'gain') {
+            if (sortConfig.key === 'gain' || sortConfig.key === 'rank') {
+                if (selectedPeriod === 'BUY') {
+                    if (!a.isOwned && !b.isOwned) return a.stock.name.localeCompare(b.stock.name);
+                    if (!a.isOwned) return 1;
+                    if (!b.isOwned) return -1;
+                }
                 return (a.effectiveGainPercent - b.effectiveGainPercent) * dir;
             }
             if (sortConfig.key === 'dailyChf') {
@@ -574,16 +613,19 @@ export function WatchlistPerformanceModal({
 
     // Key statistics for the selected period
     const stats = useMemo(() => {
-        if (displayData.length === 0) return null;
+        const statsSource = selectedPeriod === 'BUY'
+            ? displayData.filter(d => d.isOwned)
+            : displayData;
+        if (statsSource.length === 0) return null;
 
-        const sortedByGain = [...displayData].sort((a, b) => b.effectiveGainPercent - a.effectiveGainPercent);
+        const sortedByGain = [...statsSource].sort((a, b) => b.effectiveGainPercent - a.effectiveGainPercent);
         const best = sortedByGain[0];
         const worst = sortedByGain[sortedByGain.length - 1];
 
-        const sumGains = displayData.reduce((sum, d) => sum + d.effectiveGainPercent, 0);
-        const avgGain = sumGains / displayData.length;
-        const winners = displayData.filter(d => d.effectiveGainPercent > 0.005).length;
-        const losers = displayData.filter(d => d.effectiveGainPercent < -0.005).length;
+        const sumGains = statsSource.reduce((sum, d) => sum + d.effectiveGainPercent, 0);
+        const avgGain = sumGains / statsSource.length;
+        const winners = statsSource.filter(d => d.effectiveGainPercent > 0.005).length;
+        const losers = statsSource.filter(d => d.effectiveGainPercent < -0.005).length;
 
         const ownedItems = displayData.filter(d => d.isOwned && d.periodGainChfConverted !== null);
         const ownedCount = ownedItems.length;
@@ -591,7 +633,7 @@ export function WatchlistPerformanceModal({
 
         // Max abs gain for relative visual progress bar
         const maxAbsGain = Math.max(
-            ...displayData.map(d => Math.abs(d.effectiveGainPercent)),
+            ...statsSource.map(d => Math.abs(d.effectiveGainPercent)),
             1
         );
 
@@ -605,7 +647,7 @@ export function WatchlistPerformanceModal({
             ownedCount,
             totalPeriodChf
         };
-    }, [displayData]);
+    }, [displayData, selectedPeriod]);
 
     const handleSort = (key: SortKey) => {
         setSortConfig(prev => {
@@ -813,7 +855,7 @@ export function WatchlistPerformanceModal({
                     <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 flex-wrap">
                         {/* Period Selector Pills */}
                         <div className="inline-flex items-center rounded-lg border border-border bg-muted/60 p-0.5 gap-0.5 shadow-2xs">
-                            {PERIOD_CONFIG.filter(p => p.key !== 'BUY' || currentWatchlistId === 'owned').map(p => {
+                            {PERIOD_CONFIG.filter(p => p.key !== 'BUY' || currentWatchlistId === 'owned' || hasAnyOwnedInTab).map(p => {
                                 const isSelected = selectedPeriod === p.key;
                                 return (
                                     <button
@@ -1062,7 +1104,7 @@ export function WatchlistPerformanceModal({
                                             ? '...'
                                             : `${stats.avgGain >= 0 ? '+' : ''}${stats.avgGain.toFixed(2)}%`}
                                     </span>
-                                    {currentWatchlistId === 'owned' && stats.ownedCount > 0 && !(isPeriodMode && isLoadingPeriod) && (
+                                    {(currentWatchlistId === 'owned' || selectedPeriod === 'BUY') && stats.ownedCount > 0 && !(isPeriodMode && isLoadingPeriod) && (
                                         <span
                                             className={cn(
                                                 "text-xs",
@@ -1171,19 +1213,19 @@ export function WatchlistPerformanceModal({
 
                                     <th
                                         onClick={() => handleSort('gain')}
-                                        className="text-right py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground min-w-[140px]"
+                                        className="text-right py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground whitespace-nowrap min-w-[140px]"
                                     >
-                                        <div className="flex items-center justify-end gap-1.5">
+                                        <div className="flex flex-nowrap items-center justify-end gap-1.5 whitespace-nowrap">
                                             {isPeriodMode ? (
                                                 <>
-                                                    <span>Rendite</span>
-                                                    <span className="text-foreground/80">{activePeriodMeta.shortLabel}</span>
+                                                    <span className="whitespace-nowrap">Rendite</span>
+                                                    <span className="text-foreground/80 whitespace-nowrap">{activePeriodMeta.shortLabel}</span>
                                                 </>
                                             ) : (
-                                                <span>Tag %</span>
+                                                <span className="whitespace-nowrap">Tag %</span>
                                             )}
                                             {sortConfig.key === 'gain' && (
-                                                sortConfig.direction === 'desc' ? <ChevronDown className="size-3 text-primary" /> : <ChevronUp className="size-3 text-primary" />
+                                                sortConfig.direction === 'desc' ? <ChevronDown className="size-3 text-primary shrink-0" /> : <ChevronUp className="size-3 text-primary shrink-0" />
                                             )}
                                         </div>
                                     </th>
@@ -1263,10 +1305,12 @@ export function WatchlistPerformanceModal({
                                     const {
                                         stock,
                                         isOwned,
+                                        matchedViaSymbol,
                                         pos,
                                         dailyGainPercent,
                                         dailyGainChfConverted,
                                         baselinePrice,
+                                        baselineCurrency,
                                         periodStartDate,
                                         effectiveGainPercent,
                                         totalGainPercent,
@@ -1397,6 +1441,31 @@ export function WatchlistPerformanceModal({
                                                             ) : (
                                                                 <div className="size-2 rounded-full bg-red-500 shrink-0 mt-1 border border-background" title={isWaitingForOpen ? `${openingHint} (${calcState})` : `Markt geschlossen (${calcState})`} />
                                                             )}
+                                                            {(() => {
+                                                                const memberLists = watchlists.filter(w => w.stockIds.includes(stock.id));
+                                                                const isInAnyList = memberLists.length > 0;
+                                                                return (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setWatchlistModalStockId(stock.id);
+                                                                        }}
+                                                                        className={cn(
+                                                                            "inline-flex items-center justify-center p-0.5 rounded transition-colors cursor-pointer shrink-0 mt-0.5",
+                                                                            isInAnyList
+                                                                                ? "text-amber-400 hover:bg-amber-500/15"
+                                                                                : "text-muted-foreground/45 hover:text-amber-400 hover:bg-muted"
+                                                                        )}
+                                                                        title={isInAnyList
+                                                                            ? `In Watchlists: ${memberLists.map(w => w.name).join(', ')} · Klick zum Zuordnen`
+                                                                            : 'In andere Watchlists aufnehmen zum Vergleichen'}
+                                                                        aria-label="Watchlists zuordnen"
+                                                                    >
+                                                                        <Star className={cn("size-3.5", isInAnyList && "fill-amber-400")} />
+                                                                    </button>
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-muted-foreground font-mono mt-0.5">
                                                             <span className="shrink-0">{stock.symbol}</span>
@@ -1430,9 +1499,11 @@ export function WatchlistPerformanceModal({
                                                 <td className="py-3 px-2 text-right font-mono tabular-nums text-muted-foreground whitespace-nowrap">
                                                     {isLoadingPeriod ? (
                                                         <span className="animate-pulse">...</span>
+                                                    ) : selectedPeriod === 'BUY' && !isOwned ? (
+                                                        <span className="text-muted-foreground/35 text-xs">-</span>
                                                     ) : (
                                                         <div className="flex flex-col items-end leading-tight">
-                                                            <span>{formatCurrency(baselinePrice, stock.currency, false)}</span>
+                                                            <span>{formatCurrency(baselinePrice, baselineCurrency, false)}</span>
                                                             {periodStartDate && (
                                                                 <span className="text-[10px] text-muted-foreground/70 mt-0.5">
                                                                     {new Date(periodStartDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })}
@@ -1453,6 +1524,8 @@ export function WatchlistPerformanceModal({
                                                 {isPeriodMode ? (
                                                     isLoadingPeriod ? (
                                                         <div className="font-mono text-xs text-muted-foreground animate-pulse">Lade...</div>
+                                                    ) : selectedPeriod === 'BUY' && !isOwned ? (
+                                                        <span className="text-muted-foreground/35 text-xs font-mono">-</span>
                                                     ) : (
                                                         <div className="flex flex-col items-end gap-1">
                                                             <div className={cn(
@@ -1628,9 +1701,12 @@ export function WatchlistPerformanceModal({
                                             {/* Portfolio Status */}
                                             <td className="py-3 px-4 bg-muted/10 whitespace-nowrap">
                                                 {isOwned && pos ? (
-                                                    <div className="flex flex-col items-end">
+                                                    <div
+                                                        className="flex flex-col items-end"
+                                                        title={matchedViaSymbol ? `Im Depot über ${matchedViaSymbol}` : undefined}
+                                                    >
                                                         <div className="text-[10px] text-muted-foreground font-semibold">
-                                                            {pos.shares} Stk. im Depot
+                                                            {pos.shares} Stk. im Depot{matchedViaSymbol ? ` · ${matchedViaSymbol}` : ''}
                                                         </div>
                                                         <div className={cn(
                                                             "inline-flex items-baseline justify-end gap-2 font-bold text-xs font-mono tabular-nums",
@@ -1670,11 +1746,16 @@ export function WatchlistPerformanceModal({
                             {opportunityFilter === 'undervalued' ? ' · Unter Fairer Wert' : opportunityFilter === 'limitReached' ? ' · Limit erreicht' : ''}
                         </div>
                         <div className="flex items-center gap-2">
-                            <span>Klick auf Zeile öffnet Details · Klick auf Fairer Wert öffnet Rechner</span>
+                            <span>Klick auf Zeile öffnet Details · Fairer Wert öffnet Rechner · ★ ordnet Watchlists zu</span>
                         </div>
                     </div>
                 </div>
         </div>
+        <AddToWatchlistModal
+            isOpen={Boolean(watchlistModalStockId)}
+            onClose={() => setWatchlistModalStockId(null)}
+            stockId={watchlistModalStockId || ''}
+        />
         </>
     );
 }
