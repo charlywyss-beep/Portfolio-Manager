@@ -766,6 +766,205 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         enabled: true
     });
 
+    // One-time safe migration: convert unowned US / foreign-listed Watchlist ETFs to SIX (.SW) UCITS tickers
+    const [needsPostMigrationRefresh, setNeedsPostMigrationRefresh] = useState(false);
+
+    useEffect(() => {
+        const MIGRATION_KEY = 'portfolio_migration_etf_sw_v1';
+        try {
+            if (localStorage.getItem(MIGRATION_KEY) === 'done') return;
+        } catch {
+            return;
+        }
+
+        const ownedIds = new Set(positions.filter(p => p.shares > 0).map(p => String(p.stockId)));
+
+        const SW_ETF_MIGRATION_MAP: Record<string, {
+            symbol: string;
+            name: string;
+            isin: string;
+            currency: 'CHF' | 'USD';
+            currentPrice: number;
+            distributionPolicy: 'distributing' | 'accumulating';
+            dividendYield?: number;
+            dividendFrequency?: 'quarterly' | 'none';
+            resetPriceTargets: boolean;
+        }> = {
+            'VOO': {
+                symbol: 'VUSA.SW',
+                name: 'Vanguard S&P 500 UCITS ETF',
+                isin: 'IE00B3XXRP09',
+                currency: 'CHF',
+                currentPrice: 112.40,
+                distributionPolicy: 'distributing',
+                dividendYield: 1.2,
+                dividendFrequency: 'quarterly',
+                resetPriceTargets: true,
+            },
+            'QQQ': {
+                symbol: 'EQQQ.SW',
+                name: 'Invesco EQQQ Nasdaq-100 UCITS ETF',
+                isin: 'IE0032077012',
+                currency: 'USD',
+                currentPrice: 628.00,
+                distributionPolicy: 'distributing',
+                dividendYield: 0.55,
+                dividendFrequency: 'quarterly',
+                resetPriceTargets: true,
+            },
+            'SCHD': {
+                symbol: 'FUSD.SW',
+                name: 'Fidelity US Quality Income UCITS ETF',
+                isin: 'IE00BYXVGX24',
+                currency: 'USD',
+                currentPrice: 13.05,
+                distributionPolicy: 'distributing',
+                dividendYield: 2.3,
+                dividendFrequency: 'quarterly',
+                resetPriceTargets: true,
+            },
+            'SWDA.L': {
+                symbol: 'SWDA.SW',
+                name: 'iShares Core MSCI World UCITS ETF',
+                isin: 'IE00B4L5Y983',
+                currency: 'USD',
+                currentPrice: 134.82,
+                distributionPolicy: 'accumulating',
+                dividendFrequency: 'none',
+                resetPriceTargets: false,
+            },
+            'IWDA.L': {
+                symbol: 'SWDA.SW',
+                name: 'iShares Core MSCI World UCITS ETF',
+                isin: 'IE00B4L5Y983',
+                currency: 'USD',
+                currentPrice: 134.82,
+                distributionPolicy: 'accumulating',
+                dividendFrequency: 'none',
+                resetPriceTargets: false,
+            },
+            'IWDA.AS': {
+                symbol: 'SWDA.SW',
+                name: 'iShares Core MSCI World UCITS ETF',
+                isin: 'IE00B4L5Y983',
+                currency: 'USD',
+                currentPrice: 134.82,
+                distributionPolicy: 'accumulating',
+                dividendFrequency: 'none',
+                resetPriceTargets: false,
+            },
+            'TDIV.AS': {
+                symbol: 'TDIV.SW',
+                name: 'VanEck Morningstar Developed Markets Dividend Leaders',
+                isin: 'NL0011683594',
+                currency: 'CHF',
+                currentPrice: 50.62,
+                distributionPolicy: 'distributing',
+                dividendYield: 3.3,
+                dividendFrequency: 'quarterly',
+                resetPriceTargets: true,
+            },
+        };
+
+        const existingBySymbol = new Map<string, Stock>();
+        stocks.forEach(s => {
+            if (s.symbol) existingBySymbol.set(s.symbol.trim().toUpperCase(), s);
+        });
+
+        const idReplacements = new Map<string, string>();
+        const idsToDelete = new Set<string>();
+        let changed = false;
+
+        const nextStocks: Stock[] = [];
+        stocks.forEach(stock => {
+            const symUpper = (stock.symbol || '').trim().toUpperCase();
+            const isOwned = ownedIds.has(String(stock.id));
+
+            // Never touch held portfolio positions (e.g. VWRA.L in Depot)
+            if (isOwned) {
+                nextStocks.push(stock);
+                return;
+            }
+
+            // Deduplicate unowned VHYL.AS into existing VHYL.SW
+            if (symUpper === 'VHYL.AS') {
+                const vhylSw = existingBySymbol.get('VHYL.SW');
+                if (vhylSw) {
+                    idReplacements.set(stock.id, vhylSw.id);
+                    idsToDelete.add(stock.id);
+                    changed = true;
+                    return;
+                }
+            }
+
+            const mapping = SW_ETF_MIGRATION_MAP[symUpper];
+            if (!mapping) {
+                nextStocks.push(stock);
+                return;
+            }
+
+            // If target .SW symbol already exists, redirect watchlist references instead of duplicating
+            const existingTarget = existingBySymbol.get(mapping.symbol.toUpperCase());
+            if (existingTarget && existingTarget.id !== stock.id) {
+                idReplacements.set(stock.id, existingTarget.id);
+                idsToDelete.add(stock.id);
+                changed = true;
+                return;
+            }
+
+            changed = true;
+            const migrated: Stock = enrichStockMetadata({
+                ...stock,
+                symbol: mapping.symbol,
+                name: mapping.name,
+                isin: mapping.isin,
+                currency: mapping.currency,
+                type: 'etf',
+                currentPrice: mapping.currentPrice,
+                previousClose: mapping.currentPrice,
+                distributionPolicy: mapping.distributionPolicy,
+                dividendFrequency: mapping.dividendFrequency ?? stock.dividendFrequency,
+                dividendYield: mapping.distributionPolicy === 'accumulating' ? 0 : (mapping.dividendYield ?? stock.dividendYield),
+                dividendAmount: mapping.distributionPolicy === 'accumulating' ? 0 : undefined,
+                dividendCurrency: mapping.currency,
+                fairValue: undefined,
+                fairValueParams: undefined,
+                ...(mapping.resetPriceTargets ? { targetPrice: undefined, targetPriceType: undefined, sellLimit: undefined } : {}),
+            });
+            existingBySymbol.set(mapping.symbol.toUpperCase(), migrated);
+            nextStocks.push(migrated);
+        });
+
+        try {
+            localStorage.setItem(MIGRATION_KEY, 'done');
+        } catch {}
+
+        if (changed) {
+            setStocks(nextStocks);
+            if (idReplacements.size > 0 || idsToDelete.size > 0) {
+                setWatchlists(prev =>
+                    prev.map(wl => {
+                        const updatedIds: string[] = [];
+                        wl.stockIds.forEach(id => {
+                            const mappedId = idReplacements.get(id) ?? id;
+                            if (!idsToDelete.has(mappedId) && !updatedIds.includes(mappedId)) {
+                                updatedIds.push(mappedId);
+                            }
+                        });
+                        return { ...wl, stockIds: updatedIds };
+                    })
+                );
+            }
+            setNeedsPostMigrationRefresh(true);
+        }
+    }, []); // Run once on mount
+
+    useEffect(() => {
+        if (!needsPostMigrationRefresh) return;
+        setNeedsPostMigrationRefresh(false);
+        refreshAllPrices(true, true);
+    }, [needsPostMigrationRefresh, refreshAllPrices]);
+
     const updateStockDividendYield = (stockId: string, dividendYield: number) => {
         const trimmedId = String(stockId).trim();
         const upperId = trimmedId.toUpperCase();

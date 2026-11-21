@@ -73,16 +73,21 @@ export const ETF_PRESETS: Record<string, EtfPreset> = {
     'VHYL.L':  { distribution: 'distributing', eps: 5.20, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
     'VHYL':    { distribution: 'distributing', eps: 5.20, growthA: 4.5, growthB: 5.0, peA: 13.5, peB: 14.5, pe5A: 14.5, pe5B: 15.5, fallbackDiv: 3.7, label: 'FTSE High Div Index-EPS' },
 
-    // Vanguard FTSE All-World (Accumulating)
+    // Vanguard FTSE All-World (Accumulating / Distributing)
     'VWRA.L':  { distribution: 'accumulating', eps: 9.05, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
+    'VWRA.SW': { distribution: 'accumulating', eps: 7.60, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
     'VWRA':    { distribution: 'accumulating', eps: 9.05, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
+    'VWRL.SW': { distribution: 'distributing', eps: 7.35, growthA: 6.5, growthB: 7.0, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, fallbackDiv: 1.8, label: 'FTSE All-World Index-EPS' },
 
     // VanEck Morningstar Developed Markets Dividend Leaders (Distributing)
+    'TDIV.SW': { distribution: 'distributing', eps: 3.91, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
     'TDIV.AS': { distribution: 'distributing', eps: 4.25, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
     'TDIV':    { distribution: 'distributing', eps: 4.25, growthA: 4.5, growthB: 5.0, peA: 12.0, peB: 13.0, pe5A: 13.0, pe5B: 14.0, fallbackDiv: 3.3, label: 'Dividend Leaders Index-EPS' },
 
-    // Schwab US Dividend Equity (Distributing)
+    // US Dividend Quality / Aristocrats (Distributing)
     'SCHD':    { distribution: 'distributing', eps: 1.95, growthA: 5.5, growthB: 6.5, peA: 15.0, peB: 16.5, pe5A: 16.0, pe5B: 17.5, fallbackDiv: 3.6, label: 'Dow Jones US Div 100 EPS' },
+    'FUSD.SW': { distribution: 'distributing', eps: 0.77, growthA: 6.5, growthB: 7.5, peA: 16.0, peB: 17.5, pe5A: 17.0, pe5B: 18.5, fallbackDiv: 2.3, label: 'US Quality Income Index-EPS' },
+    'USDV.SW': { distribution: 'distributing', eps: 4.50, growthA: 5.5, growthB: 6.5, peA: 15.0, peB: 16.5, pe5A: 16.0, pe5B: 17.5, fallbackDiv: 2.6, label: 'US Dividend Aristocrats EPS' },
 
     // L&G Global Quality Dividends (Accumulating)
     'LDGA.SW': { distribution: 'accumulating', eps: 0.75, growthA: 8.0, growthB: 8.5, peA: 14.5, peB: 16.0, pe5A: 15.5, pe5B: 17.0, label: 'Global Quality Div Index-EPS' },
@@ -97,6 +102,7 @@ export const ETF_PRESETS: Record<string, EtfPreset> = {
     'WINC.L':  { distribution: 'distributing', eps: 0.31, growthA: 1.0, growthB: 1.5, peA: 15.0, peB: 16.0, pe5A: 16.0, pe5B: 17.0, fallbackDiv: 8.5, label: 'Option-Income Portfolio-EPS' },
 
     // iShares Core MSCI World (Accumulating)
+    'SWDA.SW': { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
     'IWDA.L':  { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
     'IWDA.AS': { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
     'SWDA.L':  { distribution: 'accumulating', eps: 6.75, growthA: 8.0, growthB: 8.5, peA: 18.0, peB: 19.5, pe5A: 19.0, pe5B: 20.5, label: 'MSCI World Index-EPS' },
@@ -105,18 +111,19 @@ export const ETF_PRESETS: Record<string, EtfPreset> = {
     'IUES.L':  { distribution: 'accumulating', eps: 0.96, growthA: 7.5, growthB: 8.0, peA: 12.5, peB: 14.0, pe5A: 13.5, pe5B: 15.0, label: 'S&P 500 Energy Mid-Cycle EPS' },
     'IUES.SW': { distribution: 'accumulating', eps: 0.96, growthA: 7.5, growthB: 8.0, peA: 12.5, peB: 14.0, pe5A: 13.5, pe5B: 15.0, label: 'S&P 500 Energy Mid-Cycle EPS' },
 
-    // Vanguard S&P 500 (Distributing)
+    // S&P 500 ETFs (Distributing / Accumulating)
     'VOO':     { distribution: 'distributing', eps: 30.25, growthA: 7.5, growthB: 8.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, fallbackDiv: 1.2, label: 'S&P 500 Index-EPS' },
+    'VUSA.SW': { distribution: 'distributing', eps: 5.35, growthA: 7.5, growthB: 8.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, fallbackDiv: 1.2, label: 'S&P 500 Index-EPS' },
+    'CSSPX.SW':{ distribution: 'accumulating', eps: 36.30, growthA: 8.5, growthB: 9.5, peA: 19.0, peB: 20.5, pe5A: 20.0, pe5B: 22.0, label: 'S&P 500 Index-EPS' },
 
-    // iShares NASDAQ 100 (Accumulating)
+    // NASDAQ 100 ETFs (Accumulating / Distributing)
     'CSNDX.SW':{ distribution: 'accumulating', eps: 60.25, growthA: 10.5, growthB: 11.5, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, label: 'NASDAQ-100 Index-EPS' },
-
-    // Invesco QQQ Trust (Distributing)
+    'EQQQ.SW': { distribution: 'distributing', eps: 26.75, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
     'QQQ':     { distribution: 'distributing', eps: 25.90, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
 };
 
 const KNOWN_ACC_ETF_PREFIXES = new Set([
-    'VWRA', 'VWCE', 'IWDA', 'SWDA', 'EUNL', 'CSPX', 'VUAA', 'CSNDX', 'CNDX', 'SXRV', 'LDGA', 'LDGL', 'IUES', 'VHYA'
+    'VWRA', 'VWCE', 'IWDA', 'SWDA', 'EUNL', 'CSPX', 'CSSPX', 'VUAA', 'CSNDX', 'CNDX', 'SXRV', 'LDGA', 'LDGL', 'IUES', 'VHYA'
 ]);
 
 export function getEtfDistributionType(

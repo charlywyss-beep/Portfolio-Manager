@@ -97,12 +97,19 @@ export function Watchlist() {
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap' | 'price', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
-    const ownedStockIds = useMemo(() => {
-        const directIds = new Set(positions.map(p => String(p.stockId)));
+    // Strictly direct portfolio positions (used for the "Bestand" tab & count so alias ETFs like VHYL.AS aren't duplicated)
+    const directOwnedStockIds = useMemo(() => {
+        return new Set(positions.filter(p => p.shares > 0).map(p => String(p.stockId)));
+    }, [positions]);
+
+    // Extended owned set (including same-ISIN / same-ETF-base-ticker listings) ONLY for the green "Bestand" badge in custom watchlists
+    const ownedBadgeStockIds = useMemo(() => {
+        const badgeIds = new Set(directOwnedStockIds);
         const ownedIsins = new Set<string>();
         const ownedEtfBaseSymbols = new Set<string>();
 
         positions.forEach(p => {
+            if (!(p.shares > 0)) return;
             const st = stocks.find(s => String(s.id) === String(p.stockId));
             if (!st) return;
             if (st.isin) ownedIsins.add(st.isin.trim().toUpperCase());
@@ -112,17 +119,17 @@ export function Watchlist() {
         });
 
         stocks.forEach(s => {
-            if (directIds.has(String(s.id))) return;
+            if (badgeIds.has(String(s.id))) return;
             if (s.isin && ownedIsins.has(s.isin.trim().toUpperCase())) {
-                directIds.add(String(s.id));
+                badgeIds.add(String(s.id));
                 return;
             }
             if (isEtfAsset(s) && s.symbol && ownedEtfBaseSymbols.has(s.symbol.split('.')[0].toUpperCase())) {
-                directIds.add(String(s.id));
+                badgeIds.add(String(s.id));
             }
         });
-        return directIds;
-    }, [positions, stocks]);
+        return badgeIds;
+    }, [directOwnedStockIds, positions, stocks]);
 
     // Open Orders from orderBook
     const openOrders = useMemo(() => {
@@ -196,7 +203,7 @@ export function Watchlist() {
     // All available tabs (system tabs + custom watchlists)
     const allTabs = useMemo<WatchlistTabItem[]>(() => {
         const list: WatchlistTabItem[] = [
-            { id: 'owned', name: 'Bestand', isSystem: true, badgeCount: ownedStockIds.size },
+            { id: 'owned', name: 'Bestand', isSystem: true, badgeCount: directOwnedStockIds.size },
             { id: 'orders', name: 'Aufträge', isSystem: true, badgeCount: ordersStocksList.length }
         ];
 
@@ -210,7 +217,7 @@ export function Watchlist() {
         });
 
         return list;
-    }, [ownedStockIds.size, ordersStocksList.length, watchlists]);
+    }, [directOwnedStockIds.size, ordersStocksList.length, watchlists]);
 
     // Custom Tab Order - Persisted in localStorage
     const TAB_ORDER_STORAGE_KEY = 'watchlist_tab_order_v1';
@@ -296,7 +303,7 @@ export function Watchlist() {
     // Filter stocks based on activeWatchlistId
     const baseStocks = useMemo(() => {
         if (activeWatchlistId === 'owned') {
-            return stocks.filter(s => ownedStockIds.has(String(s.id)));
+            return stocks.filter(s => directOwnedStockIds.has(String(s.id)));
         }
         if (activeWatchlistId === 'orders') {
             return ordersStocksList;
@@ -306,12 +313,12 @@ export function Watchlist() {
         return stocks.filter(s => {
             const explicitlyInList = activeWatchlist.stockIds.includes(s.id);
             if (activeWatchlist.isDefault) {
-                const isOwned = ownedStockIds.has(String(s.id));
+                const isOwned = directOwnedStockIds.has(String(s.id));
                 return explicitlyInList || isOwned;
             }
             return explicitlyInList;
         });
-    }, [activeWatchlistId, ownedStockIds, ordersStocksList, activeWatchlist, stocks]);
+    }, [activeWatchlistId, directOwnedStockIds, ordersStocksList, activeWatchlist, stocks]);
 
     const watchlistStocks = useMemo(() => {
         return [...baseStocks].sort((a, b) => {
@@ -358,8 +365,8 @@ export function Watchlist() {
     const allStocks = watchlistStocks.filter(s => !s.type || s.type === 'stock');
     const allEtfs = watchlistStocks.filter(s => s.type === 'etf');
 
-    const ownedStocks = allStocks.filter(s => ownedStockIds.has(String(s.id)));
-    const ownedEtfs = allEtfs.filter(s => ownedStockIds.has(String(s.id)));
+    const ownedStocks = allStocks.filter(s => directOwnedStockIds.has(String(s.id)));
+    const ownedEtfs = allEtfs.filter(s => directOwnedStockIds.has(String(s.id)));
 
     // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
 
@@ -782,8 +789,9 @@ export function Watchlist() {
                 {/* Watchlist Table */}
                 <WatchlistTable
                     stocks={currentTabStocks}
-                    ownedStockIds={ownedStockIds}
+                    ownedStockIds={ownedBadgeStockIds}
                     showOwnedBadge={activeWatchlistId !== 'owned'}
+                    canRemove={activeWatchlistId !== 'owned'}
                     sortConfig={sortConfig}
                     setSortConfig={setSortConfig}
                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
@@ -876,6 +884,7 @@ interface WatchlistTableProps {
     stocks: Stock[];
     ownedStockIds: Set<string>;
     showOwnedBadge: boolean;
+    canRemove: boolean;
     sortConfig: { key: string; direction: 'asc' | 'desc' };
     setSortConfig: (config: any) => void;
     onNavigate: (id: string) => void;
@@ -893,6 +902,7 @@ function WatchlistTable({
     stocks,
     ownedStockIds,
     showOwnedBadge,
+    canRemove,
     sortConfig,
     setSortConfig,
     onNavigate,
@@ -1616,16 +1626,18 @@ function WatchlistTable({
                                         >
                                             <Edit className="size-4" />
                                         </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onRemove(stock.id);
-                                            }}
-                                            className="p-1.5 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
-                                            title="Entfernen"
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </button>
+                                        {canRemove && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onRemove(stock.id);
+                                                }}
+                                                className="p-1.5 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                title="Entfernen"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
