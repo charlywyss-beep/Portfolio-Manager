@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info, Maximize2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info, Maximize2, Telescope } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { InfoHelp } from '../components/InfoHelp';
 import { DelayedDataBadge } from '../components/DelayedDataBadge';
@@ -14,7 +14,7 @@ import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
-import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
+import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue } from '../utils/fairValue';
 import { translateSector } from '../utils/sectorTranslation';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { getEuropeanTicker, EUROPEAN_MARKET_INFO_ITEMS, type EuropeanIndicationQuote } from '../utils/europeanMarket';
@@ -395,12 +395,7 @@ export function StockDetail() {
             symKey,
             'quality'
         );
-        const smartAutoRisk = {
-            ...smartAutoConservative,
-            growthRate: Math.max(3, parseFloat((smartAutoConservative.growthRate * 0.75).toFixed(1))),
-            pe: Math.min(20, Math.max(8, parseFloat((smartAutoConservative.pe * 0.8).toFixed(1)))),
-            mos: Math.max(25, Math.min(50, smartAutoConservative.mos + 10))
-        };
+        const smartAutoRisk = applyRiskModeParams(smartAutoConservative);
 
         const savedTargetPriceType = (stock as any).targetPriceType;
         let currentMode: 'conservative' | 'quality' | 'risk' | 'manual' = 'conservative';
@@ -1475,7 +1470,7 @@ export function StockDetail() {
                                 e.stopPropagation();
                                 navigate(`/calculator?stock=${encodeURIComponent(String(stock.id))}`);
                             }}
-                            className="flex items-center gap-1 text-xs landscape:text-[10px] font-semibold px-2.5 py-1 landscape:py-0.5 landscape:px-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-colors shadow-sm"
+                            className="h-7 inline-flex items-center justify-center gap-1.5 text-xs landscape:text-[10px] font-semibold leading-none px-2.5 py-0 landscape:px-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-colors shadow-sm cursor-pointer shrink-0"
                             title="Aktie direkt in Kauf / Verkauf öffnen"
                         >
                             <Calculator className="size-3.5 landscape:size-3" />
@@ -1645,8 +1640,26 @@ export function StockDetail() {
                         </div>
                     )}
 
-                    {/* Trenner 2: Zwischen Börsenkursen und Bewertung/Limits */}
-                    <div className="my-2.5 h-px bg-border" />
+                    {/* Trenner 2: Klar sichtbarer dünner Strich zwischen Börsenkursen und Bewertung / Limiten */}
+                    <div className="mt-3 pt-2.5 border-t border-slate-400/35 dark:border-slate-500/45 flex items-center justify-between gap-2 mb-1.5">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                            <Telescope className="size-3.5 shrink-0" />
+                            <span>Bewertung &amp; Limiten</span>
+                        </span>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/fair-value?stock=${encodeURIComponent(String(stock.symbol || stock.id))}`);
+                            }}
+                            className="h-7 inline-flex items-center justify-center gap-1.5 text-xs landscape:text-[10px] font-semibold leading-none px-2.5 py-0 landscape:px-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-colors shadow-sm cursor-pointer shrink-0 group/fvbtn"
+                            title="Aktie direkt im Fairer-Wert-Rechner öffnen"
+                        >
+                            <Telescope className="size-3.5 landscape:size-3 shrink-0" />
+                            <span>Fairer Wert</span>
+                            <ArrowRight className="size-3 shrink-0 transition-transform group-hover/fvbtn:translate-x-0.5" />
+                        </button>
+                    </div>
 
                     {(() => {
                         void fvModeTick;
@@ -1776,8 +1789,18 @@ export function StockDetail() {
                                         {typeof calcBuyPrice === 'number' ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
                                     </span>
                                 </div>
-                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                    <span className="text-muted-foreground">Fairer Wert</span>
+                                <div
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/fair-value?stock=${encodeURIComponent(String(stock.symbol || stock.id))}`);
+                                    }}
+                                    className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] cursor-pointer hover:bg-blue-500/10 -mx-1.5 px-1.5 rounded transition-colors group/fvrow"
+                                    title="Im Fairer-Wert-Rechner öffnen"
+                                >
+                                    <span className="inline-flex items-center gap-1.5 text-muted-foreground group-hover/fvrow:text-blue-500 transition-colors">
+                                        <span>Fairer Wert</span>
+                                        <ArrowRight className="size-3 opacity-60 group-hover/fvrow:opacity-100 group-hover/fvrow:translate-x-0.5 transition-all" />
+                                    </span>
                                     <span className={cn(
                                         "font-medium tabular-nums",
                                         effectiveFairValue > 0

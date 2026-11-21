@@ -7,7 +7,7 @@ import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
 import { getWithholdingTaxRate, detectStockCountry, COUNTRY_TAX_RATES } from '../utils/tax';
 import { fetchStockHistory, fetchStockQuote } from '../services/yahoo-finance';
 import { cn } from '../utils';
-import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
+import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue } from '../utils/fairValue';
 import { translateSector } from '../utils/sectorTranslation';
 
 // Helper to get annual factor
@@ -1027,12 +1027,7 @@ export function EditDividendPage() {
                                             symKey,
                                             'quality'
                                         );
-                                        const smartAutoRisk = {
-                                            ...smartAutoConservative,
-                                            growthRate: Math.max(3, parseFloat((smartAutoConservative.growthRate * 0.75).toFixed(1))),
-                                            pe: Math.min(20, Math.max(8, parseFloat((smartAutoConservative.pe * 0.8).toFixed(1)))),
-                                            mos: Math.max(25, Math.min(50, smartAutoConservative.mos + 10))
-                                        };
+                                        const smartAutoRisk = applyRiskModeParams(smartAutoConservative);
 
                                         let currentMode: 'conservative' | 'quality' | 'risk' | 'manual' = 'conservative';
                                         if (activeParams?.valuationMode === 'quality') {

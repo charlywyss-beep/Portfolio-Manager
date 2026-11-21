@@ -8,7 +8,7 @@ import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { fetchStockQuote, fetchStockAnalysis, searchStocks } from '../services/yahoo-finance';
-import { computeSmartAutoParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, isEtfAsset, calculateDcfFairValue, computeStockSupportZones } from '../utils/fairValue';
+import { computeSmartAutoParams, applyRiskModeParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, isEtfAsset, isOilEnergyStock, calculateDcfFairValue, computeStockSupportZones } from '../utils/fairValue';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { translateSector } from '../utils/sectorTranslation';
 
@@ -147,18 +147,8 @@ export function FairValueCalculator() {
         const baseMode = m === 'risk' ? 'conservative' : m;
         const result = computeSmartAutoParams(adj.quote, adj.analysis, s, sym, baseMode);
         if (m === 'risk') {
-            const growthRate = Math.max(3, parseFloat((result.growthRate * 0.75).toFixed(1)));
-            const pe = Math.min(20, Math.max(8, parseFloat((result.pe * 0.8).toFixed(1))));
-            const pe5 = (result as any).pe5 ? Math.min(20, Math.max(8, parseFloat(((result as any).pe5 * 0.8).toFixed(1)))) : pe;
-            const pe10 = (result as any).pe10 ? Math.min(20, Math.max(8, parseFloat(((result as any).pe10 * 0.8).toFixed(1)))) : pe;
-            const mos = Math.max(25, Math.min(50, result.mos + 10));
             return {
-                ...result,
-                growthRate,
-                pe,
-                pe5,
-                pe10,
-                mos,
+                ...applyRiskModeParams(result),
                 growthLabel: 'Risiko-Dämpfung (-25% Wachst., +10% Marge)',
             };
         }
@@ -387,6 +377,7 @@ export function FairValueCalculator() {
         // Currency distortion: saved EPS in a different currency than the quote (e.g. TSM: 327 TWD vs. 439 USD => P/E 1.3)
         const knownPriceForSym = stocks.find(s => s.symbol.toLowerCase() === sym.toLowerCase())?.currentPrice || 0;
         if (knownPriceForSym > 0 && knownPriceForSym / Number(params.eps) < 2.5) return true;
+        if (!params.isCustom && knownPriceForSym > 0 && knownPriceForSym / Number(params.eps) > 150) return true;
         const symUpper = sym.toUpperCase();
 
         // 1. Currency Mismatch & Extreme Distortion Auto-Heals
@@ -402,6 +393,12 @@ export function FairValueCalculator() {
 
         // Never overwrite legitimate parameters that the user manually edited!
         if (params.isCustom) return false;
+
+        // Auto-apply 10J Ø cycle multiple for oil & energy stocks when switching stocks
+        const matchedStockForOil = stocks.find(s => s.symbol.toLowerCase() === sym.toLowerCase());
+        if (isOilEnergyStock(matchedStockForOil, null, sym) && params.peHorizon !== '10Y') {
+            return true;
+        }
 
         // Auto-heal stale default params for stocks with curated fundamental fallbacks (e.g. old Yahoo raw EPS or 0% dividend)
         const preset = FUNDAMENTAL_FALLBACKS[symUpper];
@@ -676,11 +673,12 @@ export function FairValueCalculator() {
                     discountRate: numDisc,
                     mos: numMos,
                     isCustom: isSavedForStock,
+                    valuationMode: valuationProfile,
                     peHorizon: selectedPeHorizon
                 });
             }
         }
-    }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, selectedPeHorizon, quote, loadingData]);
+    }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, valuationProfile, selectedPeHorizon, quote, loadingData]);
 
     // Categorized Suggestions (Holdings & Watchlist)
     const localMatches = useMemo(() => {
@@ -1977,7 +1975,7 @@ export function FairValueCalculator() {
                                             }}
                                             className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency || 'USD'}</span>
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency === 'GBp' ? 'GBP' : (quote.currency || 'USD')}</span>
                                     </div>
                                     <div className="flex gap-3 mt-1 text-[12px] flex-wrap items-center">
                                         <a
@@ -2230,7 +2228,6 @@ export function FairValueCalculator() {
                                                             onClick={() => {
                                                                 setPe(pe10Year);
                                                                 setSelectedPeHorizon('10Y');
-                                                                setIsSavedForStock(true);
                                                             }}
                                                             className={cn(
                                                                 "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
@@ -2238,7 +2235,7 @@ export function FairValueCalculator() {
                                                                     ? "bg-blue-600 text-white shadow-xs"
                                                                     : "text-muted-foreground hover:text-foreground hover:bg-card/80"
                                                             )}
-                                                            title={`Historischer 10-Jahres-KGV-Schnitt: ${pe10Year.toFixed(1)}${isEtfAsset(currentStock, quote, selectedSymbol) ? ' (Standard für ETFs)' : ''}`}
+                                                            title={`Historischer 10-Jahres-KGV-Schnitt: ${pe10Year.toFixed(1)}${isEtfAsset(currentStock, quote, selectedSymbol) ? ' (Standard für ETFs)' : isOilEnergyStock(currentStock, quote, selectedSymbol) ? ' (Standard für Öl-/Energie-Aktien)' : ''}`}
                                                         >
                                                             <span>10J Ø</span>
                                                         </button>

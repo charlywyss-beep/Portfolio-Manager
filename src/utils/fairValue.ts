@@ -25,6 +25,10 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'SHEL': { eps: 4.00, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
     'R6C0.DE': { eps: 3.80, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
     'TTE': { eps: 6.80, growth: 3.5, pe: 8.5, pe10: 8.0, div: 5.5, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
+    'BP.L': { eps: 0.75, growth: 3.0, pe: 9.0, pe10: 8.5, mos: 20, label: 'Mid-Cycle RC Profit (GBP)' },
+    'BP': { eps: 5.50, growth: 3.0, pe: 9.0, pe10: 8.5, mos: 20, label: 'Mid-Cycle RC Profit (ADR USD)' },
+    'PBR-A': { eps: 3.70, growth: 2.0, pe: 4.5, pe10: 4.0, mos: 25, label: 'TTM ADR USD (Normalisiert)' },
+    'PBR': { eps: 3.70, growth: 2.0, pe: 4.5, pe10: 4.0, mos: 25, label: 'TTM ADR USD (Normalisiert)' },
     'LOGN.SW': { eps: 4.10, growth: 6.0, pe: 17.5, pe10: 15.5, div: 1.66, mos: 20, label: 'TTM in CHF (USD 5.45 umgerechnet)' },
     'LOGI': { eps: 5.45, growth: 6.0, pe: 17.5, pe10: 15.5, div: 1.66, mos: 20, label: 'TTM in USD (Berichtswährung)' },
     'ALC.SW': { eps: 2.68, growth: 9.5, pe: 20.0, pe10: 18.0, div: 0.49, mos: 20, label: 'Core EPS in CHF ($3.05 USD)' },
@@ -50,6 +54,37 @@ export function isEtfAsset(stockObj?: any, qData?: any, symbolStr?: string | nul
     const sym = (symbolStr || stockObj?.symbol || qData?.symbol || '').toLowerCase();
     if (name.includes('etf') || name.includes('ucits') || name.includes('ishares') || name.includes('vanguard ftse')) return true;
     if (sym.includes('etf')) return true;
+    return false;
+}
+
+const OIL_ENERGY_SYMBOLS = new Set([
+    'BP.L', 'BP', 'SHEL.L', 'SHEL', 'R6C0.DE', 'TTE.PA', 'TTE',
+    'XOM', 'CVX', 'PBR', 'PBR-A', 'COP', 'OXY', 'EQNR', 'ENI.MI', 'REP.MC',
+    'SLB', 'HAL', 'BKR', 'EOG', 'MPC', 'VLO', 'PSX', 'SU', 'CNQ', 'ENB', 'KMI'
+]);
+
+export function isOilEnergyStock(stockObj?: any, qData?: any, symbolStr?: string | null): boolean {
+    if (isEtfAsset(stockObj, qData, symbolStr)) return false;
+    const symUpper = (symbolStr || stockObj?.symbol || qData?.symbol || '').toUpperCase();
+    if (OIL_ENERGY_SYMBOLS.has(symUpper)) return true;
+    const sectorStr = (qData?.sector || stockObj?.sector || '').toLowerCase();
+    if (sectorStr.includes('energie') || sectorStr.includes('energy') || sectorStr.includes('oil') || sectorStr.includes('erdöl') || sectorStr.includes('petroleum')) {
+        return true;
+    }
+    const nameStr = (stockObj?.name || qData?.shortName || qData?.longName || '').toLowerCase();
+    if (
+        nameStr.includes('petrobras') ||
+        nameStr.includes('totalenergies') ||
+        nameStr.includes('exxon') ||
+        nameStr.includes('chevron') ||
+        nameStr.includes('bp p.l.c') ||
+        nameStr.includes('shell plc') ||
+        nameStr.includes('conocophillips') ||
+        nameStr.includes('equinor') ||
+        nameStr.includes('occidental petroleum')
+    ) {
+        return true;
+    }
     return false;
 }
 
@@ -131,6 +166,12 @@ export function computeSmartAutoParams(
                 forwardPE = null;
             }
             epsCurrencySuspect = true;
+        }
+        // Write-off / GAAP distortion guard: if rawEps rounds to 0.00 or implies P/E > 150 (e.g. BP.L 0.0034 after impairments),
+        // discard it so we fall through to forward/cashflow/market estimation instead of showing EPS = 0 and Fair Value = dividend only.
+        if (rawEps && rawEps > 0 && (Number(rawEps.toFixed(2)) <= 0 || price / rawEps > 150)) {
+            rawEps = null;
+            if (trailingPE && trailingPE > 150) trailingPE = null;
         }
     }
 
@@ -291,6 +332,10 @@ export function computeSmartAutoParams(
                 rawExitPe = 11.5;
             } else if (symUpper.startsWith('ZURN')) {
                 rawExitPe = 13.0;
+            } else if (symUpper === 'PBR-A' || symUpper === 'PBR') {
+                rawExitPe = 5.5;
+            } else if (symUpper === 'BP.L' || symUpper === 'BP') {
+                rawExitPe = 10.0;
             } else {
                 rawExitPe = Math.min(preset.pe + 2.0, maxSensibleExitPe);
             }
@@ -307,7 +352,8 @@ export function computeSmartAutoParams(
         }
     }
 
-    const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
+    const minPeFloor = preset && preset.pe < 8 ? preset.pe : 8;
+    const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, minPeFloor), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
     // Calculate 10-Year historical mean P/E (Long-term cycle mean):
     let autoPe10 = autoPe;
@@ -315,7 +361,8 @@ export function computeSmartAutoParams(
         if (isQualityMode) {
             // Quality mode gets a moderate cycle premium over safety 10J, but stays disciplined below 5J
             const cycle10 = preset.pe10 + (isWideMoat ? 3.0 : 1.0);
-            autoPe10 = Math.min(cycle10, autoPe - (autoPe >= 22 ? 3.0 : 1.5));
+            const minGap = autoPe >= 22 ? 3.0 : autoPe < 8 ? 0.5 : 1.5;
+            autoPe10 = Math.min(cycle10, autoPe - minGap);
         } else {
             autoPe10 = Math.min(preset.pe10, maxSensibleExitPe);
         }
@@ -328,8 +375,9 @@ export function computeSmartAutoParams(
     }
 
     // Safety guarantee 1: 10-year mean reversion multiple should never exceed 5-year multiple
+    const minPe10Floor = preset?.pe10 && preset.pe10 < 8 ? preset.pe10 : 8.0;
     if (autoPe10 > autoPe) {
-        autoPe10 = parseFloat((Math.max(8.0, autoPe - 1.5)).toFixed(1));
+        autoPe10 = parseFloat((Math.max(minPe10Floor, autoPe - (autoPe < 8 ? 0.5 : 1.5))).toFixed(1));
     }
     // Safety guarantee 2: Ensure 10-year cycle multiple differs meaningfully from 5-year multiple (at least 1.0 to 3.0 points lower)
     if (autoPe10 >= autoPe && autoPe >= 11) {
@@ -342,7 +390,7 @@ export function computeSmartAutoParams(
     if (preset?.mos !== undefined) {
         autoMos = isQualityMode
             ? (isSwissBlueChip || isWideMoat ? 15 : preset.mos)
-            : (preset.mos <= 15 ? 15 : 20);
+            : (preset.mos <= 15 ? 15 : Math.max(20, preset.mos));
     } else if (isEtf) {
         // Breit diversifizierte ETFs: 10% in Qualität B (praxisnaher Korrektur-Einstieg), 15% in Sicherheit A (strikter Puffer)
         autoMos = isQualityMode ? 10 : 15;
@@ -357,8 +405,9 @@ export function computeSmartAutoParams(
         autoMos = 20;
     }
 
-    const defaultHorizon: '5Y' | '10Y' = isEtf ? '10Y' : '5Y';
-    const effectiveDefaultPe = isEtf ? autoPe10 : autoPe;
+    const isOilEnergy = isOilEnergyStock(stockObj, qData, symbolStr);
+    const defaultHorizon: '5Y' | '10Y' = (isEtf || isOilEnergy) ? '10Y' : '5Y';
+    const effectiveDefaultPe = (isEtf || isOilEnergy) ? autoPe10 : autoPe;
 
     return {
         eps: autoEps,
@@ -373,7 +422,29 @@ export function computeSmartAutoParams(
         epsLabel,
         growthLabel: isQualityMode ? `${growthLabel} (Markt)` : `${growthLabel} (Sicherheit)`,
         valuationMode,
-        isEtf
+        isEtf,
+        isOilEnergy
+    };
+}
+
+export function applyRiskModeParams<T extends { growthRate: number; pe: number; pe5?: number; pe10?: number; mos: number }>(base: T) {
+    const rawGrowth = parseFloat((base.growthRate * 0.75).toFixed(1));
+    const growthRate = base.growthRate <= 3 ? Math.max(0, rawGrowth) : Math.max(3, rawGrowth);
+    const scalePe = (v: number) => {
+        const floor = v < 8 ? 3.5 : 8;
+        return Math.min(20, Math.max(floor, parseFloat((v * 0.8).toFixed(1))));
+    };
+    const pe = scalePe(base.pe);
+    const pe5 = base.pe5 !== undefined ? scalePe(base.pe5) : pe;
+    const pe10 = base.pe10 !== undefined ? scalePe(base.pe10) : pe;
+    const mos = Math.max(25, Math.min(50, base.mos + 10));
+    return {
+        ...base,
+        growthRate,
+        pe,
+        pe5,
+        pe10,
+        mos
     };
 }
 
