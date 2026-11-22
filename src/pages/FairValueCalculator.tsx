@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, Target, Lock } from 'lucide-react';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
-import { useCurrencyFormatter } from '../utils/currency';
+import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 
@@ -59,7 +59,7 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 );
 
 export function FairValueCalculator() {
-    const { positions, stocks, watchlists, updateStock, addStock, addFairValueQuickLink, removeFairValueQuickLink } = usePortfolio();
+    const { positions, stocks, watchlists, fixedDeposits, updateStock, addStock, addFairValueQuickLink, removeFairValueQuickLink } = usePortfolio();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -158,6 +158,19 @@ export function FairValueCalculator() {
     };
     const [growthSourceLabel, setGrowthSourceLabel] = useState<string>('Auto-Schätzung');
     const [isSavedForStock, setIsSavedForStock] = useState<boolean>(false);
+    const [maxPositionPct, setMaxPositionPct] = useState<number>(() => {
+        try {
+            const saved = Number(localStorage.getItem('fair_value_max_pos_pct'));
+            if ([5, 8, 10, 15].includes(saved)) return saved;
+        } catch {}
+        return 10;
+    });
+    const handleSelectMaxPositionPct = (pct: number) => {
+        setMaxPositionPct(pct);
+        try {
+            localStorage.setItem('fair_value_max_pos_pct', String(pct));
+        } catch {}
+    };
     const [valuationProfile, setValuationProfile] = useState<'conservative' | 'quality' | 'risk'>('conservative');
 
     // Persistence Ref to avoid cycles
@@ -1061,6 +1074,67 @@ export function FairValueCalculator() {
             fiftyTwoWeekLow: (quote as any)?.fiftyTwoWeekLow
         });
     }, [quote, analysis, currentStock, selectedSymbol]);
+
+    // Live Positionsgrösse & Cash-Quote für den Wenn-Dann-Risiko-Check
+    const portfolioRiskStats = useMemo(() => {
+        let totalValueStock = 0;
+        positions.forEach((p) => {
+            if (!p.shares || p.shares <= 0) return;
+            const st = stocks.find((s) => s.id === p.stockId);
+            if (!st) return;
+            totalValueStock += convertToCHF(p.shares * (st.currentPrice || 0), st.currency, fxRates);
+        });
+
+        let totalValueBank = 0;
+        (fixedDeposits || []).forEach((fd) => {
+            if (fd.accountType !== 'vorsorge') {
+                totalValueBank += convertToCHF(fd.amount || 0, fd.currency, fxRates);
+            }
+        });
+
+        const activeStock = selectedSymbol
+            ? stocks.find((s) => s.symbol.toLowerCase() === selectedSymbol.toLowerCase())
+            : null;
+        const activePosition = activeStock
+            ? positions.find((p) => p.stockId === activeStock.id && p.shares > 0)
+            : null;
+
+        const priceForPos = quote?.price || activeStock?.currentPrice || 0;
+        const currencyForPos = quote?.currency || activeStock?.currency || 'USD';
+        const positionValueChf = activePosition
+            ? convertToCHF(activePosition.shares * priceForPos, currencyForPos, fxRates)
+            : 0;
+
+        const positionSharePct = totalValueStock > 0 ? (positionValueChf / totalValueStock) * 100 : 0;
+        const maxAllowedChf = (totalValueStock * maxPositionPct) / 100;
+        const remainingBudgetChf = Math.max(0, maxAllowedChf - positionValueChf);
+
+        const zone1TargetPrice = supportZones[0]?.targetPrice || priceForPos;
+        const oneShareChf = zone1TargetPrice > 0 ? convertToCHF(zone1TargetPrice, currencyForPos, fxRates) : 0;
+        const remainingSharesApprox = oneShareChf > 0 ? Math.floor(remainingBudgetChf / oneShareChf) : 0;
+
+        const totalLiquidBase = totalValueStock + totalValueBank;
+        const cashRatioPct = totalLiquidBase > 0 ? (totalValueBank / totalLiquidBase) * 100 : 0;
+
+        const high52w = (quote as any)?.fiftyTwoWeekHigh;
+        const drawdownFrom52wHigh =
+            high52w && high52w > 0 && priceForPos > 0
+                ? ((priceForPos - high52w) / high52w) * 100
+                : null;
+
+        return {
+            totalValueStock,
+            totalValueBank,
+            positionValueChf,
+            positionSharePct,
+            maxAllowedChf,
+            remainingBudgetChf,
+            remainingSharesApprox,
+            cashRatioPct,
+            drawdownFrom52wHigh,
+            hasPosition: Boolean(activePosition && activePosition.shares > 0),
+        };
+    }, [positions, stocks, fixedDeposits, fxRates, selectedSymbol, quote, maxPositionPct, supportZones]);
 
     // Fundamentale Risikoprofil- / Abwärtsabsicherungs-Einschätzung (Downside Protection)
     const downsideProtection = useMemo(() => {
@@ -3323,7 +3397,7 @@ export function FairValueCalculator() {
                                                 <Target className="size-3.5 text-primary shrink-0" />
                                                 <span>🎯 Unterstützungs- & Kaufzonen</span>
                                             </div>
-                                            <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
+                                            <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
                                                 Kauf-Staffelung
                                             </span>
                                         </div>
@@ -3356,12 +3430,12 @@ export function FairValueCalculator() {
                                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                                 <span className="font-bold text-foreground text-xs">{zone.level}</span>
                                                                 {zone.badgeText && (
-                                                                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                                    <span className="text-xs px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 leading-none">
                                                                         {zone.badgeText}
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <div className="text-[12px] text-muted-foreground leading-normal mt-0.5">
+                                                            <div className="text-xs text-muted-foreground leading-normal mt-0.5">
                                                                 {zone.description}
                                                             </div>
                                                         </div>
@@ -3372,7 +3446,7 @@ export function FairValueCalculator() {
                                                                     ~{zone.minPrice.toFixed(2)} – {zone.maxPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}
                                                                 </div>
                                                                 <div className={cn(
-                                                                    "text-[10px] font-mono font-semibold",
+                                                                    "text-xs font-mono font-semibold",
                                                                     zone.distancePct > 0
                                                                         ? "text-emerald-400"
                                                                         : zone.distancePct < -22
@@ -3391,7 +3465,7 @@ export function FairValueCalculator() {
                                                                     handleSaveBuyLimit(val, 'manual');
                                                                 }}
                                                                 className={cn(
-                                                                    "px-2 py-1 text-[11px] font-semibold rounded-md border transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1",
+                                                                    "h-7 px-2.5 text-xs font-semibold rounded-md border transition-all cursor-pointer whitespace-nowrap active:scale-95 inline-flex items-center justify-center leading-none py-0 gap-1",
                                                                     isActive
                                                                         ? "bg-emerald-600 text-white border-emerald-500 shadow-xs"
                                                                         : "bg-card hover:bg-muted text-foreground border-border hover:border-primary/50 shadow-2xs"
@@ -3442,6 +3516,195 @@ export function FairValueCalculator() {
                                                         <span className="font-mono font-bold">{formatCurrency(pMix, quote.currency, false)}</span>
                                                         <span>{isMixActive ? 'Aktiv' : 'Als Kauflimit'}</span>
                                                     </button>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Wenn-Dann-Szenarien & Risiko-Check (Positionsgrösse + Cash-Quote) */}
+                                        {(() => {
+                                            const z1 = supportZones[0];
+                                            const z2 = supportZones[1];
+                                            const z3 = supportZones[2];
+                                            const curLabel = quote.currency === 'GBp' ? 'GBP' : quote.currency;
+                                            const isSteepDrop = portfolioRiskStats.drawdownFrom52wHigh !== null && portfolioRiskStats.drawdownFrom52wHigh <= -25;
+                                            const isBelowZone1 = Boolean(z1 && currentPrice > 0 && currentPrice < z1.minPrice);
+                                            const posFillPct = maxPositionPct > 0 ? Math.min(100, (portfolioRiskStats.positionSharePct / maxPositionPct) * 100) : 0;
+                                            const isOverLimit = portfolioRiskStats.positionSharePct >= maxPositionPct;
+                                            const isNearLimit = !isOverLimit && portfolioRiskStats.positionSharePct >= maxPositionPct * 0.8;
+
+                                            return (
+                                                <div className="pt-2.5 mt-2 border-t border-border/50 space-y-2.5">
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                        <div className="flex items-center gap-1.5 font-bold text-xs sm:text-[13px] text-foreground">
+                                                            <ShieldCheck className="size-3.5 text-blue-400 shrink-0" />
+                                                            <span>Wenn-Dann-Plan & Risiko-Check</span>
+                                                        </div>
+                                                        {(isSteepDrop || isBelowZone1) && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                                                <TriangleAlert className="size-3 shrink-0" />
+                                                                <span>
+                                                                    {isSteepDrop
+                                                                        ? `Abverkauf ${portfolioRiskStats.drawdownFrom52wHigh!.toFixed(0)} % vom 52W-Hoch · Tagesschluss abwarten`
+                                                                        : 'Unter Zone 1 · Tagesschluss abwarten'}
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Klare Wenn-Dann-Szenarien */}
+                                                    {z1 && z2 && z3 && (
+                                                        <div className="space-y-1.5 text-xs">
+                                                            <div className="flex items-start gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                                                                <span className="shrink-0 font-bold text-emerald-400">Hält:</span>
+                                                                <span className="text-muted-foreground leading-snug">
+                                                                    Wenn Zone 1 ab <strong className="font-mono text-foreground">{z1.minPrice.toFixed(2)} {curLabel}</strong> per Tagesschluss hält & sich stabilisiert → <strong className="text-foreground">Tranche 1 / Halten</strong>.
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                                                                <span className="shrink-0 font-bold text-amber-400">Bricht:</span>
+                                                                <span className="text-muted-foreground leading-snug">
+                                                                    Fällt <strong className="font-mono text-foreground">{z1.minPrice.toFixed(2)} {curLabel}</strong> per Tagesschluss → kein Griff ins fallende Messer, Geduld bis Zone 2 <strong className="font-mono text-foreground">~{z2.minPrice.toFixed(2)} {curLabel}</strong> oder Crash-Zone <strong className="font-mono text-foreground">~{z3.minPrice.toFixed(2)} {curLabel}</strong>.
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Positionsgrösse & Cash-Quote */}
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        {/* Depot-Anteil & Maximal-Limit */}
+                                                        <div className="p-2 rounded-lg bg-card/70 border border-border/60 space-y-1.5">
+                                                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                                <span className="text-xs font-semibold text-muted-foreground">Depot-Anteil</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-xs text-muted-foreground mr-0.5">Max</span>
+                                                                    {[5, 8, 10, 15].map((pct) => (
+                                                                        <button
+                                                                            key={pct}
+                                                                            type="button"
+                                                                            onClick={() => handleSelectMaxPositionPct(pct)}
+                                                                            className={cn(
+                                                                                "h-7 px-2 inline-flex items-center justify-center leading-none py-0 rounded-md text-xs font-semibold border transition-all cursor-pointer",
+                                                                                maxPositionPct === pct
+                                                                                    ? "bg-primary text-primary-foreground border-primary"
+                                                                                    : "bg-background text-muted-foreground border-border hover:text-foreground hover:bg-accent"
+                                                                            )}
+                                                                            title={`Maximale Positionsgrösse auf ${pct} % setzen`}
+                                                                        >
+                                                                            {pct} %
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-baseline justify-between gap-2">
+                                                                <span className={cn(
+                                                                    "font-mono font-bold text-sm",
+                                                                    isOverLimit ? "text-rose-400" : isNearLimit ? "text-amber-400" : "text-emerald-400"
+                                                                )}>
+                                                                    {portfolioRiskStats.positionSharePct.toFixed(1)} %
+                                                                </span>
+                                                                <span className="text-xs font-mono text-muted-foreground">
+                                                                    {formatCurrency(portfolioRiskStats.positionValueChf, 'CHF', false)} / {formatCurrency(portfolioRiskStats.maxAllowedChf, 'CHF', false)}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                                                                <div
+                                                                    className={cn(
+                                                                        "h-full rounded-full transition-all",
+                                                                        isOverLimit ? "bg-rose-500" : isNearLimit ? "bg-amber-500" : "bg-emerald-500"
+                                                                    )}
+                                                                    style={{ width: `${posFillPct}%` }}
+                                                                />
+                                                            </div>
+
+                                                            <div className="text-xs text-muted-foreground space-y-0.5">
+                                                                {isOverLimit ? (
+                                                                    <span className="text-rose-400 font-medium">
+                                                                        Max-Limit {maxPositionPct} % erreicht · Zukauf nur mit Vorsicht
+                                                                    </span>
+                                                                ) : (
+                                                                    <>
+                                                                        <div>
+                                                                            Spielraum: <strong className="font-mono text-foreground">+{formatCurrency(portfolioRiskStats.remainingBudgetChf, 'CHF', false)}</strong>
+                                                                            {portfolioRiskStats.remainingSharesApprox > 0 && (
+                                                                                <span> · ca. {portfolioRiskStats.remainingSharesApprox.toLocaleString('de-CH')} Stk.</span>
+                                                                            )}
+                                                                        </div>
+                                                                        {portfolioRiskStats.remainingBudgetChf > 0 && (
+                                                                            <div className="text-muted-foreground/90">
+                                                                                1/3-Tranche: <strong className="font-mono text-foreground">~{formatCurrency(portfolioRiskStats.remainingBudgetChf / 3, 'CHF', false)}</strong>
+                                                                                {portfolioRiskStats.remainingSharesApprox >= 3 && (
+                                                                                    <span> · ca. {Math.floor(portfolioRiskStats.remainingSharesApprox / 3).toLocaleString('de-CH')} Stk.</span>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Cash-Reserve */}
+                                                        {(() => {
+                                                            const oneTrancheChf = portfolioRiskStats.remainingBudgetChf / 3;
+                                                            const trancheCashPct = portfolioRiskStats.totalValueBank > 0 && oneTrancheChf > 0
+                                                                ? (oneTrancheChf / portfolioRiskStats.totalValueBank) * 100
+                                                                : 0;
+                                                            const cashBarPct = Math.min(100, (portfolioRiskStats.cashRatioPct / 30) * 100);
+                                                            return (
+                                                                <div className="p-2 rounded-lg bg-card/70 border border-border/60 flex flex-col justify-between gap-1.5">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <span className="text-xs font-semibold text-muted-foreground">Cash-Reserve</span>
+                                                                        <span className={cn(
+                                                                            "text-xs font-mono font-bold",
+                                                                            portfolioRiskStats.cashRatioPct >= 10
+                                                                                ? "text-emerald-400"
+                                                                                : portfolioRiskStats.cashRatioPct >= 5
+                                                                                    ? "text-amber-400"
+                                                                                    : "text-rose-400"
+                                                                        )}>
+                                                                            {portfolioRiskStats.cashRatioPct.toFixed(1)} % Quote
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="font-mono font-bold text-sm text-foreground">
+                                                                        {formatCurrency(portfolioRiskStats.totalValueBank, 'CHF', false)}
+                                                                    </div>
+
+                                                                    <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                                                                        <div
+                                                                            className={cn(
+                                                                                "h-full rounded-full transition-all",
+                                                                                portfolioRiskStats.cashRatioPct >= 10
+                                                                                    ? "bg-emerald-500"
+                                                                                    : portfolioRiskStats.cashRatioPct >= 5
+                                                                                        ? "bg-amber-500"
+                                                                                        : "bg-rose-500"
+                                                                            )}
+                                                                            style={{ width: `${cashBarPct}%` }}
+                                                                        />
+                                                                    </div>
+
+                                                                    <div className="text-xs text-muted-foreground space-y-0.5">
+                                                                        <div>
+                                                                            {portfolioRiskStats.cashRatioPct >= 10 ? (
+                                                                                <span className="text-emerald-400">Solide Reserve für gestaffelte Tranchen</span>
+                                                                            ) : portfolioRiskStats.cashRatioPct >= 5 ? (
+                                                                                <span className="text-amber-400">Mittlere Reserve · Tranchen klein halten</span>
+                                                                            ) : (
+                                                                                <span className="text-rose-400">Wenig Cash · Reserve für Crash-Zone schonen</span>
+                                                                            )}
+                                                                        </div>
+                                                                        {!isOverLimit && trancheCashPct > 0 && (
+                                                                            <div className="text-muted-foreground/90">
+                                                                                1/3-Tranche ≈ <strong className="font-mono text-foreground">{trancheCashPct.toFixed(1)} %</strong> vom Cash
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
                                                 </div>
                                             );
                                         })()}
