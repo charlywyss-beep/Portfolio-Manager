@@ -2789,7 +2789,7 @@ export function PriceHistoryChart({
             )}>
                 {/* Desktop Dynamic Hover Overlay (Fixed position inside chart - zero layout shift / zero flicker) */}
                 {hoveredData && (
-                    <div className="hidden sm:flex items-center gap-3.5 text-sm z-20 pointer-events-none absolute bottom-7 left-2 bg-background/60 dark:bg-[#0b1222]/60 backdrop-blur-md border border-border/60 rounded-lg px-3 py-1.5 shadow-lg">
+                    <div className="hidden sm:flex items-center gap-3.5 text-sm z-20 pointer-events-none absolute bottom-7 left-2 bg-background/50 dark:bg-slate-950/50 backdrop-blur-[1px] border border-border/50 rounded-lg px-3 py-1.5 shadow-sm">
                         <div className="flex flex-col items-start leading-tight">
                             <span className="font-bold text-sm text-foreground whitespace-nowrap">
                                 {(() => {
