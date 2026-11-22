@@ -647,7 +647,7 @@ export function Watchlist() {
                                             </span>
                                         )}
                                     </button>
-                                    {!tab.isSystem && !tab.isDefault && activeWatchlistId === tab.id && (
+                                    {!tab.isSystem && activeWatchlistId === tab.id && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -678,18 +678,33 @@ export function Watchlist() {
                             <Plus className="size-4" />
                         </button>
 
-                        {/* Rename Button (for active non-system list) */}
+                        {/* Rename & Delete Buttons (for active non-system list) */}
                         {activeWatchlist && (
-                            <button
-                                onClick={() => {
-                                    const newName = window.prompt("Neuer Name:", activeWatchlist.name);
-                                    if (newName) renameWatchlist(activeWatchlist.id, newName);
-                                }}
-                                className="p-2 ml-1 iphone-landscape-pill-icon rounded-full text-muted-foreground hover:bg-accent transition-colors border border-border flex items-center justify-center shrink-0 cursor-pointer"
-                                title="Liste umbenennen"
-                            >
-                                <Edit className="size-4" />
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => {
+                                        const newName = window.prompt("Neuer Name:", activeWatchlist.name);
+                                        if (newName) renameWatchlist(activeWatchlist.id, newName);
+                                    }}
+                                    className="p-2 ml-1 iphone-landscape-pill-icon rounded-full text-muted-foreground hover:bg-accent transition-colors border border-border flex items-center justify-center shrink-0 cursor-pointer"
+                                    title="Liste umbenennen"
+                                >
+                                    <Edit className="size-4" />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (confirm(`Liste "${activeWatchlist.name}" wirklich löschen?`)) {
+                                            deleteWatchlist(activeWatchlist.id);
+                                            setActiveWatchlistId('owned');
+                                        }
+                                    }}
+                                    className="p-2 ml-1 iphone-landscape-pill-icon rounded-full text-red-500 hover:bg-red-500/10 transition-colors border border-border flex items-center justify-center shrink-0 cursor-pointer"
+                                    title="Aktive Liste löschen"
+                                    aria-label="Aktive Liste löschen"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            </>
                         )}
 
                         {/* Reorder Button */}
