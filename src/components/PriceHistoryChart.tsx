@@ -6,31 +6,40 @@ import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
-import { Ruler, X, ArrowLeft, ArrowLeftRight, ArrowUpRight, Maximize2, Minimize2, HelpCircle, ShieldCheck, Sparkles, TriangleAlert, Sliders, RefreshCw, GitCompareArrows, Search, Loader2, Check } from 'lucide-react';
+import { Ruler, X, ArrowLeft, ArrowLeftRight, ArrowUpRight, Maximize2, Minimize2, HelpCircle, ShieldCheck, Sparkles, TriangleAlert, Sliders, RefreshCw, GitCompareArrows, Loader2, Check } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange, type ChartDataPoint, fetchStockHistory } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { usePortfolio } from '../context/PortfolioContext';
+
+function isUsEquitySymbol(symbol: string | undefined): boolean {
+    const s = (symbol || '').trim().toUpperCase();
+    if (!s || s.startsWith('^') || s.includes('=')) return false;
+    if (s.includes('.') && !s.endsWith('.US')) return false;
+    if (/-(USD|CHF|EUR|GBP)$/.test(s)) return false;
+    return true;
+}
 
 interface CompareTarget {
     symbol: string;
     name: string;
     currency?: string;
     badge?: string;
+    kind?: 'index' | 'etf' | 'stock';
 }
 
 const COMPARE_BENCHMARKS: CompareTarget[] = [
-    { symbol: '^N225', name: 'Nikkei 225', currency: 'JPY', badge: 'Japan' },
-    { symbol: '2559.T', name: 'All-World Tokio', currency: 'JPY', badge: 'MSCI ACWI' },
-    { symbol: 'ES=F', name: 'S&P 500 Future', currency: 'USD', badge: 'US Future' },
-    { symbol: 'NQ=F', name: 'Nasdaq 100 Future', currency: 'USD', badge: 'US Future' },
-    { symbol: '^GSPC', name: 'S&P 500', currency: 'USD', badge: 'Index' },
-    { symbol: '^NDX', name: 'Nasdaq 100', currency: 'USD', badge: 'Index' },
-    { symbol: '^SSMI', name: 'SMI', currency: 'CHF', badge: 'Schweiz' },
-    { symbol: '^GDAXI', name: 'DAX', currency: 'EUR', badge: 'Deutschland' },
-    { symbol: 'VWRA.L', name: 'Vanguard FTSE All-World', currency: 'USD', badge: 'ETF' },
-    { symbol: 'VT', name: 'Vanguard Total World US', currency: 'USD', badge: 'US Vor/Nach' },
-    { symbol: 'BTC-USD', name: 'Bitcoin', currency: 'USD', badge: '24/7' },
+    { symbol: '^N225', name: 'Nikkei 225', currency: 'JPY', badge: 'Japan', kind: 'index' },
+    { symbol: '2559.T', name: 'All-World Tokio', currency: 'JPY', badge: 'MSCI ACWI', kind: 'etf' },
+    { symbol: 'ES=F', name: 'S&P 500 Future', currency: 'USD', badge: 'US Future', kind: 'index' },
+    { symbol: 'NQ=F', name: 'Nasdaq 100 Future', currency: 'USD', badge: 'US Future', kind: 'index' },
+    { symbol: '^GSPC', name: 'S&P 500', currency: 'USD', badge: 'Index', kind: 'index' },
+    { symbol: '^NDX', name: 'Nasdaq 100', currency: 'USD', badge: 'Index', kind: 'index' },
+    { symbol: '^SSMI', name: 'SMI', currency: 'CHF', badge: 'Schweiz', kind: 'index' },
+    { symbol: '^GDAXI', name: 'DAX', currency: 'EUR', badge: 'Deutschland', kind: 'index' },
+    { symbol: 'VWRA.L', name: 'Vanguard FTSE All-World', currency: 'USD', badge: 'ETF', kind: 'etf' },
+    { symbol: 'VT', name: 'Vanguard Total World US', currency: 'USD', badge: 'US Vor/Nach', kind: 'etf' },
+    { symbol: 'BTC-USD', name: 'Bitcoin', currency: 'USD', badge: '24/7', kind: 'index' },
 ];
 
 export const COMPARE_SWISS_GUIDE_ITEMS = [
@@ -56,11 +65,15 @@ export const COMPARE_SWISS_GUIDE_ITEMS = [
     },
     {
         term: "Schritt 6 · Abstand (Δ) & Mauszeiger richtig ablesen",
-        text: "Fahre mit der Maus über jeden beliebigen Zeitpunkt (z. B. `04:50` oder `07:30 Uhr`) – oben links im Chart erscheinen **beide Prozentwerte ab Start**, **beide Originalkurse** und der exakte **Abstand Δ**:\n\n• **Positiver Abstand (z. B. Δ +1.94%):** Deine Hauptkurve (`2559.T`) hält sich um `1.94%` besser als die Vergleichslinie (`Nikkei 225`).\n• **Negativer Abstand (z. B. Δ -0.80%):** Der Weltmarkt bzw. die US-Futures schwächeln stärker als Japan – dann unbedingt auch **S&P 500 Future (`ES=F`)** gegenchecken."
+        text: "Fahre mit der Maus über jeden beliebigen Zeitpunkt (z. B. `04:50` oder `07:30 Uhr`) – unten links im Chart erscheinen **beide Prozentwerte ab Start**, **beide Originalkurse** und der exakte **Abstand Δ**:\n\n• **Positiver Abstand (z. B. Δ +1.94%):** Deine Hauptkurve (`2559.T`) hält sich um `1.94%` besser als die Vergleichslinie (`Nikkei 225`).\n• **Negativer Abstand (z. B. Δ -0.80%):** Der Weltmarkt bzw. die US-Futures schwächeln stärker als Japan – dann unbedingt auch **E-Mini S&P 500 Future (`ES=F`)** gegenchecken."
     },
     {
         term: "Schritt 7 · Konkrete Handlungsregel für Schweizer Anleger vor 09:00 Uhr",
-        text: "• **07:00–07:30 Uhr:** Kurzer Check `2559.T vs. Nikkei 225` (und bei Bedarf `vs. S&P 500 Future`) → du weisst vor Börsenstart genau, ob Ruhe, Rückenwind oder Gegenwind ansteht.\n• **09:00–09:15 Uhr (SIX-Eröffnung):** In den ersten 5–10 Minuten sind die Geld-/Brief-Spannen (Spreads) an der SIX oft unnötig breit. **Niemals «Bestens» direkt um 09:00 Uhr handeln** – setze immer eine **Limit-Order** oder warte bis **09:15 Uhr** (bei US-Aktien idealerweise ab **15:30 Uhr**)."
+        text: "• **07:00–07:30 Uhr:** Kurzer Check `2559.T vs. Nikkei 225` (und bei Bedarf `vs. E-Mini S&P 500 Future`) → du weisst vor Börsenstart genau, ob Ruhe, Rückenwind oder Gegenwind ansteht.\n• **09:00–09:15 Uhr (SIX-Eröffnung):** In den ersten 5–10 Minuten sind die Geld-/Brief-Spannen (Spreads) an der SIX oft unnötig breit. **Niemals «Bestens» direkt um 09:00 Uhr handeln** – setze immer eine **Limit-Order** oder warte bis **09:15 Uhr** (bei US-Aktien idealerweise ab **15:30 Uhr**)."
+    },
+    {
+        term: "Schritt 8 · 24h-Praxisregel & ausgeschriebene Ticker-Symbole",
+        text: "• **Morgens 01:00–07:30 Uhr (Asien / Frühtendenz):**\n  **MAXIS World Equity MSCI ACWI ETF Tokio (`2559.T`)** ↔ **Nikkei 225 (`^N225`)** / **E-Mini S&P 500 Future (`ES=F`)** / **E-Mini Nasdaq-100 Future (`NQ=F`)**.\n\n• **Tagsüber 10:00–15:30 Uhr (Europa live + US-Vorbörse · Button «10:00–15:30»):**\n  Wenn du in diesem Fenster zu deinem **Vanguard FTSE All-World UCITS ETF (`VWRA.L`)** den echten, flüssigen Taktgeber ohne Treppenstufen sehen willst, wähle statt **Vanguard Total World Stock ETF USA (`VT`)** lieber **E-Mini S&P 500 Future (`ES=F`)** oder **E-Mini Nasdaq-100 Future (`NQ=F`)** – die handeln im Sekundentakt.\n\n• **Abends 15:30–22:00 Uhr + US-Nachbörse bis 02:00 Uhr (Button «Ab 15:30»):**\n  Jetzt ist **Vanguard Total World Stock ETF USA (`VT`)** perfekt – extrem liquide und zeigt dir nach Europa-Schluss (`17:30 Uhr`) exakt, wie dein **Vanguard FTSE All-World (`VWRA.L`)** in den USA weiterläuft!"
     }
 ];
 
@@ -255,7 +268,7 @@ export function PriceHistoryChart({
     const [isCompareLoading, setIsCompareLoading] = useState(false);
     const [compareError, setCompareError] = useState<string | null>(null);
     const [showComparePicker, setShowComparePicker] = useState(false);
-    const [compareSearch, setCompareSearch] = useState('');
+    const [compareFilterTab, setCompareFilterTab] = useState<'all' | 'index' | 'etf' | 'stock'>('all');
     const [comparePickerPos, setComparePickerPos] = useState<{ top: number; left: number } | null>(null);
     const compareBtnRef = useRef<HTMLButtonElement>(null);
     const comparePopoverRef = useRef<HTMLDivElement>(null);
@@ -273,7 +286,6 @@ export function PriceHistoryChart({
         setCompareTimeMode('sync');
         setCompareError(null);
         setShowComparePicker(false);
-        setCompareSearch('');
         setHoveredData(null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stockSymbol, initialCompareKey]);
@@ -352,19 +364,21 @@ export function PriceHistoryChart({
             });
 
         const ownedIds = new Set(portfolioPositions.filter(p => p.shares > 0).map(p => p.stockId));
+        const benchmarkSymbols = new Set(filteredBenchmarks.map(b => b.symbol.toUpperCase()));
         const seenSymbols = new Set<string>([currentSym]);
         const ownedList: CompareTarget[] = [];
         const watchList: CompareTarget[] = [];
 
         for (const s of portfolioStocks) {
             const symUpper = (s.symbol || '').trim().toUpperCase();
-            if (!symUpper || seenSymbols.has(symUpper)) continue;
+            if (!symUpper || seenSymbols.has(symUpper) || benchmarkSymbols.has(symUpper)) continue;
             seenSymbols.add(symUpper);
             const item: CompareTarget = {
                 symbol: s.symbol,
                 name: s.name || s.symbol,
                 currency: s.currency,
                 badge: ownedIds.has(s.id) ? 'Depot' : 'Watchlist',
+                kind: s.type === 'etf' ? 'etf' : 'stock',
             };
             if (ownedIds.has(s.id)) ownedList.push(item);
             else watchList.push(item);
@@ -385,7 +399,6 @@ export function PriceHistoryChart({
         setCompareTimeMode('sync');
         setCompareError(null);
         setShowComparePicker(false);
-        setCompareSearch('');
         // Turn off currency-level tools while % comparison overlay is active
         setIsMeasureMode(false);
         setMeasurePoints([]);
@@ -1012,9 +1025,9 @@ export function PriceHistoryChart({
         setIsCompareLoading(true);
         setCompareError(null);
 
-        // Only request US pre/post-market hours when the comparison symbol itself is a US stock/ETF (never for .L / .SW / .T!)
-        const isCompareUsEquity = !/[.^=-]/.test(compareTarget.symbol);
-        const isPrimaryNonUs = /[.]/.test(stockSymbol || '');
+        // Only request US pre/post-market hours when the comparison symbol itself is a US stock/ETF (incl. PBR-A / BRK-B, never .L / .SW / .T!)
+        const isCompareUsEquity = isUsEquitySymbol(compareTarget.symbol);
+        const isPrimaryNonUs = !isUsEquitySymbol(stockSymbol);
         const shouldIncludePrePost = selectedRange === '1D' && isCompareUsEquity && (showPrePost || isPrimaryNonUs);
 
         fetchStockHistory(compareTarget.symbol, compareFetchRange, undefined, {
@@ -1305,7 +1318,7 @@ export function PriceHistoryChart({
         // in synchronized modes ('sync' or 'us1530') so the US regular session up to 22:00 CET and US after-hours remain visible!
         let primaryCloseDate: string | null = null;
         let comparePostStartDate: string | null = null;
-        const isCompareUsEquity = !/[.^=-]/.test(compareTarget.symbol);
+        const isCompareUsEquity = isUsEquitySymbol(compareTarget.symbol);
         if (selectedRange === '1D' && !usedSessionFallback && effectiveMode !== 'pre10_1530' && isCompareUsEquity && lastPrimaryItem) {
             const lastPrimaryMs = new Date(lastPrimaryItem.date).getTime();
             const tailPoints = sortedCmp.filter(
@@ -2697,36 +2710,46 @@ export function PriceHistoryChart({
                                 >
                                     Zeit-Sync
                                 </button>
-                                {compareOverlay.summary.hasPre10_1530Overlap && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setCompareTimeMode('pre10_1530')}
-                                        className={cn(
-                                            "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
-                                            compareOverlay.summary.activeTimeMode === 'pre10_1530'
-                                                ? "bg-sky-600 text-white shadow-sm"
-                                                : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                        title="Fokus US-Vorbörse 10:00 bis 15:30 Uhr gegen laufenden Europa-Chart · beide starten um 10:00 Uhr bei 0%"
-                                    >
-                                        10:00–15:30
-                                    </button>
-                                )}
-                                {compareOverlay.summary.hasUs1530Overlap && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setCompareTimeMode('us1530')}
-                                        className={cn(
-                                            "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
-                                            compareOverlay.summary.activeTimeMode === 'us1530'
-                                                ? "bg-sky-600 text-white shadow-sm"
-                                                : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                        title="Startet exakt um 15:30 Uhr bei 0% · Fokus auf Live-Handel Europa + USA 15:30–17:30 Uhr"
-                                    >
-                                        Ab 15:30
-                                    </button>
-                                )}
+                                <button
+                                    type="button"
+                                    disabled={!compareOverlay.summary.hasPre10_1530Overlap}
+                                    onClick={() => compareOverlay.summary?.hasPre10_1530Overlap && setCompareTimeMode('pre10_1530')}
+                                    className={cn(
+                                        "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
+                                        !compareOverlay.summary.hasPre10_1530Overlap
+                                            ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                                            : compareOverlay.summary.activeTimeMode === 'pre10_1530'
+                                                ? "bg-sky-600 text-white shadow-sm cursor-pointer"
+                                                : "text-muted-foreground hover:text-foreground cursor-pointer"
+                                    )}
+                                    title={
+                                        compareOverlay.summary.hasPre10_1530Overlap
+                                            ? "Fokus US-Vorbörse 10:00 bis 15:30 Uhr gegen laufenden Europa-Chart · beide starten um 10:00 Uhr bei 0%"
+                                            : "Keine gemeinsamen Kursdaten zwischen 10:00 und 15:30 Uhr verfügbar"
+                                    }
+                                >
+                                    10:00–15:30
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={!compareOverlay.summary.hasUs1530Overlap}
+                                    onClick={() => compareOverlay.summary?.hasUs1530Overlap && setCompareTimeMode('us1530')}
+                                    className={cn(
+                                        "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
+                                        !compareOverlay.summary.hasUs1530Overlap
+                                            ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                                            : compareOverlay.summary.activeTimeMode === 'us1530'
+                                                ? "bg-sky-600 text-white shadow-sm cursor-pointer"
+                                                : "text-muted-foreground hover:text-foreground cursor-pointer"
+                                    )}
+                                    title={
+                                        compareOverlay.summary.hasUs1530Overlap
+                                            ? "Startet exakt um 15:30 Uhr bei 0% · Fokus auf Live-Handel Europa + USA 15:30–17:30 Uhr"
+                                            : "Keine gemeinsamen Kursdaten ab 15:30 Uhr verfügbar"
+                                    }
+                                >
+                                    Ab 15:30
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => setCompareTimeMode('session')}
@@ -3874,36 +3897,23 @@ export function PriceHistoryChart({
     // Custom app-themed comparison picker popover rendered via portal so overflow-x-auto / fullscreen never clip it
     const comparePickerPortal = (showComparePicker && comparePickerPos && typeof document !== 'undefined') ? createPortal(
         (() => {
-            const q = compareSearch.trim().toLowerCase();
-            const filteredBenchmarks = q
-                ? compareBenchmarks.filter(item =>
-                    item.name.toLowerCase().includes(q) ||
-                    item.symbol.toLowerCase().includes(q) ||
-                    (item.badge && item.badge.toLowerCase().includes(q))
-                )
-                : compareBenchmarks;
-            const filteredPortfolio = q
-                ? comparePortfolioItems.filter(item =>
-                    item.name.toLowerCase().includes(q) ||
-                    item.symbol.toLowerCase().includes(q) ||
-                    (item.badge && item.badge.toLowerCase().includes(q))
-                )
-                : comparePortfolioItems;
+            const matchesFilter = (item: CompareTarget) => {
+                return compareFilterTab === 'all' || item.kind === compareFilterTab;
+            };
+            const filteredBenchmarks = compareBenchmarks.filter(matchesFilter);
+            const filteredPortfolio = comparePortfolioItems.filter(matchesFilter);
 
-            const customTicker = compareSearch.trim().toUpperCase();
-            const hasExactMatch = [...filteredBenchmarks, ...filteredPortfolio].some(
-                i => i.symbol.toUpperCase() === customTicker
-            );
-            const showCustomTickerOption = customTicker.length >= 1 && !hasExactMatch && customTicker !== (stockSymbol || '').toUpperCase();
+            const etfCount = compareBenchmarks.filter(i => i.kind === 'etf').length + comparePortfolioItems.filter(i => i.kind === 'etf').length;
+            const stockCount = comparePortfolioItems.filter(i => i.kind === 'stock').length;
 
             return (
                 <div
                     ref={comparePopoverRef}
                     style={{ top: comparePickerPos.top, left: comparePickerPos.left }}
-                    className="fixed z-[10050] w-[min(320px,calc(100vw-16px))] bg-card border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+                    className="fixed z-[10050] w-[min(340px,calc(100vw-16px))] bg-card border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
                 >
-                    <div className="p-2.5 border-b border-border bg-muted/30">
-                        <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="p-2.5 border-b border-border bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-bold text-foreground">Vergleichs-Titel wählen</span>
                             {compareTarget && (
                                 <button
@@ -3918,41 +3928,28 @@ export function PriceHistoryChart({
                                 </button>
                             )}
                         </div>
-                        <div className="relative">
-                            <Search className="size-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                            <input
-                                type="text"
-                                value={compareSearch}
-                                onChange={(e) => setCompareSearch(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const first = filteredBenchmarks[0] || filteredPortfolio[0];
-                                        if (first) {
-                                            handleSelectCompareTarget(first);
-                                        } else if (showCustomTickerOption) {
-                                            handleSelectCompareTarget({
-                                                symbol: customTicker,
-                                                name: customTicker,
-                                                badge: 'Ticker',
-                                            });
-                                        }
-                                    }
-                                }}
-                                placeholder="Suchen z. B. Nikkei, 2559.T, S&P…"
-                                autoFocus
-                                className="w-full h-8 pl-8 pr-7 rounded-lg border border-border bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
-                            />
-                            {compareSearch && (
+                        {/* Vorauswahl-Filter: Alle / Indizes / ETFs / Aktien (ohne Eingabefeld -> kein Passwort-Manager-Popup) */}
+                        <div className="h-7 grid grid-cols-4 gap-0.5 p-0.5 rounded-lg bg-background/80 border border-border/80">
+                            {([
+                                { id: 'all', label: 'Alle' },
+                                { id: 'index', label: 'Indizes' },
+                                { id: 'etf', label: `ETFs ${etfCount}` },
+                                { id: 'stock', label: `Aktien ${stockCount}` },
+                            ] as const).map((tab) => (
                                 <button
+                                    key={tab.id}
                                     type="button"
-                                    onClick={() => setCompareSearch('')}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-                                    title="Suche leeren"
+                                    onClick={() => setCompareFilterTab(tab.id)}
+                                    className={cn(
+                                        "h-6 inline-flex items-center justify-center px-1 py-0 rounded-md text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                        compareFilterTab === tab.id
+                                            ? "bg-sky-600 text-white shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                    )}
                                 >
-                                    <X className="size-3.5" />
+                                    {tab.label}
                                 </button>
-                            )}
+                            ))}
                         </div>
                     </div>
 
@@ -3960,7 +3957,11 @@ export function PriceHistoryChart({
                         {filteredBenchmarks.length > 0 && (
                             <div>
                                 <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                                    Empfohlen · Märkte &amp; Indizes
+                                    {compareFilterTab === 'etf'
+                                        ? 'Empfohlen · Welt-ETFs'
+                                        : compareFilterTab === 'index'
+                                            ? 'Märkte, Indizes & Futures'
+                                            : 'Empfohlen · Märkte & Indizes'}
                                 </div>
                                 <div className="space-y-0.5">
                                     {filteredBenchmarks.map((item) => {
@@ -3998,8 +3999,15 @@ export function PriceHistoryChart({
 
                         {filteredPortfolio.length > 0 && (
                             <div>
-                                <div className="px-2 py-1 text-xs font-semibold text-muted-foreground border-t border-border/60 pt-2">
-                                    Depot &amp; Watchlist
+                                <div className={cn(
+                                    "px-2 py-1 text-xs font-semibold text-muted-foreground",
+                                    filteredBenchmarks.length > 0 && "border-t border-border/60 pt-2"
+                                )}>
+                                    {compareFilterTab === 'etf'
+                                        ? 'Depot & Watchlist · ETFs'
+                                        : compareFilterTab === 'stock'
+                                            ? 'Depot & Watchlist · Aktien'
+                                            : 'Depot & Watchlist'}
                                 </div>
                                 <div className="space-y-0.5">
                                     {filteredPortfolio.map((item) => {
@@ -4040,24 +4048,7 @@ export function PriceHistoryChart({
                             </div>
                         )}
 
-                        {showCustomTickerOption && (
-                            <div className="border-t border-border/60 pt-1.5">
-                                <button
-                                    type="button"
-                                    onClick={() => handleSelectCompareTarget({
-                                        symbol: customTicker,
-                                        name: customTicker,
-                                        badge: 'Ticker',
-                                    })}
-                                    className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-left text-xs bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-300 font-semibold transition-colors cursor-pointer"
-                                >
-                                    <span className="truncate">Symbol direkt vergleichen: <span className="font-mono font-bold">{customTicker}</span></span>
-                                    <GitCompareArrows className="size-3.5 shrink-0" />
-                                </button>
-                            </div>
-                        )}
-
-                        {filteredBenchmarks.length === 0 && filteredPortfolio.length === 0 && !showCustomTickerOption && (
+                        {filteredBenchmarks.length === 0 && filteredPortfolio.length === 0 && (
                             <div className="px-3 py-4 text-center text-xs text-muted-foreground">
                                 Keine passenden Titel gefunden
                             </div>
