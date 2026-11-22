@@ -3420,10 +3420,10 @@ export function FairValueCalculator() {
                                                         className={cn(
                                                             "p-2 rounded-lg border transition-all text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2",
                                                             zone.id === 'zone1'
-                                                                ? "bg-blue-500/5 border-blue-500/25 hover:border-blue-500/40"
+                                                                ? "bg-emerald-500/5 border-emerald-500/30 hover:border-emerald-500/50"
                                                                 : zone.id === 'zone2'
-                                                                    ? "bg-purple-500/5 border-purple-500/25 hover:border-purple-500/40"
-                                                                    : "bg-emerald-500/5 border-emerald-500/25 hover:border-emerald-500/40"
+                                                                    ? "bg-amber-500/5 border-amber-500/30 hover:border-amber-500/50"
+                                                                    : "bg-rose-500/5 border-rose-500/35 hover:border-rose-500/55"
                                                         )}
                                                     >
                                                         <div className="min-w-0 flex-1">
@@ -3554,16 +3554,16 @@ export function FairValueCalculator() {
                                                     {/* Klare Wenn-Dann-Szenarien */}
                                                     {z1 && z2 && z3 && (
                                                         <div className="space-y-1.5 text-xs">
-                                                            <div className="flex items-start gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                                                            <div className="flex items-start gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/30">
                                                                 <span className="shrink-0 font-bold text-emerald-400">Hält:</span>
                                                                 <span className="text-muted-foreground leading-snug">
-                                                                    Wenn Zone 1 ab <strong className="font-mono text-foreground">{z1.minPrice.toFixed(2)} {curLabel}</strong> per Tagesschluss hält & sich stabilisiert → <strong className="text-foreground">Tranche 1 / Halten</strong>.
+                                                                    Wenn Zone 1 ab <strong className="font-mono text-emerald-400">{z1.minPrice.toFixed(2)} {curLabel}</strong> per Tagesschluss hält & sich stabilisiert → <strong className="text-foreground">Tranche 1 / Halten</strong>.
                                                                 </span>
                                                             </div>
-                                                            <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                                                                <span className="shrink-0 font-bold text-amber-400">Bricht:</span>
+                                                            <div className="flex items-start gap-2 p-2 rounded-lg bg-rose-500/5 border border-rose-500/35">
+                                                                <span className="shrink-0 font-bold text-rose-400">Bricht:</span>
                                                                 <span className="text-muted-foreground leading-snug">
-                                                                    Fällt <strong className="font-mono text-foreground">{z1.minPrice.toFixed(2)} {curLabel}</strong> per Tagesschluss → kein Griff ins fallende Messer, Geduld bis Zone 2 <strong className="font-mono text-foreground">~{z2.minPrice.toFixed(2)} {curLabel}</strong> oder Crash-Zone <strong className="font-mono text-foreground">~{z3.minPrice.toFixed(2)} {curLabel}</strong>.
+                                                                    Fällt <strong className="font-mono text-foreground">{z1.minPrice.toFixed(2)} {curLabel}</strong> per Tagesschluss → kein Griff ins fallende Messer, Geduld bis Zone 2 <strong className="font-mono text-amber-400">~{z2.minPrice.toFixed(2)} {curLabel}</strong> oder Crash-Zone <strong className="font-mono text-rose-400">~{z3.minPrice.toFixed(2)} {curLabel}</strong>.
                                                                 </span>
                                                             </div>
                                                         </div>
