@@ -95,7 +95,7 @@ export function Watchlist() {
         : (watchlists.find(w => w.id === activeWatchlistId) || watchlists[0]);
 
     // Sorting
-    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap' | 'price', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap' | 'price' | 'exDate' | 'payDate', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
     // Strictly direct portfolio positions (used for the "Bestand" tab & count so alias ETFs like VHYL.AS aren't duplicated)
     const directOwnedStockIds = useMemo(() => {
@@ -356,6 +356,26 @@ export function Watchlist() {
                 const gapA = (a.currentPrice - sellA) / sellA;
                 const gapB = (b.currentPrice - sellB) / sellB;
                 return sortConfig.direction === 'asc' ? gapA - gapB : gapB - gapA;
+            }
+            if (sortConfig.key === 'exDate') {
+                const dateA = getCurrentDividendPeriod(a).exDate;
+                const dateB = getCurrentDividendPeriod(b).exDate;
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+                const timeA = new Date(dateA).getTime();
+                const timeB = new Date(dateB).getTime();
+                return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
+            }
+            if (sortConfig.key === 'payDate') {
+                const dateA = getCurrentDividendPeriod(a).payDate;
+                const dateB = getCurrentDividendPeriod(b).payDate;
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+                const timeA = new Date(dateA).getTime();
+                const timeB = new Date(dateB).getTime();
+                return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
             }
             return 0;
         });
@@ -922,7 +942,7 @@ function WatchlistTable({
     const handleSort = (key: string) => {
         setSortConfig((prev: any) => {
             const isSameKey = prev.key === key;
-            const defaultDir = (key === 'gap' || key === 'sellGap') ? 'asc' : 'desc';
+            const defaultDir = (key === 'gap' || key === 'sellGap' || key === 'exDate' || key === 'payDate') ? 'asc' : 'desc';
             let newDir: 'asc' | 'desc';
             if (!isSameKey) {
                 newDir = defaultDir;
@@ -969,6 +989,26 @@ function WatchlistTable({
                 const gapA = (a.currentPrice - sellA) / sellA;
                 const gapB = (b.currentPrice - sellB) / sellB;
                 return sortConfig.direction === 'asc' ? gapA - gapB : gapB - gapA;
+            }
+            if (sortConfig.key === 'exDate') {
+                const dateA = getCurrentDividendPeriod(a).exDate;
+                const dateB = getCurrentDividendPeriod(b).exDate;
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+                const timeA = new Date(dateA).getTime();
+                const timeB = new Date(dateB).getTime();
+                return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
+            }
+            if (sortConfig.key === 'payDate') {
+                const dateA = getCurrentDividendPeriod(a).payDate;
+                const dateB = getCurrentDividendPeriod(b).payDate;
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+                const timeA = new Date(dateA).getTime();
+                const timeB = new Date(dateB).getTime();
+                return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
             }
             return 0;
         });
@@ -1277,11 +1317,35 @@ function WatchlistTable({
                                 >
                                     <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-xs sm:text-[13px] text-foreground truncate">
-                                    EX-Tag
-                                </span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleSort('exDate');
+                                    }}
+                                    className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
+                                >
+                                    <span className="truncate">EX-Tag</span>
+                                    {sortConfig.key === 'exDate' && (
+                                        <span className="font-bold text-sm text-primary shrink-0">
+                                            {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                        </span>
+                                    )}
+                                </button>
                             </div>
-                            <span className="hidden xl:inline">EX-Tag</span>
+                            <button
+                                type="button"
+                                onClick={() => handleSort('exDate')}
+                                className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                            >
+                                <span>EX-Tag</span>
+                                {sortConfig.key === 'exDate' && (
+                                    <span className="font-bold text-xs">
+                                        {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                    </span>
+                                )}
+                            </button>
                         </th>
 
                         {/* 6. Zahl-Tag */}
@@ -1292,9 +1356,22 @@ function WatchlistTable({
                             )}
                         >
                             <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
-                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-xs sm:text-[13px] text-foreground truncate">
-                                    Zahl-Tag
-                                </span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleSort('payDate');
+                                    }}
+                                    className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
+                                >
+                                    <span className="truncate">Zahl-Tag</span>
+                                    {sortConfig.key === 'payDate' && (
+                                        <span className="font-bold text-sm text-primary shrink-0">
+                                            {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                        </span>
+                                    )}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -1310,7 +1387,18 @@ function WatchlistTable({
                                     <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
-                            <span className="hidden xl:inline">Zahl-Tag</span>
+                            <button
+                                type="button"
+                                onClick={() => handleSort('payDate')}
+                                className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                            >
+                                <span>Zahl-Tag</span>
+                                {sortConfig.key === 'payDate' && (
+                                    <span className="font-bold text-xs">
+                                        {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                    </span>
+                                )}
+                            </button>
                         </th>
 
                         {/* 7. Aktionen */}
@@ -1535,11 +1623,11 @@ function WatchlistTable({
                                 <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 2 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                         <span className={cn(
-                                            "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
+                                            "text-[15px] xl:text-sm whitespace-nowrap leading-tight tabular-nums",
                                             (() => {
                                                 const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                if (dDays !== null && dDays < 0) return "text-red-500 dark:text-red-400 font-medium";
-                                                if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                if (dDays !== null && dDays < 0) return "text-[#ff1e1e] dark:text-[#ff2b2b] font-bold";
+                                                if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-amber-500 dark:text-amber-400 font-semibold";
                                                 if (dDays !== null && dDays > 14) return "text-green-600 dark:text-green-400 font-medium";
                                                 return "text-muted-foreground";
                                             })()
@@ -1549,7 +1637,7 @@ function WatchlistTable({
                                                 : '-'}
                                         </span>
                                         {currentDiv.status === 'ex-dividend' && (
-                                            <span className="text-[11px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
+                                            <span className="text-xs font-bold text-white bg-[#e61919] dark:bg-[#ff2424] px-1.5 py-0.5 rounded leading-none uppercase tracking-wide">
                                                 Ex-Div
                                             </span>
                                         )}
@@ -1558,13 +1646,13 @@ function WatchlistTable({
                                 <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 2 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                         <span className={cn(
-                                            "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
+                                            "text-[15px] xl:text-sm whitespace-nowrap leading-tight tabular-nums",
                                             (() => {
                                                 const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                                                 const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                if (payDays !== null && payDays < 0) return "text-green-600 dark:text-green-400 font-medium";
-                                                if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
-                                                if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
+                                                if (payDays !== null && payDays < 0) return "text-green-600 dark:text-green-400 font-semibold";
+                                                if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-amber-500 dark:text-amber-400 font-semibold";
+                                                if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-amber-500 dark:text-amber-400 font-semibold";
                                                 return "text-muted-foreground";
                                             })()
                                         )}>
@@ -1573,7 +1661,7 @@ function WatchlistTable({
                                                 : '-'}
                                         </span>
                                         {currentDiv.status === 'paid' && (
-                                            <span className="text-[11px] font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
+                                            <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
                                                 Bezahlt
                                             </span>
                                         )}
