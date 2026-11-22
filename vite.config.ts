@@ -99,7 +99,7 @@ export default defineConfig({
               // Always fetch quoteSummary on the actual symbol `sym` so EPS/PE/Dividend match local share currency & ratio!
               const [result, quoteBasic, quoteFundamental] = await Promise.all([
                  yahooFinance.quoteSummary(sym, {
-                    modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'financialData', 'earningsTrend']
+                    modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'financialData', 'earningsTrend', 'calendarEvents']
                  }).catch(() => null),
                  yahooFinance.quote(sym).catch(() => null),
                  (fundamentalSymbol !== sym) ? yahooFinance.quote(fundamentalSymbol).catch(() => null) : null
@@ -207,6 +207,14 @@ export default defineConfig({
               const summaryProfile: any = result?.summaryProfile || {};
               const financialData: any = result?.financialData || {};
               const earningsTrend: any = result?.earningsTrend || {};
+              const calendarEvents: any = result?.calendarEvents || {};
+              const toUnixSec = (v: any): number | null => {
+                  const raw = typeof v === 'object' && v !== null && 'raw' in v ? v.raw : v;
+                  if (raw instanceof Date) return Math.floor(raw.getTime() / 1000);
+                  if (typeof raw === 'number' && Number.isFinite(raw)) return raw > 1e12 ? Math.floor(raw / 1000) : Math.floor(raw);
+                  if (typeof raw === 'string' && !isNaN(Date.parse(raw))) return Math.floor(Date.parse(raw) / 1000);
+                  return null;
+              };
 
               const currency = price.currency || quoteBasic?.currency;
               const rawPrice = price.regularMarketPrice || quoteBasic?.regularMarketPrice;
@@ -292,6 +300,8 @@ export default defineConfig({
                 epsSource,
                 growthRate: growthRate5Y,
                 dividendYield: getRawVal(summaryDetail.dividendYield) ? getRawVal(summaryDetail.dividendYield) * 100 : (getRawVal(quoteBasic?.dividendYield) || null),
+                exDividendDate: toUnixSec(calendarEvents.exDividendDate) ?? toUnixSec(summaryDetail.exDividendDate) ?? toUnixSec(quoteBasic?.exDividendDate) ?? null,
+                dividendPayDate: toUnixSec(calendarEvents.dividendDate) ?? toUnixSec((quoteBasic as any)?.dividendDate) ?? null,
                 kcv: kcvValue,
 
                 regularMarketOpen: getRawVal(quoteBasic?.regularMarketOpen) || getRawVal(summaryDetail.open) || null,
@@ -448,6 +458,47 @@ export default defineConfig({
         } catch (error: any) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: error.message }));
+        }
+      });
+
+      // DivvyDiary API Proxy (forwards user's X-API-Key to api.divvydiary.com)
+      server.middlewares.use('/api/divvydiary', async (req, res, _next) => {
+        try {
+          const url = new URL(req.url!, `http://${req.headers.host}`);
+          const isin = (url.searchParams.get('isin') || '').trim().toUpperCase();
+          const apiKeyHeader = req.headers['x-api-key'];
+          const apiKey = (Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader || '').trim();
+
+          if (!isin) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'ISIN required' }));
+            return;
+          }
+          if (!apiKey) {
+            res.statusCode = 401;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'X-API-Key header required' }));
+            return;
+          }
+
+          const targetUrl = `https://api.divvydiary.com/symbols/${encodeURIComponent(isin)}`;
+          const upstream = await fetch(targetUrl, {
+            headers: {
+              'X-API-Key': apiKey,
+              'Accept': 'application/json',
+              'User-Agent': 'PortfolioManager/1.0'
+            }
+          });
+
+          const text = await upstream.text();
+          res.statusCode = upstream.status;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(text);
+        } catch (error: any) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: error.message || 'DivvyDiary request failed' }));
         }
       });
     }

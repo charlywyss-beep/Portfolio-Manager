@@ -4,10 +4,15 @@ import { usePortfolio } from '../context/PortfolioContext';
 
 import {
     Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw,
-    Cloud, CloudUpload, CloudDownload, Key, Eye, EyeOff, RefreshCw, ExternalLink, Copy, Check, Loader2, Settings as SettingsIcon
+    Cloud, CloudUpload, CloudDownload, Key, Eye, EyeOff, RefreshCw, ExternalLink, Copy, Check, Loader2, Settings as SettingsIcon, Calendar
 } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import packageJson from '../../package.json';
+import {
+    getDivvyDiaryApiKey,
+    saveDivvyDiaryApiKey,
+    testDivvyDiaryApiKey
+} from '../services/divvydiary';
 import {
     getGistCredentials,
     saveGistCredentials,
@@ -93,6 +98,28 @@ export function Settings() {
     const [syncLoading, setSyncLoading] = useState(false);
     const [syncStatus, setSyncStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
     const [connectedUser, setConnectedUser] = useState<string | null>(null);
+
+    // DivvyDiary API Key States
+    const [divvyApiKey, setDivvyApiKey] = useState(() => getDivvyDiaryApiKey());
+    const [isDivvyKeyVisible, setIsDivvyKeyVisible] = useState(false);
+    const [divvyTesting, setDivvyTesting] = useState(false);
+    const [divvyStatus, setDivvyStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
+
+    const handleTestDivvyDiary = async () => {
+        if (!divvyApiKey.trim()) {
+            setDivvyStatus({ type: 'error', message: 'Bitte zuerst einen DivvyDiary API-Key eingeben.' });
+            return;
+        }
+        saveDivvyDiaryApiKey(divvyApiKey);
+        setDivvyTesting(true);
+        setDivvyStatus({ type: 'idle', message: '' });
+        const res = await testDivvyDiaryApiKey(divvyApiKey);
+        setDivvyTesting(false);
+        setDivvyStatus({
+            type: res.ok ? 'success' : 'error',
+            message: res.message
+        });
+    };
 
     useEffect(() => {
         if (gistToken) {
@@ -446,6 +473,99 @@ export function Settings() {
                             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1 leading-relaxed whitespace-pre-wrap">{syncStatus.message}</div>
+                    </div>
+                )}
+            </div>
+
+            {/* DivvyDiary API Integration Card */}
+            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-4 w-full max-w-full overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 text-sky-600 dark:text-sky-400">
+                        <div className="p-2 bg-sky-500/10 rounded-lg shrink-0">
+                            <Calendar className="size-6" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-foreground">DivvyDiary Dividenden-API</h2>
+                            <p className="text-xs text-muted-foreground">
+                                Lädt offizielle Ex-Tage, exakte Zahltage und Forecasts direkt per ISIN (mit Yahoo als Fallback).
+                            </p>
+                        </div>
+                    </div>
+                    {divvyApiKey.trim() && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 w-fit">
+                            <CheckCircle className="size-3.5" />
+                            <span>API-Key hinterlegt</span>
+                        </span>
+                    )}
+                </div>
+
+                <div className="space-y-1.5 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                            <Key className="size-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+                            <span>DivvyDiary X-API-Key</span>
+                        </label>
+                        <a
+                            href="https://divvydiary.com/settings"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 w-fit"
+                        >
+                            <span>API-Key auf DivvyDiary öffnen</span>
+                            <ExternalLink className="size-3" />
+                        </a>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full min-w-0">
+                        <div className="relative flex-1 min-w-0">
+                            <input
+                                type={isDivvyKeyVisible ? 'text' : 'password'}
+                                value={divvyApiKey}
+                                onChange={(e) => {
+                                    setDivvyApiKey(e.target.value);
+                                    saveDivvyDiaryApiKey(e.target.value);
+                                    setDivvyStatus({ type: 'idle', message: '' });
+                                }}
+                                placeholder="DivvyDiary API-Key hier einfügen..."
+                                className="w-full h-10 pl-3 pr-10 text-xs sm:text-sm bg-background border border-border rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setIsDivvyKeyVisible(!isDivvyKeyVisible)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground rounded transition-colors"
+                                title={isDivvyKeyVisible ? 'Verbergen' : 'Anzeigen'}
+                            >
+                                {isDivvyKeyVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleTestDivvyDiary}
+                            disabled={divvyTesting || !divvyApiKey.trim()}
+                            className="h-10 px-4 text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50 shrink-0"
+                        >
+                            {divvyTesting ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+                            <span>Verbindung testen</span>
+                        </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-normal">
+                        Der Key bleibt lokal in deinem Browser gespeichert und wird nur beim Klick auf „Termine automatisch laden“ oder „Termine abgleichen“ verwendet.
+                    </p>
+                </div>
+
+                {divvyStatus.message && (
+                    <div
+                        className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
+                            divvyStatus.type === 'success'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                        }`}
+                    >
+                        {divvyStatus.type === 'success' ? (
+                            <CheckCircle className="size-4 shrink-0 mt-0.5" />
+                        ) : (
+                            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 leading-relaxed">{divvyStatus.message}</div>
                     </div>
                 )}
             </div>

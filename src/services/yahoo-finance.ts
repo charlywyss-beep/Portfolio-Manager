@@ -2,6 +2,7 @@
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { resolveStockCountry, resolveStockSector } from '../utils/stockMetadata';
 import { translateSector } from '../utils/sectorTranslation';
+import { fetchDivvyDiaryDividends, getDivvyDiaryApiKey } from './divvydiary';
 
 // Basic type for a chart data point
 export interface ChartDataPoint {
@@ -551,6 +552,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
     forwardPE?: number | null,
     eps?: number | null,
     dividendYield?: number,
+    exDividendDate?: number | null,
+    dividendPayDate?: number | null,
     longName?: string | null,
     shortName?: string | null,
     displayName?: string | null,
@@ -618,6 +621,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
             shortName?: string | null,
             displayName?: string | null,
             isin?: string | null,
+            exDividendDate?: number | null,
+            dividendPayDate?: number | null,
             kcv?: number | null,
             fiftyDayAverage?: number | null,
             twoHundredDayAverage?: number | null,
@@ -709,6 +714,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     shortName: res.shortName || null,
                     displayName: res.displayName || null,
                     isin: res.isin || null,
+                    exDividendDate: res.exDividendDate ?? null,
+                    dividendPayDate: res.dividendPayDate ?? null,
                     kcv: res.kcv || null,
                     fiftyDayAverage: res.fiftyDayAverage ? normalizeYahooPrice(extractValue(res.fiftyDayAverage), res.currency, res.symbol) : null,
                     twoHundredDayAverage: res.twoHundredDayAverage ? normalizeYahooPrice(extractValue(res.twoHundredDayAverage), res.currency, res.symbol) : null,
@@ -755,6 +762,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
     name?: string | null,
     isin?: string | null,
     exDividendDate?: Date | null,
+    dividendPayDate?: Date | null,
     kcv?: number | null,
     fiftyDayAverage?: number | null,
     twoHundredDayAverage?: number | null,
@@ -815,6 +823,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 name: batchResult.longName || batchResult.shortName || batchResult.displayName || initialName || symbol,
                 isin: batchResult.isin || null,
                 exDividendDate: (batchResult as any).exDividendDate ? new Date((batchResult as any).exDividendDate * 1000) : null,
+                dividendPayDate: (batchResult as any).dividendPayDate ? new Date((batchResult as any).dividendPayDate * 1000) : null,
                 kcv: batchResult.kcv || null,
                 fiftyDayAverage: (batchResult as any).fiftyDayAverage || null,
                 twoHundredDayAverage: (batchResult as any).twoHundredDayAverage || null,
@@ -1228,4 +1237,775 @@ export async function fetchStockAnalysis(symbol: string): Promise<{
             kcv: null
         };
     }
+}
+
+export type DividendScheduleFrequency = 'annually' | 'semi-annually' | 'quarterly' | 'monthly';
+export type DividendSlotSource = 'official' | 'history' | 'projected' | 'paid';
+
+export interface SmartDividendSlot {
+    exDate: string;
+    payDate: string;
+    extraPayDates?: string[];
+    source: DividendSlotSource;
+    amount?: number;
+}
+
+export interface SmartDividendHistoryItem {
+    exDate: string;
+    amount: number;
+    isLikelySpecial?: boolean;
+}
+
+export interface SmartDividendScheduleResult {
+    symbol: string;
+    provider: 'divvydiary' | 'yahoo';
+    resolvedIsin?: string | null;
+    divvyDiaryHint?: string;
+    frequency: DividendScheduleFrequency;
+    slots: SmartDividendSlot[];
+    recentHistory: SmartDividendHistoryItem[];
+    currency?: string | null;
+    hasSpecialDividendHint: boolean;
+    officialCount: number;
+    projectedCount: number;
+    historyCount: number;
+    payOffsetDays: number;
+    payOffsetSource: 'official' | 'learned' | 'market';
+    error?: string;
+}
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseIsoUtcMs(iso: string): number | null {
+    if (!ISO_DATE_RE.test(iso)) return null;
+    const [y, m, d] = iso.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return Date.UTC(y, m - 1, d);
+}
+
+function formatUtcMsToIso(ms: number): string {
+    const dt = new Date(ms);
+    const y = dt.getUTCFullYear();
+    const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(dt.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function getTodayIsoLocal(): string {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function diffCalendarDaysIso(startIso: string, endIso: string): number | null {
+    const a = parseIsoUtcMs(startIso);
+    const b = parseIsoUtcMs(endIso);
+    if (a === null || b === null) return null;
+    return Math.round((b - a) / 86400000);
+}
+
+function snapUtcMsToWeekday(ms: number): number {
+    const day = new Date(ms).getUTCDay();
+    if (day === 6) return ms + 2 * 86400000; // Saturday -> Monday
+    if (day === 0) return ms + 1 * 86400000; // Sunday -> Monday
+    return ms;
+}
+
+function addCalendarDaysWeekdayIso(iso: string, days: number): string {
+    const base = parseIsoUtcMs(iso);
+    if (base === null) return iso;
+    return formatUtcMsToIso(snapUtcMsToWeekday(base + days * 86400000));
+}
+
+function addTradingDaysIso(iso: string, tradingDays: number): string {
+    const base = parseIsoUtcMs(iso);
+    if (base === null) return iso;
+    let cur = base;
+    let added = 0;
+    while (added < tradingDays) {
+        cur += 86400000;
+        const dow = new Date(cur).getUTCDay();
+        if (dow !== 0 && dow !== 6) {
+            added++;
+        }
+    }
+    return formatUtcMsToIso(cur);
+}
+
+function shiftDateMonthsWeekdayIso(iso: string, monthsDelta: number): string {
+    const base = parseIsoUtcMs(iso);
+    if (base === null) return iso;
+    const dt = new Date(base);
+    const origDay = dt.getUTCDate();
+    const targetMonthIndex = dt.getUTCMonth() + monthsDelta;
+    const targetYear = dt.getUTCFullYear() + Math.floor(targetMonthIndex / 12);
+    const normalizedMonth = ((targetMonthIndex % 12) + 12) % 12;
+    const lastDayOfTargetMonth = new Date(Date.UTC(targetYear, normalizedMonth + 1, 0)).getUTCDate();
+    const clampedDay = Math.min(origDay, lastDayOfTargetMonth);
+    const targetMs = Date.UTC(targetYear, normalizedMonth, clampedDay);
+    return formatUtcMsToIso(snapUtcMsToWeekday(targetMs));
+}
+
+function calendarPositionKey(iso: string): number {
+    const ms = parseIsoUtcMs(iso);
+    if (ms === null) return 9999;
+    const dt = new Date(ms);
+    return (dt.getUTCMonth() + 1) * 31 + dt.getUTCDate();
+}
+
+function dayOfYearUtc(iso: string): number | null {
+    const ms = parseIsoUtcMs(iso);
+    if (ms === null) return null;
+    const dt = new Date(ms);
+    const startOfYear = Date.UTC(dt.getUTCFullYear(), 0, 1);
+    return Math.floor((ms - startOfYear) / 86400000) + 1;
+}
+
+function circularDayOfYearDistance(isoA: string, isoB: string): number {
+    const a = dayOfYearUtc(isoA);
+    const b = dayOfYearUtc(isoB);
+    if (a === null || b === null) return 999;
+    const raw = Math.abs(a - b);
+    return Math.min(raw, 365 - raw);
+}
+
+/**
+ * 3-Stufen-Automatik für Dividenden-Termine:
+ * 1) Offizielle Yahoo-Termine (calendarEvents: exDividendDate & dividendPayDate)
+ * 2) 2-Jahres-Dividendenhistorie (events=div) + automatische Frequenz- & Zahltag-Offset-Logik
+ * 3) Intelligente Fortschreibung vergangener Termine aufs nächste Jahr / den nächsten Monat (Mo–Fr)
+ */
+export async function fetchSmartDividendSchedule(
+    symbol: string,
+    options?: {
+        isin?: string;
+        isEtf?: boolean;
+        currentFrequency?: string;
+        forceFrequency?: DividendScheduleFrequency;
+        existingDates?: { exDate?: string; payDate?: string }[];
+    }
+): Promise<SmartDividendScheduleResult> {
+    const cleanSym = (symbol || '').trim();
+    const initialIsin = (options?.isin || '').trim().toUpperCase();
+    const fallbackFreq: DividendScheduleFrequency =
+        options?.currentFrequency === 'monthly' ||
+        options?.currentFrequency === 'quarterly' ||
+        options?.currentFrequency === 'semi-annually' ||
+        options?.currentFrequency === 'annually'
+            ? options.currentFrequency
+            : 'quarterly';
+
+    if (!cleanSym && !initialIsin) {
+        return {
+            symbol: cleanSym,
+            provider: 'yahoo',
+            resolvedIsin: null,
+            frequency: fallbackFreq,
+            slots: [],
+            recentHistory: [],
+            currency: null,
+            hasSpecialDividendHint: false,
+            officialCount: 0,
+            projectedCount: 0,
+            historyCount: 0,
+            payOffsetDays: 21,
+            payOffsetSource: 'market',
+            error: 'Kein Symbol oder ISIN angegeben'
+        };
+    }
+
+    const todayIso = getTodayIsoLocal();
+    const todayMs = parseIsoUtcMs(todayIso) ?? Date.now();
+    const currentYear = Number(todayIso.slice(0, 4));
+
+    const isSlotStillActive = (payIso: string): boolean => {
+        const payMs = parseIsoUtcMs(payIso);
+        if (payMs === null) return false;
+        return (payMs + 7 * 86400000) > todayMs;
+    };
+
+    // Helper: Build schedule directly from DivvyDiary data (exact Ex-Date + exact Pay-Date + forecast flag)
+    const buildFromDivvyDiary = (
+        dd: NonNullable<Awaited<ReturnType<typeof fetchDivvyDiaryDividends>>>
+    ): SmartDividendScheduleResult | null => {
+        if (!dd || dd.error || dd.dividends.length === 0) return null;
+
+        // Cluster split tranches sharing the same Ex-Date (<= 5 days apart, e.g. Petrobras 2 half-tranches)
+        const clustered: { exDate: string; payDate: string; payDates: string[]; amount: number; forecast: boolean }[] = [];
+        for (const item of dd.dividends) {
+            const last = clustered[clustered.length - 1];
+            const itemPay = item.payDate || item.exDate;
+            if (last) {
+                const diff = diffCalendarDaysIso(last.exDate, item.exDate);
+                if (diff !== null && Math.abs(diff) <= 5) {
+                    last.amount += item.amount;
+                    if (itemPay && !last.payDates.includes(itemPay)) {
+                        last.payDates.push(itemPay);
+                        last.payDates.sort();
+                        last.payDate = last.payDates[0];
+                    }
+                    last.forecast = last.forecast && item.forecast;
+                    continue;
+                }
+            }
+            clustered.push({
+                exDate: item.exDate,
+                payDate: itemPay,
+                payDates: itemPay ? [itemPay] : [],
+                amount: item.amount,
+                forecast: item.forecast
+            });
+        }
+
+        // Keep window of last 3.5 years + upcoming 15 months
+        const minMs = todayMs - 1280 * 86400000;
+        const maxMs = todayMs + 460 * 86400000;
+        const windowed = clustered.filter(ev => {
+            const ms = parseIsoUtcMs(ev.exDate);
+            return ms !== null && ms >= minMs && ms <= maxMs;
+        });
+        if (windowed.length === 0) return null;
+
+        // Frequency: forced -> DivvyDiary field -> trailing 12m count
+        let freq: DividendScheduleFrequency = options?.forceFrequency || fallbackFreq;
+        if (!options?.forceFrequency) {
+            if (
+                dd.dividendFrequency === 'monthly' ||
+                dd.dividendFrequency === 'quarterly' ||
+                dd.dividendFrequency === 'semi-annually' ||
+                dd.dividendFrequency === 'annually'
+            ) {
+                freq = dd.dividendFrequency;
+            } else {
+                const oneYearAgo = todayMs - 375 * 86400000;
+                const realRecent = windowed.filter(e => {
+                    const ms = parseIsoUtcMs(e.exDate);
+                    return ms !== null && ms >= oneYearAgo && ms <= todayMs + 30 * 86400000;
+                });
+                const c = realRecent.length;
+                if (c >= 9) freq = 'monthly';
+                else if (c >= 3) freq = 'quarterly';
+                else if (c === 2) freq = 'semi-annually';
+                else if (c === 1) freq = 'annually';
+            }
+        }
+
+        // Real history for transparent info chips & special-dividend detection
+        const pastOrConfirmed = windowed.filter(e => !e.forecast || (parseIsoUtcMs(e.exDate) ?? 0) <= todayMs);
+        const posAmounts = pastOrConfirmed.map(e => e.amount).filter(a => a > 0).sort((a, b) => a - b);
+        const med = posAmounts.length > 0 ? posAmounts[Math.floor(posAmounts.length / 2)] : 0;
+        const distYears = new Set(pastOrConfirmed.map(e => e.exDate.slice(0, 4))).size;
+
+        const isRecurringDd = (ev: { exDate: string }) => {
+            if (distYears < 2) return true;
+            const y = ev.exDate.slice(0, 4);
+            return pastOrConfirmed.some(o => o.exDate.slice(0, 4) !== y && circularDayOfYearDistance(ev.exDate, o.exDate) <= 28);
+        };
+
+        const recentHistory: SmartDividendHistoryItem[] = [...pastOrConfirmed]
+            .reverse()
+            .slice(0, 6)
+            .map(ev => ({
+                exDate: ev.exDate,
+                amount: ev.amount,
+                isLikelySpecial: (posAmounts.length >= 4 && med > 0 && ev.amount >= med * 2.0) || (distYears >= 2 && !isRecurringDd(ev))
+            }));
+        const hasSpecialDividendHint = recentHistory.some(h => h.isLikelySpecial);
+
+        const toSlot = (ev: { exDate: string; payDate: string; payDates: string[]; amount: number; forecast: boolean }): SmartDividendSlot => {
+            let source: DividendSlotSource;
+            const latestPay = ev.payDates.length > 0 ? ev.payDates[ev.payDates.length - 1] : ev.payDate;
+            if (!isSlotStillActive(latestPay)) source = 'paid';
+            else if (!ev.forecast) source = 'official';
+            else source = 'projected';
+            const extraPayDates = ev.payDates.length > 1 ? ev.payDates.slice(1) : undefined;
+            return { exDate: ev.exDate, payDate: ev.payDate, extraPayDates, source, amount: ev.amount };
+        };
+
+        const ddSlots: SmartDividendSlot[] = [];
+
+        if (freq === 'annually' || freq === 'monthly') {
+            const active = windowed.find(ev => isSlotStillActive(ev.payDate));
+            if (active) {
+                ddSlots.push(toSlot(active));
+            } else {
+                const latest = windowed[windowed.length - 1];
+                if (latest) {
+                    const step = freq === 'monthly' ? 1 : 12;
+                    let ex = latest.exDate;
+                    let pay = latest.payDate;
+                    const diff = diffCalendarDaysIso(ex, pay) ?? 21;
+                    let safety = 0;
+                    while (!isSlotStillActive(pay) && safety < 24) {
+                        ex = shiftDateMonthsWeekdayIso(ex, step);
+                        pay = addCalendarDaysWeekdayIso(ex, Math.max(1, diff));
+                        safety++;
+                    }
+                    ddSlots.push({ exDate: ex, payDate: pay, source: 'projected', amount: latest.amount });
+                }
+            }
+        } else {
+            const targetCount = freq === 'quarterly' ? 4 : 2;
+            const minGap = freq === 'quarterly' ? 28 : 90;
+
+            const collectForYear = (year: number): SmartDividendSlot[] => {
+                const yearEvents = windowed.filter(e => Number(e.exDate.slice(0, 4)) === year);
+                const picked: SmartDividendSlot[] = [];
+                // Prefer non-forecast first, then forecast
+                const ordered = [...yearEvents].sort((a, b) => {
+                    if (a.forecast !== b.forecast) return a.forecast ? 1 : -1;
+                    return a.exDate.localeCompare(b.exDate);
+                });
+                for (const ev of ordered) {
+                    if (picked.length >= targetCount) break;
+                    if (picked.some(p => circularDayOfYearDistance(p.exDate, ev.exDate) < minGap)) continue;
+                    picked.push(toSlot(ev));
+                }
+                // If DivvyDiary doesn't have all slots for `year` yet, fill missing calendar slots from adjacent year
+                if (picked.length < targetCount) {
+                    const prevEvents = [...windowed]
+                        .filter(e => Number(e.exDate.slice(0, 4)) < year)
+                        .reverse();
+                    for (const ev of prevEvents) {
+                        if (picked.length >= targetCount) break;
+                        if (picked.some(p => circularDayOfYearDistance(p.exDate, ev.exDate) < minGap)) continue;
+                        const yearDiff = year - Number(ev.exDate.slice(0, 4));
+                        const shiftedEx = shiftDateMonthsWeekdayIso(ev.exDate, yearDiff * 12);
+                        const origDiff = diffCalendarDaysIso(ev.exDate, ev.payDate);
+                        const shiftedPay = origDiff !== null && origDiff >= 0 && origDiff <= 150
+                            ? addCalendarDaysWeekdayIso(shiftedEx, origDiff)
+                            : shiftDateMonthsWeekdayIso(ev.payDate, yearDiff * 12);
+                        picked.push({
+                            exDate: shiftedEx,
+                            payDate: shiftedPay,
+                            source: isSlotStillActive(shiftedPay) ? 'projected' : 'paid',
+                            amount: ev.amount
+                        });
+                    }
+                }
+                picked.sort((a, b) => calendarPositionKey(a.exDate) - calendarPositionKey(b.exDate));
+                return picked;
+            };
+
+            const thisYearSlots = collectForYear(currentYear);
+            const hasActiveThisYear = thisYearSlots.some(s => s.source !== 'paid');
+            const chosen = hasActiveThisYear ? thisYearSlots : collectForYear(currentYear + 1);
+            ddSlots.push(...chosen);
+        }
+
+        if (ddSlots.length === 0) return null;
+
+        // Calculate representative pay-date offset from DivvyDiary slots
+        const sampleSlot = ddSlots.find(s => s.source === 'official') || ddSlots[ddSlots.length - 1];
+        const sampleOffset = Math.max(0, diffCalendarDaysIso(sampleSlot.exDate, sampleSlot.payDate) ?? 21);
+
+        return {
+            symbol: cleanSym || dd.symbol || dd.isin,
+            provider: 'divvydiary',
+            resolvedIsin: dd.isin,
+            frequency: freq,
+            slots: ddSlots,
+            recentHistory,
+            currency: dd.currency || null,
+            hasSpecialDividendHint,
+            officialCount: ddSlots.filter(s => s.source === 'official').length,
+            projectedCount: ddSlots.filter(s => s.source === 'projected').length,
+            historyCount: ddSlots.filter(s => s.source === 'history').length,
+            payOffsetDays: sampleOffset,
+            payOffsetSource: 'official'
+        };
+    };
+
+    // Stage 0: Try DivvyDiary first if user configured an API key and we already have an ISIN
+    let divvyDiaryHint: string | undefined;
+    const hasDivvyKey = Boolean(getDivvyDiaryApiKey());
+    if (hasDivvyKey && initialIsin) {
+        const ddRes = await fetchDivvyDiaryDividends(initialIsin).catch(() => null);
+        if (ddRes && !ddRes.error && ddRes.dividends.length > 0) {
+            const built = buildFromDivvyDiary(ddRes);
+            if (built) return built;
+        } else if (ddRes?.error) {
+            divvyDiaryHint = ddRes.error;
+        }
+    }
+
+    // Fetch Stage 1 (quoteSummary with calendarEvents) and Stage 2 (3y dividend history) in parallel
+    const fetchDivHistory = async (): Promise<{ events: { exDate: string; amount: number }[]; currency: string | null }> => {
+        const encodedSym = encodeURIComponent(cleanSym);
+        let json: any = null;
+        try {
+            const res = await fetch(`/api/yahoo-finance?symbol=${encodedSym}&period=3y&interval=1d&events=div&_=${Date.now()}`);
+            if (res.ok) json = await res.json();
+        } catch {
+            // Static hosting fallback below
+        }
+
+        if (!json || !json.chart?.result?.[0]) {
+            try {
+                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=3y&interval=1d&events=div&_=${Date.now()}`;
+                const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
+                if (proxyRes.ok) json = await proxyRes.json();
+            } catch {
+                // Ignore
+            }
+        }
+
+        const chartResult = json?.chart?.result?.[0];
+        const chartCurrency: string | null = chartResult?.meta?.currency || null;
+        const rawDivs = chartResult?.events?.dividends;
+        if (!rawDivs || typeof rawDivs !== 'object') return { events: [], currency: chartCurrency };
+
+        const rawList = Object.values(rawDivs)
+            .map((d: any) => {
+                const sec = typeof d?.date === 'number' ? d.date : Number(d?.date);
+                const amount = typeof d?.amount === 'number' ? d.amount : Number(d?.amount) || 0;
+                if (!Number.isFinite(sec) || sec <= 0) return null;
+                return { exDate: formatUtcMsToIso(sec * 1000), amount };
+            })
+            .filter((x): x is { exDate: string; amount: number } => Boolean(x))
+            .sort((a, b) => a.exDate.localeCompare(b.exDate));
+
+        // Cluster nearby events (<= 12 days apart, e.g. Petrobras JCP + regular dividend on same Ex-Date)
+        const clustered: { exDate: string; amount: number }[] = [];
+        for (const ev of rawList) {
+            const last = clustered[clustered.length - 1];
+            if (last) {
+                const diff = diffCalendarDaysIso(last.exDate, ev.exDate);
+                if (diff !== null && Math.abs(diff) <= 12) {
+                    last.amount += ev.amount;
+                    continue;
+                }
+            }
+            clustered.push({ ...ev });
+        }
+        return { events: clustered, currency: chartCurrency };
+    };
+
+    const [quoteRes, divHistoryRes] = await Promise.all([
+        fetchStockQuote(cleanSym).catch(() => null),
+        fetchDivHistory().catch(() => ({ events: [], currency: null }))
+    ]);
+    const historyEvents = divHistoryRes.events;
+    const resolvedCurrency = quoteRes?.currency || divHistoryRes.currency || null;
+    const resolvedIsin = initialIsin || (quoteRes?.isin ? quoteRes.isin.trim().toUpperCase() : null);
+
+    // If ISIN was resolved via Yahoo and user has a DivvyDiary key, try DivvyDiary now!
+    if (hasDivvyKey && !initialIsin && resolvedIsin) {
+        const ddRes = await fetchDivvyDiaryDividends(resolvedIsin).catch(() => null);
+        if (ddRes && !ddRes.error && ddRes.dividends.length > 0) {
+            const built = buildFromDivvyDiary(ddRes);
+            if (built) return built;
+        } else if (ddRes?.error) {
+            divvyDiaryHint = ddRes.error;
+        }
+    }
+
+    // Extract Stage 1 official dates (ignore stale dates older than 420 days)
+    let officialExIso: string | null = null;
+    let officialPayIso: string | null = null;
+
+    if (quoteRes?.exDividendDate instanceof Date && !isNaN(quoteRes.exDividendDate.getTime())) {
+        const iso = formatUtcMsToIso(quoteRes.exDividendDate.getTime());
+        const ageDays = diffCalendarDaysIso(iso, todayIso);
+        if (ageDays !== null && ageDays <= 420 && ageDays >= -400) {
+            officialExIso = iso;
+        }
+    }
+    if (quoteRes?.dividendPayDate instanceof Date && !isNaN(quoteRes.dividendPayDate.getTime())) {
+        const iso = formatUtcMsToIso(quoteRes.dividendPayDate.getTime());
+        const ageDays = diffCalendarDaysIso(iso, todayIso);
+        if (ageDays !== null && ageDays <= 420 && ageDays >= -420) {
+            officialPayIso = iso;
+        }
+    }
+
+    if (!officialExIso && historyEvents.length === 0) {
+        return {
+            symbol: cleanSym,
+            provider: 'yahoo',
+            resolvedIsin,
+            divvyDiaryHint,
+            frequency: fallbackFreq,
+            slots: [],
+            recentHistory: [],
+            currency: resolvedCurrency,
+            hasSpecialDividendHint: false,
+            officialCount: 0,
+            projectedCount: 0,
+            historyCount: 0,
+            payOffsetDays: 21,
+            payOffsetSource: 'market',
+            error: 'Keine Dividenden-Termine bei Yahoo Finance gefunden'
+        };
+    }
+
+    // Analyze historical recurrence & potential special dividends (Sonderdividenden)
+    const distinctHistoryYears = new Set(historyEvents.map(e => e.exDate.slice(0, 4))).size;
+    const positiveAmounts = historyEvents.map(e => e.amount).filter(a => a > 0).sort((a, b) => a - b);
+    const medianAmount = positiveAmounts.length > 0 ? positiveAmounts[Math.floor(positiveAmounts.length / 2)] : 0;
+
+    const isRecurringCalendarWindow = (ev: { exDate: string }): boolean => {
+        if (distinctHistoryYears < 2) return true;
+        const evYear = ev.exDate.slice(0, 4);
+        return historyEvents.some(other =>
+            other.exDate.slice(0, 4) !== evYear &&
+            circularDayOfYearDistance(ev.exDate, other.exDate) <= 28
+        );
+    };
+
+    const annotatedHistory: SmartDividendHistoryItem[] = historyEvents.map(ev => {
+        const highAmount = positiveAmounts.length >= 4 && medianAmount > 0 && ev.amount >= medianAmount * 2.0;
+        const oneOffMonth = distinctHistoryYears >= 2 && !isRecurringCalendarWindow(ev);
+        return {
+            exDate: ev.exDate,
+            amount: ev.amount,
+            isLikelySpecial: highAmount || oneOffMonth
+        };
+    });
+
+    const recentHistory: SmartDividendHistoryItem[] = [...annotatedHistory].reverse().slice(0, 6);
+    const hasSpecialDividendHint = recentHistory.some(item => item.isLikelySpecial);
+
+    // Determine Pay-Date Offset (Priority: 1. Official pair, 2. Learned from user's existing dates, 3. Market default)
+    const upperSym = cleanSym.toUpperCase();
+    let payOffsetDays = 21;
+    let payOffsetSource: 'official' | 'learned' | 'market' = 'market';
+    let useTradingDaysMode: number | null = null;
+
+    const officialDiff = (officialExIso && officialPayIso) ? diffCalendarDaysIso(officialExIso, officialPayIso) : null;
+    if (officialDiff !== null && officialDiff >= 1 && officialDiff <= 90) {
+        payOffsetDays = officialDiff;
+        payOffsetSource = 'official';
+    } else {
+        const learnedDiffs: number[] = [];
+        for (const pair of options?.existingDates || []) {
+            if (pair.exDate && pair.payDate) {
+                const d = diffCalendarDaysIso(pair.exDate, pair.payDate);
+                if (d !== null && d >= 1 && d <= 90) learnedDiffs.push(d);
+            }
+        }
+        if (learnedDiffs.length > 0) {
+            learnedDiffs.sort((a, b) => a - b);
+            payOffsetDays = learnedDiffs[Math.floor(learnedDiffs.length / 2)];
+            payOffsetSource = 'learned';
+        } else if (options?.isEtf) {
+            payOffsetDays = 13;
+            payOffsetSource = 'market';
+        } else if (upperSym.endsWith('.SW')) {
+            payOffsetDays = 2;
+            useTradingDaysMode = 2;
+            payOffsetSource = 'market';
+        } else if (upperSym.endsWith('.DE') || upperSym.endsWith('.F') || upperSym.endsWith('.MU') || upperSym.endsWith('.BE')) {
+            payOffsetDays = 3;
+            useTradingDaysMode = 3;
+            payOffsetSource = 'market';
+        } else if (upperSym.endsWith('.L')) {
+            payOffsetDays = 30;
+            payOffsetSource = 'market';
+        } else {
+            payOffsetDays = 21;
+            payOffsetSource = 'market';
+        }
+    }
+
+    const computePayDate = (exIso: string): string => {
+        if (officialExIso && officialPayIso && exIso === officialExIso) {
+            return officialPayIso;
+        }
+        if (useTradingDaysMode !== null) {
+            return addTradingDaysIso(exIso, useTradingDaysMode);
+        }
+        return addCalendarDaysWeekdayIso(exIso, payOffsetDays);
+    };
+
+    // Detect Frequency from trailing 375 days of unique historical events (unless caller locks frequency)
+    let detectedFrequency: DividendScheduleFrequency = options?.forceFrequency || fallbackFreq;
+    if (!options?.forceFrequency && historyEvents.length > 0) {
+        const latestHistMs = parseIsoUtcMs(historyEvents[historyEvents.length - 1].exDate) ?? todayMs;
+        const anchorMs = Math.max(todayMs, latestHistMs);
+        const oneYearAgoMs = anchorMs - 375 * 86400000;
+        const trailingEvents = historyEvents.filter(e => {
+            const ms = parseIsoUtcMs(e.exDate);
+            return ms !== null && ms >= oneYearAgoMs;
+        });
+
+        const count = trailingEvents.length > 0
+            ? trailingEvents.length
+            : Math.round(historyEvents.length / Math.max(1, distinctHistoryYears));
+        if (count >= 9) {
+            detectedFrequency = 'monthly';
+        } else if (count >= 3) {
+            detectedFrequency = 'quarterly';
+        } else if (count === 2) {
+            detectedFrequency = 'semi-annually';
+        } else if (count === 1) {
+            detectedFrequency = 'annually';
+        }
+    } else if (officialExIso && !options?.currentFrequency) {
+        detectedFrequency = 'annually';
+    }
+
+    const slots: SmartDividendSlot[] = [];
+
+    if (detectedFrequency === 'annually') {
+        // Prefer most recent recurring annual event (avoids picking a one-off special dividend)
+        const reversed = [...historyEvents].reverse();
+        const recurringLatest = reversed.find(ev => isRecurringCalendarWindow(ev));
+        const baseEx = officialExIso || recurringLatest?.exDate || historyEvents[historyEvents.length - 1]?.exDate;
+        if (baseEx) {
+            let ex = baseEx;
+            let pay = computePayDate(ex);
+            let source: DividendSlotSource = (officialExIso && ex === officialExIso) ? 'official' : 'history';
+            let safety = 0;
+            while (!isSlotStillActive(pay) && safety < 3) {
+                ex = shiftDateMonthsWeekdayIso(ex, 12);
+                pay = computePayDate(ex);
+                source = 'projected';
+                safety++;
+            }
+            slots.push({ exDate: ex, payDate: pay, source });
+        }
+    } else if (detectedFrequency === 'monthly') {
+        const baseEx = officialExIso || historyEvents[historyEvents.length - 1]?.exDate;
+        if (baseEx) {
+            let ex = baseEx;
+            let pay = computePayDate(ex);
+            let source: DividendSlotSource = (officialExIso && ex === officialExIso) ? 'official' : 'history';
+            let safety = 0;
+            while (!isSlotStillActive(pay) && safety < 24) {
+                ex = shiftDateMonthsWeekdayIso(ex, 1);
+                pay = computePayDate(ex);
+                source = 'projected';
+                safety++;
+            }
+            slots.push({ exDate: ex, payDate: pay, source });
+        }
+    } else {
+        // Quarterly (4 slots) or Semi-Annually (2 slots)
+        const targetCount = detectedFrequency === 'quarterly' ? 4 : 2;
+        const stepMonths = detectedFrequency === 'quarterly' ? 3 : 6;
+        // Minimum circular day-of-year distance between two distinct annual payouts
+        // (28 days deduplicates e.g. 2025-06-03 & 2026-06-04 while preserving Apr 24 & Jun 04 = 41d)
+        const minCycleGapDays = detectedFrequency === 'quarterly' ? 28 : 90;
+
+        const working: SmartDividendSlot[] = [];
+
+        // Stage 1: seed with official date first if present
+        if (officialExIso) {
+            working.push({
+                exDate: officialExIso,
+                payDate: officialPayIso || computePayDate(officialExIso),
+                source: 'official'
+            });
+        }
+
+        const isDuplicateCycle = (candidateIso: string): boolean =>
+            working.some(existing => circularDayOfYearDistance(existing.exDate, candidateIso) < minCycleGapDays);
+
+        const reversedHist = [...historyEvents].reverse();
+
+        // Pass 1: newest non-duplicate slots from recurring calendar windows (filters out one-off Sonderdividenden)
+        for (const ev of reversedHist) {
+            if (working.length >= targetCount) break;
+            if (!isRecurringCalendarWindow(ev)) continue;
+            if (isDuplicateCycle(ev.exDate)) continue;
+            working.push({
+                exDate: ev.exDate,
+                payDate: computePayDate(ev.exDate),
+                source: 'history',
+                amount: ev.amount
+            });
+        }
+
+        // Pass 2: if still short (e.g. young ETF with < 2y history), accept remaining non-duplicate events
+        if (working.length < targetCount) {
+            for (const ev of reversedHist) {
+                if (working.length >= targetCount) break;
+                if (isDuplicateCycle(ev.exDate)) continue;
+                working.push({
+                    exDate: ev.exDate,
+                    payDate: computePayDate(ev.exDate),
+                    source: 'history',
+                    amount: ev.amount
+                });
+            }
+        }
+
+        // Sort chronologically before any fallback projection
+        working.sort((a, b) => a.exDate.localeCompare(b.exDate));
+
+        // If fewer than targetCount slots exist (e.g., young ETF), project missing slots at stepMonths intervals
+        let fillSafety = 0;
+        while (working.length > 0 && working.length < targetCount && fillSafety < 8) {
+            const last = working[working.length - 1];
+            const nextEx = shiftDateMonthsWeekdayIso(last.exDate, stepMonths);
+            fillSafety++;
+            if (isDuplicateCycle(nextEx)) continue;
+            working.push({
+                exDate: nextEx,
+                payDate: computePayDate(nextEx),
+                source: 'projected'
+            });
+        }
+
+        // Build calendar-year schedule:
+        // Keep real dates of the current year (marked 'paid' if already past) as long as at least
+        // one payout of the current year is still upcoming/active. Only once ALL payouts of the
+        // current year are finished, advance the full schedule to next year.
+        const alignSlotToYear = (slot: SmartDividendSlot, targetYear: number): SmartDividendSlot => {
+            const slotYear = Number(slot.exDate.slice(0, 4));
+            let ex = slot.exDate;
+            let pay = slot.payDate;
+            let source: DividendSlotSource = slot.source;
+
+            if (slotYear !== targetYear) {
+                const yearDiff = targetYear - slotYear;
+                ex = shiftDateMonthsWeekdayIso(ex, yearDiff * 12);
+                pay = computePayDate(ex);
+                source = 'projected';
+            }
+
+            if (!isSlotStillActive(pay)) {
+                source = 'paid';
+            }
+            return { exDate: ex, payDate: pay, source, amount: slot.amount };
+        };
+
+        const currentYearSlots = working.map(slot => alignSlotToYear(slot, currentYear));
+        const hasUpcomingInCurrentYear = currentYearSlots.some(s => s.source !== 'paid');
+
+        const chosenSlots = hasUpcomingInCurrentYear
+            ? currentYearSlots
+            : working.map(slot => alignSlotToYear(slot, currentYear + 1));
+
+        for (const s of chosenSlots) {
+            slots.push(s);
+        }
+
+        // Sort slots by calendar position Jan -> Dec so Q1..Q4 / H1..H2 align cleanly with calendar order
+        slots.sort((a, b) => calendarPositionKey(a.exDate) - calendarPositionKey(b.exDate));
+    }
+
+    const officialCount = slots.filter(s => s.source === 'official').length;
+    const historyCount = slots.filter(s => s.source === 'history').length;
+    const projectedCount = slots.filter(s => s.source === 'projected').length;
+
+    return {
+        symbol: cleanSym,
+        provider: 'yahoo',
+        resolvedIsin,
+        divvyDiaryHint,
+        frequency: detectedFrequency,
+        slots,
+        recentHistory,
+        currency: resolvedCurrency,
+        hasSpecialDividendHint,
+        officialCount,
+        projectedCount,
+        historyCount,
+        payOffsetDays,
+        payOffsetSource
+    };
 }

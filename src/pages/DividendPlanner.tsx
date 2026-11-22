@@ -2,7 +2,7 @@ import { StockName } from '../components/StockName';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, TrendingUp, Edit, Trash2, RefreshCw, ChevronLeft, ChevronRight, Landmark, Percent, Building2 } from 'lucide-react';
+import { Calendar, TrendingUp, Edit, Trash2, RefreshCw, ChevronLeft, ChevronRight, Landmark, Percent, Building2, X } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
 import { useState, useEffect, useRef } from 'react';
@@ -12,11 +12,16 @@ import { getCurrentDividendPeriod } from '../utils/dividend';
 import { getWithholdingTaxRate } from '../utils/tax';
 import { DividendCalendarChart } from '../components/DividendCalendarChart';
 import { translateSector } from '../utils/sectorTranslation';
+import { fetchSmartDividendSchedule } from '../services/yahoo-finance';
 
 export function DividendPlanner() {
     const navigate = useNavigate();
-    const { stocks, positions, fixedDeposits, deleteFixedDeposit, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices } = usePortfolio();
+    const { stocks, positions, fixedDeposits, deleteFixedDeposit, updateStockDividend, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices } = usePortfolio();
     const { convertToCHF } = useCurrencyFormatter();
+
+    const [isSyncingDates, setIsSyncingDates] = useState(false);
+    const [syncDatesProgress, setSyncDatesProgress] = useState<{ done: number; total: number } | null>(null);
+    const [syncDatesReport, setSyncDatesReport] = useState<string | null>(null);
 
     // Main table: 0: [Anteile, Rendite %], 1: [Div./Akt., Frequenz], 2: [Frequenzweise, Jährlich], 3: [EX-Tag, Zahl-Tag], 4: [Aktion]
     const [mobilePage, setMobilePage] = useState(0);
@@ -406,6 +411,124 @@ export function DividendPlanner() {
         return 0;
     });
 
+    const handleSyncAllDividendDates = async () => {
+        if (isSyncingDates) return;
+
+        // Deduplicate owned dividend-paying stocks
+        const uniqueStocksMap = new Map<string, typeof stocks[number]>();
+        for (const item of projectedDividends) {
+            if (!item) continue;
+            const s = item.stock;
+            if (!s.symbol || s.dividendFrequency === 'none') continue;
+            if (!uniqueStocksMap.has(s.id)) uniqueStocksMap.set(s.id, s);
+        }
+        const candidates = Array.from(uniqueStocksMap.values());
+        if (candidates.length === 0) {
+            setSyncDatesReport('Keine Dividenden-Positionen zum Abgleichen gefunden.');
+            return;
+        }
+
+        // Cutoff matching getCurrentDividendPeriod (payDate + 7 days > today stays active)
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - 7);
+        const cutoffIso = `${cutoffDate.getFullYear()}-${String(cutoffDate.getMonth() + 1).padStart(2, '0')}-${String(cutoffDate.getDate()).padStart(2, '0')}`;
+
+        const toUpdate: typeof candidates = [];
+        let alreadyUpToDate = 0;
+
+        for (const stock of candidates) {
+            const current = getCurrentDividendPeriod(stock);
+            const hasValidCurrentPair = Boolean(current.exDate && current.payDate && current.payDate >= cutoffIso);
+            if (hasValidCurrentPair) {
+                alreadyUpToDate++;
+            } else {
+                toUpdate.push(stock);
+            }
+        }
+
+        if (toUpdate.length === 0) {
+            setSyncDatesReport(`Alle ${alreadyUpToDate} Titel haben bereits aktuelle Termine.`);
+            return;
+        }
+
+        setIsSyncingDates(true);
+        setSyncDatesReport(null);
+        setSyncDatesProgress({ done: 0, total: toUpdate.length });
+
+        let updatedCount = 0;
+        let failedCount = 0;
+
+        try {
+            const batchSize = 2;
+            for (let i = 0; i < toUpdate.length; i += batchSize) {
+                const chunk = toUpdate.slice(i, i + batchSize);
+                await Promise.all(chunk.map(async (stock) => {
+                    try {
+                        const existingPairs = (stock.dividendDates && stock.dividendDates.length > 0)
+                            ? stock.dividendDates
+                            : (stock.dividendExDate || stock.dividendPayDate
+                                ? [{ exDate: stock.dividendExDate, payDate: stock.dividendPayDate }]
+                                : []);
+
+                        const lockedFreq = (stock.dividendFrequency && stock.dividendFrequency !== 'none')
+                            ? stock.dividendFrequency
+                            : undefined;
+
+                        const res = await fetchSmartDividendSchedule(stock.symbol, {
+                            isin: stock.isin,
+                            isEtf: stock.type === 'etf',
+                            currentFrequency: stock.dividendFrequency,
+                            forceFrequency: lockedFreq,
+                            existingDates: existingPairs
+                        });
+
+                        if (res.error || res.slots.length === 0) {
+                            failedCount++;
+                            return;
+                        }
+
+                        const effectiveFreq = lockedFreq || res.frequency;
+                        const isMulti = effectiveFreq === 'quarterly' || effectiveFreq === 'semi-annually';
+                        const newDates = isMulti
+                            ? res.slots.map(s => ({ exDate: s.exDate, payDate: s.payDate }))
+                            : undefined;
+                        const firstSlot = res.slots[0];
+
+                        updateStockDividend(stock.id, {
+                            dividendYield: stock.dividendYield,
+                            dividendAmount: stock.dividendAmount,
+                            dividendCurrency: stock.dividendCurrency,
+                            dividendExDate: firstSlot?.exDate,
+                            dividendPayDate: firstSlot?.payDate,
+                            dividendDates: newDates,
+                            dividendFrequency: effectiveFreq,
+                            withholdingTaxRate: stock.withholdingTaxRate
+                        });
+                        updatedCount++;
+                    } catch {
+                        failedCount++;
+                    }
+                }));
+
+                setSyncDatesProgress({ done: Math.min(i + chunk.length, toUpdate.length), total: toUpdate.length });
+                if (i + batchSize < toUpdate.length) {
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                }
+            }
+
+            const parts: string[] = [];
+            parts.push(`${updatedCount} ${updatedCount === 1 ? 'Titel' : 'Titel'} aktualisiert`);
+            if (alreadyUpToDate > 0) parts.push(`${alreadyUpToDate} bereits aktuell`);
+            if (failedCount > 0) parts.push(`${failedCount} ohne Yahoo-Termine`);
+            setSyncDatesReport(parts.join(' · '));
+        } finally {
+            setIsSyncingDates(false);
+            setSyncDatesProgress(null);
+        }
+    };
+
+    const headerActionBtnBase = "h-10 px-3 md:px-4 py-0 rounded-lg inline-flex items-center justify-center gap-2 transition-all text-sm font-medium leading-none whitespace-nowrap border";
+
     return (
         <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-page-root">
             {/* Header - Fixed Height */}
@@ -426,17 +549,37 @@ export function DividendPlanner() {
 
                             <div className="flex items-center gap-2 ml-auto iphone-landscape-portfolio-actions">
                                 <button
+                                    type="button"
+                                    onClick={handleSyncAllDividendDates}
+                                    disabled={isSyncingDates}
+                                    className={cn(
+                                        headerActionBtnBase,
+                                        isSyncingDates
+                                            ? "bg-muted text-muted-foreground border-border cursor-wait"
+                                            : "bg-emerald-600/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/35 hover:bg-emerald-600/25 shadow-sm active:scale-95"
+                                    )}
+                                    title="Fehlende oder abgelaufene Ex- und Zahltage automatisch von Yahoo Finance laden (aktuelle Termine bleiben unverändert)"
+                                >
+                                    <Calendar className={cn("size-4 shrink-0", isSyncingDates && "animate-pulse")} />
+                                    <span className="hidden sm:inline">
+                                        {isSyncingDates && syncDatesProgress
+                                            ? `Termine ${syncDatesProgress.done}/${syncDatesProgress.total}...`
+                                            : 'Termine abgleichen'}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
                                     onClick={() => refreshAllPrices(true)}
                                     disabled={isGlobalRefreshing}
                                     className={cn(
-                                        "p-2.5 md:p-2 md:px-4 rounded-lg flex items-center gap-2 transition-all font-medium whitespace-nowrap",
+                                        headerActionBtnBase,
                                         isGlobalRefreshing
-                                            ? "bg-muted text-muted-foreground cursor-not-allowed"
-                                            : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm active:scale-95"
+                                            ? "bg-muted text-muted-foreground border-border cursor-not-allowed"
+                                            : "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm active:scale-95"
                                     )}
                                     title="Preise aktualisieren"
                                 >
-                                    <RefreshCw className={cn("size-5 md:size-4", isGlobalRefreshing && "animate-spin")} />
+                                    <RefreshCw className={cn("size-4 shrink-0", isGlobalRefreshing && "animate-spin")} />
                                     <span className="hidden md:inline">
                                         {isGlobalRefreshing
                                             ? 'Aktualisiere...'
@@ -450,6 +593,23 @@ export function DividendPlanner() {
                     </div>
                 </div>
             </div>
+
+            {syncDatesReport && (
+                <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="size-3.5 shrink-0" />
+                        <span>{syncDatesReport}</span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setSyncDatesReport(null)}
+                        className="p-0.5 rounded hover:bg-emerald-500/20 transition-colors"
+                        title="Hinweis schliessen"
+                    >
+                        <X className="size-3.5" />
+                    </button>
+                </div>
+            )}
 
             {/* Summary Cards - Fixed Height */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 shrink-0">
@@ -1322,11 +1482,11 @@ export function DividendPlanner() {
                                             <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 3 ? "table-cell" : "hidden xl:table-cell")}>
                                                 <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                                     <span className={cn(
-                                                        "font-bold text-[13px] xl:text-sm whitespace-nowrap leading-tight",
+                                                        "text-[13px] xl:text-sm whitespace-nowrap leading-tight tabular-nums",
                                                         (() => {
                                                             const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                            if (dDays !== null && dDays < 0) return "text-red-500 dark:text-red-400 font-medium";
-                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                            if (dDays !== null && dDays < 0) return "text-[#ff1e1e] dark:text-[#ff2b2b] font-bold";
+                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-amber-500 dark:text-amber-400 font-semibold";
                                                             if (dDays !== null && dDays > 14) return "text-green-600 dark:text-green-400 font-medium";
                                                             return "text-muted-foreground";
                                                         })()
@@ -1336,7 +1496,7 @@ export function DividendPlanner() {
                                                             : '-'}
                                                     </span>
                                                     {currentDiv.status === 'ex-dividend' && (
-                                                        <span className="text-[11px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
+                                                        <span className="text-xs font-bold text-white bg-[#e61919] dark:bg-[#ff2424] px-1.5 py-0.5 rounded leading-none uppercase tracking-wide">
                                                             Ex-Div
                                                         </span>
                                                     )}
@@ -1347,13 +1507,13 @@ export function DividendPlanner() {
                                             <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 3 ? "table-cell" : "hidden xl:table-cell")}>
                                                 <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                                     <span className={cn(
-                                                        "font-bold text-[13px] xl:text-sm whitespace-nowrap leading-tight",
+                                                        "text-[13px] xl:text-sm whitespace-nowrap leading-tight tabular-nums",
                                                         (() => {
                                                             const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                                                             const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                            if (payDays !== null && payDays < 0) return "text-green-600 dark:text-green-400 font-medium";
-                                                            if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
-                                                            if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
+                                                            if (payDays !== null && payDays < 0) return "text-green-600 dark:text-green-400 font-semibold";
+                                                            if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-amber-500 dark:text-amber-400 font-semibold";
+                                                            if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-amber-500 dark:text-amber-400 font-semibold";
                                                             return "text-muted-foreground";
                                                         })()
                                                     )}>
@@ -1362,7 +1522,7 @@ export function DividendPlanner() {
                                                             : '-'}
                                                     </span>
                                                     {currentDiv.status === 'paid' && (
-                                                        <span className="text-[11px] font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
+                                                        <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
                                                             Bezahlt
                                                         </span>
                                                     )}

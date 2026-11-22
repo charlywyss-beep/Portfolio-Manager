@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         // Use local symbol for quoteSummary so EPS/PE match local share ratio & currency
         const [quoteSummary, quoteBasic] = await Promise.all([
             yahooFinance.quoteSummary(symbol, {
-                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile', 'financialData', 'earningsTrend']
+                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile', 'financialData', 'earningsTrend', 'calendarEvents']
             }).catch(() => null),
             yahooFinance.quote(symbol).catch(() => null)
         ]);
@@ -288,6 +288,20 @@ export default async function handler(req, res) {
                 if (basicDiv !== null && basicDiv !== undefined) {
                     return basicDiv < 0.25 ? basicDiv * 100 : basicDiv;
                 }
+                return null;
+            })(),
+            exDividendDate: (() => {
+                const v = quoteSummary?.calendarEvents?.exDividendDate ?? quoteSummary?.summaryDetail?.exDividendDate ?? quoteBasic?.exDividendDate;
+                if (v instanceof Date) return Math.floor(v.getTime() / 1000);
+                if (typeof v === 'number' && Number.isFinite(v)) return v > 1e12 ? Math.floor(v / 1000) : Math.floor(v);
+                if (typeof v === 'string' && !isNaN(Date.parse(v))) return Math.floor(Date.parse(v) / 1000);
+                return null;
+            })(),
+            dividendPayDate: (() => {
+                const v = quoteSummary?.calendarEvents?.dividendDate ?? quoteBasic?.dividendDate;
+                if (v instanceof Date) return Math.floor(v.getTime() / 1000);
+                if (typeof v === 'number' && Number.isFinite(v)) return v > 1e12 ? Math.floor(v / 1000) : Math.floor(v);
+                if (typeof v === 'string' && !isNaN(Date.parse(v))) return Math.floor(Date.parse(v) / 1000);
                 return null;
             })(),
             country: quoteSummary?.summaryProfile?.country || quoteSummary?.assetProfile?.country || null,

@@ -5,7 +5,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
 import { getWithholdingTaxRate, detectStockCountry, COUNTRY_TAX_RATES } from '../utils/tax';
-import { fetchStockHistory, fetchStockQuote } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote, fetchSmartDividendSchedule, type DividendSlotSource, type SmartDividendHistoryItem } from '../services/yahoo-finance';
+import { getDivvyDiaryApiKey } from '../services/divvydiary';
 import { cn } from '../utils';
 import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue } from '../utils/fairValue';
 import { translateSector } from '../utils/sectorTranslation';
@@ -96,6 +97,19 @@ export function EditDividendPage() {
     const [isSavedFeedback, setIsSavedFeedback] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+    const [isFetchingSchedule, setIsFetchingSchedule] = useState(false);
+    const [scheduleFeedback, setScheduleFeedback] = useState<{
+        type: 'success' | 'warning';
+        provider?: 'divvydiary' | 'yahoo';
+        message: string;
+        detail?: string;
+        hint?: string;
+        recentHistory?: SmartDividendHistoryItem[];
+        historyCurrency?: string | null;
+        hasSpecialDividendHint?: boolean;
+    } | null>(null);
+    const [slotSources, setSlotSources] = useState<Record<number, DividendSlotSource>>({});
+    const [slotExtraPayDates, setSlotExtraPayDates] = useState<Record<number, string[]>>({});
 
     // Derived state
     const rawId = decodeURIComponent((stockId || selectedStockId || '').trim());
@@ -231,6 +245,9 @@ export function EditDividendPage() {
             }
             setIsDirty(false);
             setStockNameOverride(undefined);
+            setScheduleFeedback(null);
+            setSlotSources({});
+            setSlotExtraPayDates({});
         }
     }, [stock?.id, stock?.symbol]);
 
@@ -304,6 +321,142 @@ export function EditDividendPage() {
         const newDates = [...quarterlyDates];
         newDates[index] = { ...newDates[index], [field]: value };
         setQuarterlyDates(newDates);
+        setSlotSources(prev => {
+            if (!(index in prev)) return prev;
+            const next = { ...prev };
+            delete next[index];
+            return next;
+        });
+    };
+
+    const handleAutoFetchSchedule = async () => {
+        const targetSym = (symbol || stock?.symbol || '').trim();
+        const targetIsin = (isin || stock?.isin || '').trim();
+        if ((!targetSym && !targetIsin) || isFetchingSchedule) return;
+
+        setIsFetchingSchedule(true);
+        setScheduleFeedback(null);
+        try {
+            const existingPairs = (frequency === 'quarterly' || frequency === 'semi-annually')
+                ? quarterlyDates
+                : (exDate || payDate ? [{ exDate, payDate }] : []);
+
+            const result = await fetchSmartDividendSchedule(targetSym, {
+                isin: targetIsin || undefined,
+                isEtf: stock?.type === 'etf',
+                currentFrequency: frequency,
+                existingDates: existingPairs
+            });
+
+            if (result.resolvedIsin && !isin.trim()) {
+                setIsin(result.resolvedIsin);
+            }
+
+            if (result.error || result.slots.length === 0) {
+                setScheduleFeedback({
+                    type: 'warning',
+                    provider: result.provider,
+                    message: result.error || 'Keine Dividenden-Termine gefunden.',
+                    detail: result.divvyDiaryHint || 'Nutze DivvyDiary rechts daneben zur schnellen Prüfung.'
+                });
+                return;
+            }
+
+            const newFreq = result.frequency;
+            if (newFreq !== frequency) {
+                const oldFactor = getFrequencyFactor(frequency);
+                const newFactor = getFrequencyFactor(newFreq);
+                setFrequency(newFreq);
+                if (amount && !isNaN(parseFloat(amount.replace(',', '.'))) && oldFactor > 0 && newFactor > 0) {
+                    const scaledAmount = (parseFloat(amount.replace(',', '.')) * oldFactor) / newFactor;
+                    if (isFinite(scaledAmount) && scaledAmount > 0) {
+                        setAmount(scaledAmount.toFixed(4));
+                    }
+                }
+            }
+
+            const nextSources: Record<number, DividendSlotSource> = {};
+            const nextExtraPays: Record<number, string[]> = {};
+            if (newFreq === 'quarterly' || newFreq === 'semi-annually') {
+                const filled = result.slots.map((s, i) => {
+                    nextSources[i] = s.source;
+                    if (s.extraPayDates && s.extraPayDates.length > 0) {
+                        nextExtraPays[i] = s.extraPayDates;
+                    }
+                    return { exDate: s.exDate, payDate: s.payDate };
+                });
+                while (filled.length < 4) filled.push({ exDate: '', payDate: '' });
+                setQuarterlyDates(filled);
+                if (filled[0]) {
+                    setExDate(filled[0].exDate);
+                    setPayDate(filled[0].payDate);
+                }
+            } else {
+                const first = result.slots[0];
+                if (first) {
+                    setExDate(first.exDate);
+                    setPayDate(first.payDate);
+                    nextSources[0] = first.source;
+                    if (first.extraPayDates && first.extraPayDates.length > 0) {
+                        nextExtraPays[0] = first.extraPayDates;
+                    }
+                }
+            }
+
+            setSlotSources(nextSources);
+            setSlotExtraPayDates(nextExtraPays);
+            setIsDirty(true);
+
+            const paidCount = result.slots.filter(s => s.source === 'paid').length;
+            const providerLabel = result.provider === 'divvydiary' ? 'DivvyDiary' : 'Yahoo Finance';
+            const parts: string[] = [];
+            if (paidCount > 0) parts.push(`${paidCount} bezahlt`);
+            if (result.officialCount > 0) parts.push(`${result.officialCount} offiziell`);
+            if (result.historyCount > 0) parts.push(`${result.historyCount} bestätigt`);
+            if (result.projectedCount > 0) parts.push(`${result.projectedCount} geschätzt`);
+
+            const offsetHint = result.provider === 'divvydiary'
+                ? 'Exakte Ex- & Zahltage'
+                : result.payOffsetSource === 'official'
+                    ? `Zahltag-Abstand offiziell +${result.payOffsetDays} T`
+                    : result.payOffsetSource === 'learned'
+                        ? `Zahltag-Abstand gelernt +${result.payOffsetDays} T`
+                        : `Zahltag-Abstand Markt +${result.payOffsetDays} T`;
+
+            const freqLabel = newFreq === 'quarterly' ? 'Quartalsweise'
+                : newFreq === 'semi-annually' ? 'Halbjährlich'
+                    : newFreq === 'monthly' ? 'Monatlich' : 'Jährlich';
+
+            let hint: string | undefined;
+            if (result.provider === 'yahoo') {
+                if (result.divvyDiaryHint) {
+                    hint = `DivvyDiary: ${result.divvyDiaryHint} — Fallback auf Yahoo Finance genutzt.`;
+                } else if (!getDivvyDiaryApiKey()) {
+                    hint = 'Tipp: DivvyDiary API-Key in den Einstellungen hinterlegen für exakte Zahltage.';
+                } else if (!targetIsin && !result.resolvedIsin) {
+                    hint = 'Tipp: ISIN oben eintragen, damit DivvyDiary exakte Ex- und Zahltage liefert.';
+                }
+            }
+
+            setScheduleFeedback({
+                type: 'success',
+                provider: result.provider,
+                message: `${result.slots.length} ${result.slots.length === 1 ? 'Termin' : 'Termine'} geladen · ${freqLabel} · Quelle ${providerLabel}`,
+                detail: `${parts.join(' · ')} · ${offsetHint}`,
+                hint,
+                recentHistory: result.recentHistory,
+                historyCurrency: result.currency || currency,
+                hasSpecialDividendHint: result.hasSpecialDividendHint
+            });
+        } catch {
+            setScheduleFeedback({
+                type: 'warning',
+                message: 'Termine konnten nicht geladen werden.',
+                detail: 'Bitte später erneut versuchen oder DivvyDiary öffnen.'
+            });
+        } finally {
+            setIsFetchingSchedule(false);
+        }
     };
 
     const handleAutoFillExDates = () => {
@@ -1765,45 +1918,220 @@ export function EditDividendPage() {
                             </div>
 
                             {/* Dates Section - Only show if frequency is not 'none' */}
-                            {frequency !== 'none' && (
+                            {frequency !== 'none' && (() => {
+                                const termineBtnBase = "h-7 inline-flex items-center justify-center gap-1.5 px-2.5 py-0 rounded-md text-xs font-medium leading-none border transition-colors whitespace-nowrap";
+                                const renderSlotBadge = (idx: number) => {
+                                    const src = slotSources[idx];
+                                    if (!src) return null;
+                                    if (src === 'paid') {
+                                        return (
+                                            <span
+                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-muted text-muted-foreground border border-border"
+                                                title="Termin liegt in der Vergangenheit — bereits ausbezahlt"
+                                            >
+                                                Bezahlt
+                                            </span>
+                                        );
+                                    }
+                                    if (src === 'official') {
+                                        return (
+                                            <span
+                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold leading-none bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                                                title="Offiziell von Yahoo Finance gemeldet"
+                                            >
+                                                Offiziell
+                                            </span>
+                                        );
+                                    }
+                                    if (src === 'history') {
+                                        return (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30">
+                                                Bestätigt
+                                            </span>
+                                        );
+                                    }
+                                    return (
+                                        <span
+                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                                            title="Kommender Termin — aus Vorjahr geschätzt"
+                                        >
+                                            Geschätzt
+                                        </span>
+                                    );
+                                };
+                                const divvyUrl = isin.trim()
+                                    ? `https://divvydiary.com/symbols/${encodeURIComponent(isin.trim().toUpperCase())}`
+                                    : `https://divvydiary.com/de/alle-wertpapiere`;
+
+                                return (
                                 <div id="section-termine" className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4 scroll-mt-20">
                                     <div className="flex flex-wrap justify-between items-center gap-2">
                                         <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Termine</h3>
-                                        <div className="flex items-center gap-2 flex-wrap">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {(symbol || stock?.symbol || isin.trim()) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAutoFetchSchedule}
+                                                    disabled={isFetchingSchedule}
+                                                    className={cn(
+                                                        termineBtnBase,
+                                                        isFetchingSchedule
+                                                            ? "bg-muted text-muted-foreground border-border cursor-wait"
+                                                            : "bg-blue-600 hover:bg-blue-700 text-white border-blue-600 shadow-sm"
+                                                    )}
+                                                    title="Termine automatisch über DivvyDiary (mit ISIN & API-Key) oder Yahoo Finance laden"
+                                                >
+                                                    <RefreshCw className={cn("size-3.5 shrink-0", isFetchingSchedule && "animate-spin")} />
+                                                    <span>{isFetchingSchedule ? 'Lade Termine...' : 'Termine automatisch laden'}</span>
+                                                </button>
+                                            )}
+                                            <a
+                                                href={divvyUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={cn(
+                                                    termineBtnBase,
+                                                    "text-sky-700 dark:text-sky-300 bg-sky-50 hover:bg-sky-100 dark:bg-sky-900/30 dark:hover:bg-sky-900/50 border-sky-200 dark:border-sky-800/60"
+                                                )}
+                                                title={isin.trim()
+                                                    ? `Direkt zu ${isin.trim().toUpperCase()} auf DivvyDiary öffnen`
+                                                    : 'DivvyDiary Wertpapier-Übersicht öffnen (ISIN oben eintragen für Direktlink)'}
+                                            >
+                                                <ExternalLink className="size-3.5 shrink-0" />
+                                                <span>DivvyDiary</span>
+                                            </a>
                                             {frequency === 'quarterly' && (
                                                 <button
                                                     type="button"
                                                     onClick={handleSetVanguardSchedule}
-                                                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors font-medium border border-blue-200 dark:border-blue-800/50"
-                                                    title="Vanguard Standard-Quartale (März, Juni, Sept, Dez) eintragen"
+                                                    className={cn(
+                                                        termineBtnBase,
+                                                        "text-blue-600 hover:text-blue-700 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800/50"
+                                                    )}
+                                                    title="Vanguard Standard-Quartale März, Juni, Sept, Dez eintragen"
                                                 >
-                                                    <Calendar className="size-3.5" />
+                                                    <Calendar className="size-3.5 shrink-0" />
                                                     <span>Vanguard-Quartale</span>
                                                 </button>
                                             )}
                                             <button
                                                 type="button"
                                                 onClick={handleAutoFillExDates}
-                                                className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors font-medium border border-emerald-200 dark:border-emerald-800/50"
+                                                className={cn(
+                                                    termineBtnBase,
+                                                    "text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800/50"
+                                                )}
                                                 title="Ex-Tage automatisch 14 Tage vor den eingetragenen Zahltagen berechnen"
                                             >
-                                                <Sparkles className="size-3.5" />
-                                                <span>Ex-Tage auto (14 Tage vor Zahltag)</span>
+                                                <Sparkles className="size-3.5 shrink-0" />
+                                                <span>Ex-Tage ±14 T</span>
                                             </button>
                                             {symbol && (
                                                 <button
                                                     type="button"
                                                     onClick={() => {
                                                         const year = new Date().getFullYear();
-                                                        window.open(`https://www.google.com/search?q=${symbol}+dividend+dates+${year}+${year + 1}`, '_blank');
+                                                        window.open(`https://www.google.com/search?q=${encodeURIComponent(symbol)}+dividend+dates+${year}+${year + 1}`, '_blank');
                                                     }}
-                                                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md transition-colors"
+                                                    className={cn(
+                                                        termineBtnBase,
+                                                        "text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 border-primary/20"
+                                                    )}
                                                     title="Auf Google nach Dividenden-Terminen suchen"
                                                 >
-                                                    <Search className="size-3.5" />
-                                                    <span className="font-medium">Termine suchen</span>
+                                                    <Search className="size-3.5 shrink-0" />
+                                                    <span>Google</span>
                                                 </button>
                                             )}
+                                        </div>
+                                    </div>
+
+                                    {scheduleFeedback && (
+                                        <div className={cn(
+                                            "rounded-lg px-3 py-2.5 text-xs border space-y-2",
+                                            scheduleFeedback.type === 'success'
+                                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                                                : "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300"
+                                        )}>
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <div className="space-y-0.5">
+                                                    <div className="font-semibold">{scheduleFeedback.message}</div>
+                                                    {scheduleFeedback.detail && (
+                                                        <div className="text-muted-foreground">{scheduleFeedback.detail}</div>
+                                                    )}
+                                                    {scheduleFeedback.hint && (
+                                                        <div className="text-sky-700 dark:text-sky-300 pt-0.5 flex flex-wrap items-center gap-2">
+                                                            <span>{scheduleFeedback.hint}</span>
+                                                            {!getDivvyDiaryApiKey() && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => navigate('/settings')}
+                                                                    className="underline font-semibold hover:opacity-80"
+                                                                >
+                                                                    Zu Einstellungen
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {scheduleFeedback.type === 'success' && isDirty && (
+                                                    <span className="font-medium text-emerald-700 dark:text-emerald-300">
+                                                        Noch nicht gespeichert
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {scheduleFeedback.recentHistory && scheduleFeedback.recentHistory.length > 0 && (
+                                                <div className="pt-1.5 border-t border-emerald-500/20 space-y-1">
+                                                    <div className="text-muted-foreground font-medium">
+                                                        {scheduleFeedback.provider === 'divvydiary'
+                                                            ? 'Letzte echte DivvyDiary-Ex-Tage:'
+                                                            : 'Letzte echte Yahoo-Ex-Tage:'}
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {scheduleFeedback.recentHistory.map((item, idx) => {
+                                                            const [y, m, d] = item.exDate.split('-');
+                                                            const formattedDate = (d && m && y) ? `${d}.${m}.${y}` : item.exDate;
+                                                            const cur = scheduleFeedback.historyCurrency || '';
+                                                            return (
+                                                                <span
+                                                                    key={`${item.exDate}-${idx}`}
+                                                                    className={cn(
+                                                                        "inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs tabular-nums",
+                                                                        item.isLikelySpecial
+                                                                            ? "bg-amber-500/15 border-amber-500/35 text-amber-800 dark:text-amber-200"
+                                                                            : "bg-background/70 border-border text-foreground"
+                                                                    )}
+                                                                    title={item.isLikelySpecial ? 'Abweichender Termin oder Betrag — mögliche Sonderdividende' : 'Reguläre Yahoo-Ausschüttung'}
+                                                                >
+                                                                    <span>{formattedDate}</span>
+                                                                    {item.amount > 0 && (
+                                                                        <span className="text-muted-foreground">
+                                                                            {item.amount.toFixed(2)}{cur ? ` ${cur}` : ''}
+                                                                        </span>
+                                                                    )}
+                                                                    {item.isLikelySpecial && (
+                                                                        <span className="font-semibold text-amber-700 dark:text-amber-300">Sonder?</span>
+                                                                    )}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {scheduleFeedback.hasSpecialDividendHint && (
+                                                        <div className="text-amber-700 dark:text-amber-300 pt-0.5">
+                                                            Mögliche Sonderdividende erkannt — Sonderdividenden werden nicht in den regulären Jahresplan übernommen.
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground border-b border-border/50 pb-2">
+                                        <div>
+                                            <span className="font-semibold text-foreground">Links · Ex-Tag</span> — Stichtag für Dividenden-Anspruch
+                                        </div>
+                                        <div>
+                                            <span className="font-semibold text-foreground">Rechts · Zahltag</span> — Gutschrift auf deinem Konto
                                         </div>
                                     </div>
 
@@ -1812,10 +2140,13 @@ export function EditDividendPage() {
                                             {quarterlyDates.slice(0, frequency === 'semi-annually' ? 2 : 4).map((date, idx) => (
                                                 <div key={idx} className="grid grid-cols-2 gap-4 pb-4 border-b border-border/50 last:border-0 last:pb-0">
                                                     <div className="space-y-1">
-                                                        <div className="flex justify-between items-center">
-                                                            <label className="text-xs text-muted-foreground font-medium uppercase">
-                                                                {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Ex-Datum
-                                                            </label>
+                                                        <div className="flex justify-between items-center gap-1.5">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <label className="text-xs text-muted-foreground font-medium uppercase">
+                                                                    {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Ex-Datum
+                                                                </label>
+                                                                {renderSlotBadge(idx)}
+                                                            </div>
                                                             {date.exDate && (
                                                                 <button
                                                                     type="button"
@@ -1835,10 +2166,25 @@ export function EditDividendPage() {
                                                         />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <div className="flex justify-between items-center">
-                                                            <label className="text-xs text-muted-foreground font-medium uppercase">
-                                                                {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahl-Datum
-                                                            </label>
+                                                        <div className="flex justify-between items-center gap-1.5">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <label className="text-xs text-muted-foreground font-medium uppercase">
+                                                                    {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahl-Datum
+                                                                </label>
+                                                                {slotExtraPayDates[idx]?.map((extraIso, eIdx) => {
+                                                                    const [ey, em, ed] = extraIso.split('-');
+                                                                    const fmt = (ed && em && ey) ? `${ed}.${em}.${ey}` : extraIso;
+                                                                    return (
+                                                                        <span
+                                                                            key={extraIso}
+                                                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30 tabular-nums"
+                                                                            title="Aufgeteilte Auszahlung in mehrere Tranchen zum selben Ex-Tag"
+                                                                        >
+                                                                            + {eIdx + 2}. Tranche {fmt}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                            </div>
                                                             {date.payDate && (
                                                                 <button
                                                                     type="button"
@@ -1863,12 +2209,15 @@ export function EditDividendPage() {
                                     ) : (
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <label className="text-sm font-medium">Ex-Datum</label>
+                                                <div className="flex justify-between items-center gap-1.5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <label className="text-sm font-medium">Ex-Datum</label>
+                                                        {renderSlotBadge(0)}
+                                                    </div>
                                                     {exDate && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => setExDate('')}
+                                                            onClick={() => { setExDate(''); setIsDirty(true); }}
                                                             className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
                                                             title="Datum löschen"
                                                         >
@@ -1881,6 +2230,8 @@ export function EditDividendPage() {
                                                     value={sanitizeDateYear(exDate)}
                                                     onChange={(e) => {
                                                         setExDate(e.target.value);
+                                                        setSlotSources({});
+                                                        setIsDirty(true);
                                                     }}
                                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 />
@@ -1891,7 +2242,7 @@ export function EditDividendPage() {
                                                     {payDate && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => setPayDate('')}
+                                                            onClick={() => { setPayDate(''); setIsDirty(true); }}
                                                             className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
                                                             title="Datum löschen"
                                                         >
@@ -1902,14 +2253,19 @@ export function EditDividendPage() {
                                                 <input
                                                     type="date"
                                                     value={sanitizeDateYear(payDate, exDate)}
-                                                    onChange={(e) => setPayDate(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setPayDate(e.target.value);
+                                                        setSlotSources({});
+                                                        setIsDirty(true);
+                                                    }}
                                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 />
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                            )}
+                                );
+                            })()}
                         </>
                     )}
                 </form>
