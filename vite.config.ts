@@ -417,7 +417,8 @@ export default defineConfig({
             return;
           }
 
-          const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=${events}${includePrePost}`;
+          const encodedSymbol = encodeURIComponent(symbol);
+          const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?range=${range}&interval=${interval}&events=${events}${includePrePost}`;
           let response = await fetch(yahooUrl, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -426,7 +427,7 @@ export default defineConfig({
           });
 
           if (!response.ok) {
-            const yahooUrl2 = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=${events}${includePrePost}`;
+            const yahooUrl2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?range=${range}&interval=${interval}&events=${events}${includePrePost}`;
             response = await fetch(yahooUrl2, {
               headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

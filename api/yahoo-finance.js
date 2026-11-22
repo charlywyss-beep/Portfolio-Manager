@@ -23,8 +23,9 @@ export default async function handler(req, res) {
     }
 
     try {
+        const encodedSymbol = encodeURIComponent(symbol);
         const queryParams = new URLSearchParams(params).toString();
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?${queryParams}`;
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?${queryParams}`;
 
         console.log('[Vercel Proxy] Fetching:', url);
 
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
         });
 
         if (!response.ok) {
-            const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?${queryParams}`;
+            const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?${queryParams}`;
             response = await fetch(url2, {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

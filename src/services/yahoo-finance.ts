@@ -58,38 +58,82 @@ export async function fetchStockHistory(
     try {
         const { period, interval } = getYahooParams(range);
         const includePrePostParam = (range === '1D' && options?.includePrePost) ? '&includePrePost=true' : '';
-        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=${interval}${includePrePostParam}&_=${Date.now()}`;
+
+        const fetchChartJson = async (sym: string, reqPeriod: string, reqInterval: string, prePostParam: string): Promise<any> => {
+            const encodedSym = encodeURIComponent(sym);
+            const url = `/api/yahoo-finance?symbol=${encodedSym}&period=${reqPeriod}&interval=${reqInterval}${prePostParam}&_=${Date.now()}`;
+            let json: any = null;
+
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    json = await response.json();
+                }
+            } catch {
+                // Local proxy unavailable (e.g. GitHub Pages)
+            }
+
+            // Fallback for GitHub Pages / static hosting:
+            if (!json || !json.chart?.result?.[0]) {
+                try {
+                    const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSym}?range=${reqPeriod}&interval=${reqInterval}${prePostParam}&_=${Date.now()}`;
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                    const fallbackRes = await fetch(proxyUrl);
+                    if (fallbackRes.ok) {
+                        json = await fallbackRes.json();
+                    }
+                } catch (fbErr) {
+                    console.warn('[Yahoo Finance Fallback Proxy Error]:', fbErr);
+                }
+            }
+
+            return json;
+        };
+
+        const countValidCandles = (res: any): number => {
+            const ts: number[] | undefined = res?.timestamp;
+            const cls: (number | null | undefined)[] | undefined = res?.indicators?.quote?.[0]?.close;
+            if (!ts || !cls || ts.length === 0) return 0;
+            let count = 0;
+            for (let i = 0; i < ts.length; i++) {
+                if (cls[i] !== null && cls[i] !== undefined && Number.isFinite(cls[i])) {
+                    count++;
+                }
+            }
+            return count;
+        };
 
         console.log('[Yahoo Finance Proxy] Fetching:', symbol, 'Period:', period, 'Interval:', interval);
-        let data: any = null;
-
-        try {
-            const response = await fetch(url);
-            if (response.ok) {
-                data = await response.json();
-            }
-        } catch {
-            // Local proxy unavailable (e.g. GitHub Pages)
-        }
-
-        // Fallback for GitHub Pages / static hosting:
-        if (!data || !data.chart?.result?.[0]) {
-            try {
-                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${period}&interval=${interval}${includePrePostParam}&_=${Date.now()}`;
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-                const fallbackRes = await fetch(proxyUrl);
-                if (fallbackRes.ok) {
-                    data = await fallbackRes.json();
-                }
-            } catch (fbErr) {
-                console.warn('[Yahoo Finance Fallback Proxy Error]:', fbErr);
-            }
-        }
+        let data: any = await fetchChartJson(symbol, period, interval, includePrePostParam);
 
         if (!data) return { data: null, error: `Keine Daten verfügbar` };
         if (data.chart?.error) return { data: null, error: `Yahoo Finance: ${data.chart.error.description}` };
 
         let result = data.chart?.result?.[0];
+        let slicedFromMultiDay = false;
+
+        // Weekend / between-session fallback for 1D (especially CME futures like ES=F, NQ=F):
+        // Yahoo often returns empty timestamps on range=1d over weekends. Fetch 5d intraday and slice the last trading day.
+        if (range === '1D' && countValidCandles(result) < 2) {
+            const fallback5d = await fetchChartJson(symbol, '5d', '5m', includePrePostParam);
+            let fbResult = fallback5d?.chart?.result?.[0];
+            if (countValidCandles(fbResult) < 2) {
+                const fallback5d15m = await fetchChartJson(symbol, '5d', '15m', includePrePostParam);
+                fbResult = fallback5d15m?.chart?.result?.[0];
+            }
+            if (countValidCandles(fbResult) >= 2) {
+                // Preserve 1d meta previousClose if available, otherwise keep 5d meta
+                const prevClose1d = result?.meta?.regularMarketPreviousClose || result?.meta?.chartPreviousClose || result?.meta?.previousClose;
+                result = {
+                    ...fbResult,
+                    meta: {
+                        ...fbResult.meta,
+                        ...(prevClose1d ? { regularMarketPreviousClose: prevClose1d, chartPreviousClose: prevClose1d } : {})
+                    }
+                };
+                slicedFromMultiDay = true;
+            }
+        }
 
         // For German Xetra (.DE) listings of international stocks (e.g. ABEA.DE):
         // If 1D Xetra has no intraday candles for today yet while Börse Frankfurt (.F, trading from 08:00 CET) already has today's candles,
@@ -103,23 +147,20 @@ export async function fetchStockHistory(
             if (!hasTodayPoints) {
                 const frankfurtSymbol = symbol.replace(/\.DE$/i, '.F');
                 try {
-                    const fUrl = `/api/yahoo-finance?symbol=${frankfurtSymbol}&period=${period}&interval=${interval}${includePrePostParam}&_=${Date.now()}`;
-                    const fRes = await fetch(fUrl);
-                    if (fRes.ok) {
-                        const fData = await fRes.json();
-                        const fResult = fData?.chart?.result?.[0];
-                        const fTs: number[] = fResult?.timestamp || [];
-                        const fLastTs = fTs.length > 0 ? fTs[fTs.length - 1] : 0;
-                        if (fLastTs > 0 && new Date(fLastTs * 1000).toDateString() === todayStr) {
-                            const xetraPrevClose = result?.meta?.regularMarketPreviousClose || result?.meta?.chartPreviousClose || result?.meta?.previousClose;
-                            result = {
-                                ...fResult,
-                                meta: {
-                                    ...fResult.meta,
-                                    ...(xetraPrevClose ? { regularMarketPreviousClose: xetraPrevClose, chartPreviousClose: xetraPrevClose } : {})
-                                }
-                            };
-                        }
+                    const fData = await fetchChartJson(frankfurtSymbol, period, interval, includePrePostParam);
+                    const fResult = fData?.chart?.result?.[0];
+                    const fTs: number[] = fResult?.timestamp || [];
+                    const fLastTs = fTs.length > 0 ? fTs[fTs.length - 1] : 0;
+                    if (fLastTs > 0 && new Date(fLastTs * 1000).toDateString() === todayStr) {
+                        const xetraPrevClose = result?.meta?.regularMarketPreviousClose || result?.meta?.chartPreviousClose || result?.meta?.previousClose;
+                        result = {
+                            ...fResult,
+                            meta: {
+                                ...fResult.meta,
+                                ...(xetraPrevClose ? { regularMarketPreviousClose: xetraPrevClose, chartPreviousClose: xetraPrevClose } : {})
+                            }
+                        };
+                        slicedFromMultiDay = false;
                     }
                 } catch {
                     // Ignore Frankfurt fallback errors
@@ -141,12 +182,12 @@ export async function fetchStockHistory(
             ? Math.max(0, Math.round((refPer.start - timestamps[0]) / 86400)) * 86400
             : 0;
 
-        const points: ChartDataPoint[] = timestamps
+        let points: ChartDataPoint[] = timestamps
             .map((timestamp: number, index: number) => {
                 const close = closes[index];
                 if (close === null || close === undefined) return null;
                 let session: 'pre' | 'regular' | 'post' | undefined;
-                if (range === '1D' && options?.includePrePost && tp?.regular) {
+                if (range === '1D' && options?.includePrePost && tp?.regular && !slicedFromMultiDay) {
                     const regStart = tp.regular.start - dayShift;
                     const regEnd = tp.regular.end - dayShift;
                     session = timestamp < regStart ? 'pre' : timestamp >= regEnd ? 'post' : 'regular';
@@ -158,6 +199,19 @@ export async function fetchStockHistory(
                 };
             })
             .filter((p: ChartDataPoint | null): p is ChartDataPoint => p !== null);
+
+        // If 1D fell back to 5d intraday (e.g. ES=F / NQ=F on weekends), keep only the last trading day's session
+        if (slicedFromMultiDay && points.length > 0) {
+            const lastDateObj = new Date(points[points.length - 1].date);
+            const lastDayStr = lastDateObj.toDateString();
+            const sameDayPoints = points.filter(p => new Date(p.date).toDateString() === lastDayStr);
+            if (sameDayPoints.length >= 6) {
+                points = sameDayPoints;
+            } else {
+                const cutoffMs = lastDateObj.getTime() - 24 * 60 * 60 * 1000;
+                points = points.filter(p => new Date(p.date).getTime() >= cutoffMs);
+            }
+        }
 
         const rawPrevClose = result.meta?.regularMarketPreviousClose || result.meta?.chartPreviousClose || result.meta?.previousClose;
         let normalizedPrevClose = rawPrevClose ? normalizeYahooPrice(rawPrevClose, resultCurrency, symbol) : undefined;
@@ -184,11 +238,13 @@ export async function fetchStockHistory(
             ? new Date(regTimeSec * 1000)
             : undefined;
 
-        // If regularMarketTime is from today and newer than the last 5m candle, append the live point
+        // If regularMarketTime is from today and slightly newer (1–30 min) than the last 5m candle, append the live point.
+        // Cap at 30 min so late off-book settlement prints (e.g. LSE 19:05 after 17:30 close) never create a fake 90-min gap!
         if (range === '1D' && normalizedRegPrice && normalizedRegTime && points.length > 0) {
             const lastPointTime = new Date(points[points.length - 1].date).getTime();
             const isSameDay = new Date(points[points.length - 1].date).toDateString() === normalizedRegTime.toDateString();
-            if (isSameDay && normalizedRegTime.getTime() > lastPointTime + 60 * 1000) {
+            const deltaMs = normalizedRegTime.getTime() - lastPointTime;
+            if (isSameDay && deltaMs > 60 * 1000 && deltaMs <= 30 * 60 * 1000) {
                 points.push({
                     date: normalizedRegTime.toISOString(),
                     value: normalizedRegPrice,

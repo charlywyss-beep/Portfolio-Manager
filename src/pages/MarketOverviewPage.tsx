@@ -66,6 +66,7 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 },
     { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 },
     { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 },
+    { id: 'asia-allworld', symbol: '2559.T', name: 'All-World Tokio · MSCI ACWI', category: 'indices', decimals: 0 },
     { id: '8', symbol: 'GC=F', name: 'Goldpreis (Spot)', category: 'commodities', decimals: 2 },
     { id: '9', symbol: 'SI=F', name: 'Silberpreis (Spot)', category: 'commodities', decimals: 2 },
     { id: 'cmd-hg', symbol: 'HG=F', name: 'Kupfer (Copper)', category: 'commodities', decimals: 2 },
@@ -127,6 +128,7 @@ export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
     // Asiatische Indizes (Morgen-Check)
     { symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'asia', decimals: 2 },
     { symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'asia', decimals: 2 },
+    { symbol: '2559.T', name: 'All-World ETF Tokio · MSCI ACWI', category: 'asia', decimals: 0 },
     { symbol: '000001.SS', name: 'Shanghai Composite (China)', category: 'asia', decimals: 2 },
     { symbol: '000300.SS', name: 'CSI 300 (China)', category: 'asia', decimals: 2 },
     { symbol: '^KS11', name: 'Kospi (Südkorea)', category: 'asia', decimals: 2 },
@@ -310,7 +312,7 @@ export function MarketOverviewPage() {
         if (['GC=F', 'SI=F', 'BZ=F', 'CL=F', 'HG=F', 'NG=F', 'PL=F', 'PA=F'].includes(sym)) {
             return 'commodities';
         }
-        if (sym.startsWith('^') || ['NQ=F', 'ES=F', 'YM=F', 'RTY=F', '000001.SS', '000300.SS'].includes(sym)) {
+        if (sym.startsWith('^') || ['NQ=F', 'ES=F', 'YM=F', 'RTY=F', '000001.SS', '000300.SS', '2559.T'].includes(sym)) {
             return 'indices';
         }
         if (sym.endsWith('=X')) {
@@ -421,6 +423,7 @@ export function MarketOverviewPage() {
                     const hasFTSE = migrated.some((it: MarketItem) => it.symbol === '^FTSE');
                     const hasNQ = migrated.some((it: MarketItem) => it.symbol === 'NQ=F');
                     const hasES = migrated.some((it: MarketItem) => it.symbol === 'ES=F');
+                    const hasTokyoAllWorld = migrated.some((it: MarketItem) => it.symbol === '2559.T');
                     const toAdd: MarketItem[] = [];
                     if (!hasN225) toAdd.push({ id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 });
                     if (!hasHSI) toAdd.push({ id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 });
@@ -429,6 +432,7 @@ export function MarketOverviewPage() {
                     if (!hasFTSE) toAdd.push({ id: 'idx-ftse', symbol: '^FTSE', name: 'FTSE 100 (London)', category: 'indices', decimals: 2 });
                     if (!hasNQ) toAdd.push({ id: 'fut-nq', symbol: 'NQ=F', name: 'Nasdaq 100 Future', category: 'indices', decimals: 2 });
                     if (!hasES) toAdd.push({ id: 'fut-es', symbol: 'ES=F', name: 'S&P 500 Future', category: 'indices', decimals: 2 });
+                    if (!hasTokyoAllWorld) toAdd.push({ id: 'asia-allworld', symbol: '2559.T', name: 'All-World Tokio · MSCI ACWI', category: 'indices', decimals: 0 });
                     if (toAdd.length > 0) {
                         migrated = sanitizeMarketItems([...migrated, ...toAdd], portfolioMarketItems);
                     }
@@ -861,7 +865,8 @@ export function MarketOverviewPage() {
                 'NQ=F',
                 'ES=F',
                 'YM=F',
-                'GC=F'
+                'GC=F',
+                '2559.T'
             ]));
             const res = await fetch(`/api/yahoo-quote?symbol=${symList.join(',')}&_=${Date.now()}`);
             if (res.ok) {
@@ -1707,7 +1712,7 @@ export function MarketOverviewPage() {
                             item.symbol.endsWith('.SW') ? 'CHF' :
                             item.symbol.endsWith('.DE') ? 'EUR' :
                             item.symbol.includes('CHF') ? 'CHF' :
-                            item.symbol === '^N225' ? 'JPY' :
+                            item.symbol === '^N225' || item.symbol.endsWith('.T') ? 'JPY' :
                             item.symbol === '^HSI' ? 'HKD' :
                             item.symbol === '^FTSE' ? 'GBP' :
                             item.symbol.endsWith('.SS') || item.symbol.endsWith('.SZ') ? 'CNY' :

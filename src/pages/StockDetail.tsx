@@ -1,11 +1,11 @@
 import { StockName } from '../components/StockName';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info, Maximize2, Telescope } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info, Maximize2, Telescope, ChevronDown, ChevronUp } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { InfoHelp } from '../components/InfoHelp';
 import { DelayedDataBadge } from '../components/DelayedDataBadge';
@@ -85,7 +85,23 @@ function getExtendedHoursInfo(stock: ExtendedHoursSource | null | undefined) {
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
+    const returnToCompare = useMemo<{ url: string; label: string } | null>(() => {
+        const fromState = (location.state as { returnToCompare?: { url: string; label: string } } | null)?.returnToCompare;
+        if (fromState?.url) return fromState;
+        if (!id) return null;
+        try {
+            const raw = sessionStorage.getItem(`portfolio_compare_return_${id.toUpperCase()}`);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed?.url) return parsed;
+            }
+        } catch {
+            // ignore storage errors
+        }
+        return null;
+    }, [location.state, id]);
     const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists, updatePosition, deletePosition, orderBook } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const { rates } = useExchangeRates();
@@ -98,39 +114,40 @@ export function StockDetail() {
         s.symbol.toLowerCase() === id?.toLowerCase()
     );
 
-    // Initialize virtual stock if not found in context (v3.13.44)
-    const [virtualStock, setVirtualStock] = useState<any>(() => {
-        if (!stockFromContext && id) {
-            const paramName = searchParams.get('name');
-            const paramCurrency = searchParams.get('currency');
-            return {
-                id: id,
-                symbol: id.toUpperCase(),
-                name: paramName ? decodeURIComponent(paramName) : id.toUpperCase(),
-                currentPrice: 0,
-                currency: paramCurrency ? decodeURIComponent(paramCurrency) : 'USD',
-                type: 'stock'
-            };
-        }
-        return null;
-    });
+    // Resolve virtual stock synchronously when symbol is not in portfolio/watchlist so symbol switches never lag a render
+    const resolvedVirtualFallback = useMemo(() => {
+        if (stockFromContext || !id) return null;
+        const paramName = searchParams.get('name');
+        const paramCurrency = searchParams.get('currency');
+        return {
+            id: id,
+            symbol: id.toUpperCase(),
+            name: paramName ? decodeURIComponent(paramName) : id.toUpperCase(),
+            currentPrice: 0,
+            currency: paramCurrency ? decodeURIComponent(paramCurrency) : 'USD',
+            type: 'stock'
+        };
+    }, [stockFromContext, id, searchParams]);
 
-    const stock = stockFromContext || virtualStock;
+    const [virtualStock, setVirtualStock] = useState<any>(() => resolvedVirtualFallback);
+
+    const activeVirtualStock = (!stockFromContext && virtualStock && id && virtualStock.id?.toLowerCase() === id.toLowerCase())
+        ? virtualStock
+        : resolvedVirtualFallback;
+
+    const stock = stockFromContext || activeVirtualStock;
 
     useEffect(() => {
-        if (!stockFromContext && id && !virtualStock) {
-            const paramName = searchParams.get('name');
-            const paramCurrency = searchParams.get('currency');
-            setVirtualStock({
-                id: id,
-                symbol: id.toUpperCase(),
-                name: paramName ? decodeURIComponent(paramName) : id.toUpperCase(),
-                currentPrice: 0,
-                currency: paramCurrency ? decodeURIComponent(paramCurrency) : 'USD',
-                type: 'stock'
-            });
+        if (stockFromContext) {
+            if (virtualStock) setVirtualStock(null);
+            return;
         }
-    }, [stockFromContext, id, !!virtualStock, searchParams]);
+        if (resolvedVirtualFallback && (!virtualStock || virtualStock.id?.toLowerCase() !== id?.toLowerCase())) {
+            setChartData(null);
+            setQuoteDate(null);
+            setVirtualStock(resolvedVirtualFallback);
+        }
+    }, [stockFromContext, id, resolvedVirtualFallback, virtualStock]);
 
     const activeOrder = useMemo(() => {
         if (!stock) return null;
@@ -144,6 +161,38 @@ export function StockDetail() {
 
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const notesTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const [isQuickLinksCollapsed, setIsQuickLinksCollapsed] = useState<boolean>(() => {
+        try { return localStorage.getItem('stock_detail_quicklinks_collapsed') === 'true'; } catch { return false; }
+    });
+    const [isNotesCollapsed, setIsNotesCollapsed] = useState<boolean>(() => {
+        try { return localStorage.getItem('stock_detail_notes_collapsed') === 'true'; } catch { return false; }
+    });
+
+    const toggleQuickLinksCollapsed = () => {
+        setIsQuickLinksCollapsed(prev => {
+            const next = !prev;
+            try { localStorage.setItem('stock_detail_quicklinks_collapsed', String(next)); } catch { /* ignore */ }
+            return next;
+        });
+    };
+
+    const toggleNotesCollapsed = () => {
+        setIsNotesCollapsed(prev => {
+            const next = !prev;
+            try { localStorage.setItem('stock_detail_notes_collapsed', String(next)); } catch { /* ignore */ }
+            return next;
+        });
+    };
+
+    // Auto-grow personal notes textarea cleanly with every line of text
+    useEffect(() => {
+        if (isNotesCollapsed) return;
+        const el = notesTextareaRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${Math.max(180, el.scrollHeight + 4)}px`;
+    }, [notes, isNotesCollapsed, id]);
     const [timeRange, setTimeRange] = useState<TimeRange>('1D');
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -157,13 +206,15 @@ export function StockDetail() {
         return localStorage.getItem('chart_show_prepost') !== 'false';
     });
 
-    // Check if stock is traded on US markets (only US stocks have Yahoo Pre/Post-Market data)
+    // Check if stock is traded on US markets (only US stocks/ETFs have real Yahoo Pre/Post-Market sessions)
     const isUSStock = useMemo(() => {
         if (!stock) return false;
         const sym = (stock.symbol || '').toUpperCase();
-        const curr = (stock.currency || '').toUpperCase();
-        return curr === 'USD' || !sym.includes('.') || sym.endsWith('.US');
-    }, [stock?.symbol, stock?.currency]);
+        if (!sym || sym.startsWith('^') || sym.includes('=')) return false;
+        if (sym.includes('.') && !sym.endsWith('.US')) return false;
+        if (/-(USD|CHF|EUR|GBP)$/.test(sym)) return false;
+        return true;
+    }, [stock?.symbol]);
 
     // European Indication Quote (Tradegate / Xetra early market)
     const [europeanQuote, setEuropeanQuote] = useState<EuropeanIndicationQuote | null>(null);
@@ -761,10 +812,15 @@ export function StockDetail() {
                     chartUpdates.previousClose = response.previousClose;
                 }
                 if (Object.keys(chartUpdates).length > 0) {
+                    if (latestStockRef.current?.id?.toLowerCase() !== currentStock.id.toLowerCase()) return;
                     if (stockFromContext) {
                         updateStock(currentStock.id, chartUpdates);
                     } else {
-                        setVirtualStock((prev: any) => ({ ...prev, ...chartUpdates }));
+                        setVirtualStock((prev: any) =>
+                            prev && prev.id?.toLowerCase() === currentStock.id.toLowerCase()
+                                ? { ...prev, ...chartUpdates }
+                                : prev
+                        );
                     }
                 }
             }
@@ -841,10 +897,15 @@ export function StockDetail() {
                 }
 
                 if (hasUpdates) {
+                    if (latestStockRef.current?.id?.toLowerCase() !== currentStock.id.toLowerCase()) return;
                     if (stockFromContext) {
-                        updateStock(stock.id, updates);
+                        updateStock(currentStock.id, updates);
                     } else {
-                        setVirtualStock((prev: any) => ({ ...prev, ...updates }));
+                        setVirtualStock((prev: any) =>
+                            prev && prev.id?.toLowerCase() === currentStock.id.toLowerCase()
+                                ? { ...prev, ...updates }
+                                : prev
+                        );
                     }
                 }
             }
@@ -910,6 +971,47 @@ export function StockDetail() {
     const effectiveStockDate = (!isStockMarketOpen && quoteTimestamp > 0) ? new Date(quoteTimestamp) : new Date();
     const stockDateStr = effectiveStockDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
+    const handleBackNavigation = () => {
+        if (returnToCompare?.url) {
+            try {
+                if (id) sessionStorage.removeItem(`portfolio_compare_return_${id.toUpperCase()}`);
+            } catch {
+                // ignore
+            }
+            navigate(returnToCompare.url, { replace: true });
+            return;
+        }
+        const from = searchParams.get('from');
+        if (from === 'performance') {
+            navigate('/?openPerformance=true');
+        } else if (from === 'market-overview-performance') {
+            const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
+            const params = new URLSearchParams();
+            if (tab && tab !== 'all') params.set('tab', tab);
+            params.set('openPerformance', 'true');
+            navigate(`/market-overview?${params.toString()}`);
+        } else if (from === 'watchlist-performance') {
+            navigate('/watchlist?openPerformance=true');
+        } else if (from === 'orderbook') {
+            navigate('/calculator?orderbook=true');
+        } else if (from === 'watchlist') {
+            navigate('/watchlist');
+        } else if (from === 'portfolio') {
+            navigate('/portfolio');
+        } else if (from === 'dividends') {
+            navigate('/dividends');
+        } else if (from === 'dashboard') {
+            navigate('/');
+        } else if (from === 'market-overview') {
+            const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
+            navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
+        } else if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+            navigate(-1);
+        } else {
+            navigate('/');
+        }
+    };
+
     return (
         <div className="stock-detail-page p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10 pl-[max(env(safe-area-inset-left,0px),0.5rem)] pr-[max(env(safe-area-inset-right,0px),0.5rem)]">
             {/* Sticky Header on Desktop and Mobile */}
@@ -917,35 +1019,7 @@ export function StockDetail() {
                 <div className="stock-detail-top-actions flex portrait:flex-wrap landscape:flex-nowrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 mb-2 sm:mb-3.5 md:mb-4 landscape:mb-1 pl-12 xl:pl-0 w-full overflow-x-auto scroller-none">
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <button
-                            onClick={() => {
-                                const from = searchParams.get('from');
-                                if (from === 'performance') {
-                                    navigate('/?openPerformance=true');
-                                } else if (from === 'market-overview-performance') {
-                                    const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
-                                    const params = new URLSearchParams();
-                                    if (tab && tab !== 'all') params.set('tab', tab);
-                                    params.set('openPerformance', 'true');
-                                    navigate(`/market-overview?${params.toString()}`);
-                                } else if (from === 'watchlist-performance') {
-                                    navigate('/watchlist?openPerformance=true');
-                                } else if (from === 'orderbook') {
-                                    navigate('/calculator?orderbook=true');
-                                } else if (from === 'watchlist') {
-                                    navigate('/watchlist');
-                                } else if (from === 'portfolio') {
-                                    navigate('/portfolio');
-                                } else if (from === 'dividends') {
-                                    navigate('/dividends');
-                                } else if (from === 'market-overview') {
-                                    const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
-                                    navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
-                                } else if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
-                                    navigate(-1);
-                                } else {
-                                    navigate('/');
-                                }
-                            }}
+                            onClick={handleBackNavigation}
                             className="h-7 w-7 inline-flex items-center justify-center leading-none rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-foreground/40 hover:border-foreground/75 shadow-sm p-0 transition-all group active:scale-95 shrink-0 cursor-pointer"
                             title={
                                 searchParams.get('from') === 'performance' || searchParams.get('from') === 'market-overview-performance'
@@ -954,7 +1028,9 @@ export function StockDetail() {
                                         ? "Zurück zur Watchlist Performance"
                                         : searchParams.get('from') === 'orderbook'
                                             ? "Zurück zum Auftragsbuch"
-                                            : searchParams.get('from') === 'market-overview'
+                                            : searchParams.get('from') === 'dashboard'
+                                                ? "Zurück zur Übersicht"
+                                                : searchParams.get('from') === 'market-overview'
                                                 ? "Zurück zur Marktübersicht"
                                                 : searchParams.get('from') === 'portfolio'
                                                     ? "Zurück zu Positionen"
@@ -1231,7 +1307,7 @@ export function StockDetail() {
 
                                     {/* Row 4: Extended Hours (Pre-Market / After-Hours) */}
                                     {(() => {
-                                        const ext = getExtendedHoursInfo(stock);
+                                        const ext = isUSStock ? getExtendedHoursInfo(stock) : null;
                                         if (!ext) return null;
                                         const pct = ext.pct ?? 0;
                                         return (
@@ -1364,7 +1440,38 @@ export function StockDetail() {
                         minutesAgo={minutesAgo}
                         isFullscreen={isChartFullscreen}
                         onToggleFullscreen={setIsChartFullscreen}
-                        extendedHours={getExtendedHoursInfo(stock)}
+                        extendedHours={isUSStock ? getExtendedHoursInfo(stock) : null}
+                        initialCompareTarget={(() => {
+                            const cmpSym = searchParams.get('compare');
+                            if (!cmpSym) return null;
+                            return {
+                                symbol: cmpSym,
+                                name: searchParams.get('compareName') || cmpSym,
+                                currency: searchParams.get('compareCurrency') || undefined,
+                            };
+                        })()}
+                        onOpenCompareSymbol={(target) => {
+                            const returnParams = new URLSearchParams(searchParams);
+                            returnParams.set('compare', target.symbol);
+                            returnParams.set('compareName', target.name);
+                            returnParams.set('compareCurrency', target.currency);
+                            const returnUrl = `/stock/${encodeURIComponent(stock.id)}?${returnParams.toString()}`;
+                            const returnInfo = {
+                                url: returnUrl,
+                                label: `${stock.symbol} vs. ${target.symbol}`,
+                            };
+                            try {
+                                sessionStorage.setItem(`portfolio_compare_return_${target.symbol.toUpperCase()}`, JSON.stringify(returnInfo));
+                            } catch {
+                                // ignore storage errors
+                            }
+                            navigate(
+                                `/stock/${encodeURIComponent(target.symbol)}?name=${encodeURIComponent(target.name)}&currency=${encodeURIComponent(target.currency)}`,
+                                { state: { returnToCompare: returnInfo } }
+                            );
+                        }}
+                        onReturnToCompare={handleBackNavigation}
+                        returnToCompareLabel={returnToCompare?.label}
                         headerActions={position ? (
                             <>
                                 <button
@@ -1392,20 +1499,19 @@ export function StockDetail() {
                 </div>
             </div>
 
-            {/* Kursdaten, Stammdaten, Quick Links & Notizen - Harmonisches 2-Spalten-Layout mit nachrückenden Feldern */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-start iphone-landscape-section">
-                {/* Linke Spalte: Kursdaten & nachrückendes Quick-Links-Feld (kein Loch darunter!) */}
-                <div className="contents md:flex md:flex-col md:gap-4 md:gap-6 landscape:gap-3">
-                    <div className="order-1 md:order-none">
-                        {/* Kursdaten */}
-                        <div
+            {/* Kursdaten, Stammdaten, Quick Links & Notizen - Symmetrisches 2x2-Kreuz-Raster */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-stretch iphone-landscape-section">
+                {/* Zeile 1 Links: Kursdaten */}
+                <div className="order-1 h-full">
+                    {/* Kursdaten */}
+                    <div
                     onClick={() => {
                         const from = searchParams.get('from') || 'dividends';
                         const query = from ? `?from=${from}` : '';
                         const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
                         navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                     }}
-                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm cursor-pointer transition-colors group flex flex-col justify-start overflow-hidden"
+                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 shadow-sm cursor-pointer transition-colors group flex flex-col justify-start h-full overflow-hidden"
                     title="Daten bearbeiten"
                 >
                     <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
@@ -1588,7 +1694,7 @@ export function StockDetail() {
 
                     {/* Vorbörse / Nachbörse Indikation (Yahoo) */}
                     {(() => {
-                        const ext = getExtendedHoursInfo(stock);
+                        const ext = isUSStock ? getExtendedHoursInfo(stock) : null;
                         if (!ext) return null;
                         const pct = ext.pct ?? 0;
                         return (
@@ -1865,14 +1971,40 @@ export function StockDetail() {
                 </div>
             </div>
 
-            {/* Quick Links Card - rückt in der linken Spalte direkt unter Kursdaten nach! */}
-            <div className="order-3 md:order-none">
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-start overflow-hidden">
-                    <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
-                        <Link2 className="size-4 md:size-5 text-blue-500 shrink-0" />
-                        Quick Links
-                    </h3>
-                    <div className="space-y-3">
+            {/* Zeile 2 Links: Quick Links (einklappbar, gleiche Höhe wie Notizen wenn beide aufgeklappt) */}
+            <div className={cn("order-3", !isQuickLinksCollapsed && !isNotesCollapsed ? "h-full" : "self-start")}>
+                <div className={cn(
+                    "bg-card border border-border rounded-xl p-4 md:p-6 shadow-sm flex flex-col justify-start overflow-hidden",
+                    !isQuickLinksCollapsed && !isNotesCollapsed && "h-full"
+                )}>
+                    <div
+                        onClick={toggleQuickLinksCollapsed}
+                        className={cn(
+                            "flex items-center justify-between gap-2 cursor-pointer select-none",
+                            !isQuickLinksCollapsed && "mb-3 md:mb-4"
+                        )}
+                    >
+                        <h3 className="font-bold text-base md:text-lg flex items-center gap-1.5 md:gap-2">
+                            <Link2 className="size-4 md:size-5 text-blue-500 shrink-0" />
+                            <span>Quick Links</span>
+                            {stock?.quickLinks && stock.quickLinks.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground tabular-nums">
+                                    {stock.quickLinks.length}
+                                </span>
+                            )}
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); toggleQuickLinksCollapsed(); }}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-lg border border-border/70 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
+                            title={isQuickLinksCollapsed ? "Quick Links aufklappen" : "Quick Links einklappen"}
+                            aria-label={isQuickLinksCollapsed ? "Quick Links aufklappen" : "Quick Links einklappen"}
+                        >
+                            {isQuickLinksCollapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+                        </button>
+                    </div>
+                    {!isQuickLinksCollapsed && (
+                    <div className="space-y-3 flex-1">
                         {/* Input for adding new links */}
                         <div className="flex gap-2">
                             <input
@@ -1939,15 +2071,14 @@ export function StockDetail() {
                             </div>
                         )}
                     </div>
+                    )}
                 </div>
             </div>
-        </div>
 
-        {/* Rechte Spalte: Stammdaten & nachrückendes Notizen-Feld */}
-        <div className="contents md:flex md:flex-col md:gap-4 md:gap-6 landscape:gap-3">
-            <div className="order-2 md:order-none">
+            {/* Zeile 1 Rechts: Stammdaten (streckt sich sauber auf exakt dieselbe Höhe wie Kursdaten → symmetrisches Kreuz) */}
+            <div className="order-2 h-full">
                 {/* Stammdaten */}
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-start overflow-hidden space-y-2.5">
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 shadow-sm flex flex-col justify-start h-full overflow-hidden space-y-2.5">
                     <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
                         <div className="flex items-center gap-1.5 md:gap-2">
                             <Layers className="size-4 md:size-5 text-blue-500 shrink-0" />
@@ -2112,38 +2243,65 @@ export function StockDetail() {
                 </div>
             </div>
 
-            {/* Notes Card - rückt in der rechten Spalte direkt unter Stammdaten nach! */}
-            <div className="order-4 md:order-none">
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-start overflow-hidden">
-                    <div className="flex items-center justify-between mb-2 md:mb-4 landscape:mb-1">
-                        <h3 className="font-bold text-base md:text-lg landscape:text-xs flex items-center gap-1.5 md:gap-2">
+            {/* Zeile 2 Rechts: Persönliche Notizen & Analyse (einklappbar, wächst automatisch mit Inhalt & passt sich Quick Links an) */}
+            <div className={cn("order-4", !isQuickLinksCollapsed && !isNotesCollapsed ? "h-full" : "self-start")}>
+                <div className={cn(
+                    "bg-card border border-border rounded-xl p-4 md:p-6 shadow-sm flex flex-col justify-start overflow-hidden",
+                    !isQuickLinksCollapsed && !isNotesCollapsed && "h-full"
+                )}>
+                    <div
+                        onClick={toggleNotesCollapsed}
+                        className={cn(
+                            "flex items-center justify-between gap-2 cursor-pointer select-none",
+                            !isNotesCollapsed && "mb-3 md:mb-4"
+                        )}
+                    >
+                        <h3 className="font-bold text-base md:text-lg flex items-center gap-1.5 md:gap-2 min-w-0">
                             <Save className="size-4 md:size-5 text-purple-500 shrink-0" />
-                            Persönliche Notizen & Analyse
+                            <span className="truncate">Persönliche Notizen &amp; Analyse</span>
                         </h3>
-                        <button
-                            onClick={handleSaveNotes}
-                            className={cn(
-                                'px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all',
-                                isSaving
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            {!isNotesCollapsed && (
+                                <button
+                                    type="button"
+                                    onClick={handleSaveNotes}
+                                    className={cn(
+                                        'h-7 inline-flex items-center justify-center px-3 py-0 rounded-lg font-bold text-xs leading-none transition-all cursor-pointer whitespace-nowrap',
+                                        isSaving
+                                            ? 'bg-green-500 text-white'
+                                            : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                    )}
+                                >
+                                    {isSaving ? 'Gespeichert!' : 'Speichern'}
+                                </button>
                             )}
-                        >
-                            {isSaving ? 'Gespeichert!' : 'Speichern'}
-                        </button>
+                            <button
+                                type="button"
+                                onClick={toggleNotesCollapsed}
+                                className="h-7 w-7 inline-flex items-center justify-center rounded-lg border border-border/70 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
+                                title={isNotesCollapsed ? "Notizen aufklappen" : "Notizen einklappen"}
+                                aria-label={isNotesCollapsed ? "Notizen aufklappen" : "Notizen einklappen"}
+                            >
+                                {isNotesCollapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+                            </button>
+                        </div>
                     </div>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                        className="min-h-[160px] md:min-h-[220px] landscape:min-h-0 w-full p-2.5 md:p-4 text-xs sm:text-sm rounded-lg border border-border bg-background/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1 landscape:mt-0.5">
-                        * Notizen werden nur lokal gespeichert.
-                    </p>
+                    {!isNotesCollapsed && (
+                        <>
+                            <textarea
+                                ref={notesTextareaRef}
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
+                                className="min-h-[180px] flex-1 w-full p-3 md:p-4 text-xs sm:text-sm leading-relaxed rounded-lg border border-border bg-background/50 resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <p className="text-xs text-muted-foreground mt-2">
+                                * Notizen werden nur lokal gespeichert.
+                            </p>
+                        </>
+                    )}
                 </div>
             </div>
-        </div>
     </div>
 
             {/* NEW: ETF Allocation Breakdown */}

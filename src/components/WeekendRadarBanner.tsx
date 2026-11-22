@@ -6,10 +6,12 @@ import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { InfoHelp } from './InfoHelp';
 import { cn } from '../utils';
+import { fetchStockQuotes } from '../services/yahoo-finance';
 
 interface RadarQuote {
     price: number;
     previousClose: number;
+    open?: number;
     changePercent: number;
     changeAmount: number;
     currency?: string;
@@ -18,6 +20,7 @@ interface RadarQuote {
 const DEFAULT_RADAR_QUOTES: Record<string, RadarQuote> = {
     'NQ=F': { price: 21540.50, previousClose: 21420.00, changePercent: 0.56, changeAmount: 120.50, currency: 'USD' },
     'ES=F': { price: 5985.25, previousClose: 5962.50, changePercent: 0.38, changeAmount: 22.75, currency: 'USD' },
+    '2559.T': { price: 22450, previousClose: 22450, open: 22450, changePercent: 0, changeAmount: 0, currency: 'JPY' },
     'BTC-CHF': { price: 68150, previousClose: 67700, changePercent: 0.65, changeAmount: 450, currency: 'CHF' },
     'GC=F': { price: 4142.60, previousClose: 4131.45, changePercent: 0.27, changeAmount: 11.15, currency: 'USD' }
 };
@@ -143,50 +146,91 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
         });
     };
 
-    // Cached quotes from market overview
+    // Cached quotes from market overview + radar cache
     const [quotes, setQuotes] = useState<Record<string, RadarQuote>>(() => {
+        let merged: Record<string, RadarQuote> = { ...DEFAULT_RADAR_QUOTES };
         try {
             const raw = localStorage.getItem('portfolio_market_overview_quotes');
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (parsed && typeof parsed === 'object') {
-                    return { ...DEFAULT_RADAR_QUOTES, ...parsed };
+                    merged = { ...merged, ...parsed };
+                }
+            }
+            const radarRaw = localStorage.getItem('portfolio_radar_quotes_cache');
+            if (radarRaw) {
+                const parsedRadar = JSON.parse(radarRaw);
+                if (parsedRadar && typeof parsedRadar === 'object') {
+                    merged = { ...merged, ...parsedRadar };
                 }
             }
         } catch {}
-        return DEFAULT_RADAR_QUOTES;
+        return merged;
     });
 
-    // Fresh fetch in background
+    // Fresh fetch in background (local proxy with GitHub Pages fallback via fetchStockQuotes)
     useEffect(() => {
         let isCancelled = false;
         const fetchRadarQuotes = async () => {
+            const updated: Record<string, RadarQuote> = {};
             try {
-                const res = await fetch(`/api/yahoo-quote?symbol=NQ=F,ES=F,GC=F&_=${Date.now()}`);
+                const res = await fetch(`/api/yahoo-quote?symbol=NQ=F,ES=F,2559.T,BTC-CHF,GC=F&_=${Date.now()}`);
                 if (res.ok && !isCancelled) {
                     const json = await res.json();
                     const results = json.quoteResponse?.result || [];
-                    const updated: Record<string, RadarQuote> = {};
                     for (const r of results) {
                         if (r && r.symbol && r.regularMarketPrice !== undefined) {
                             const p = r.regularMarketPrice;
                             const prev = r.regularMarketPreviousClose || p;
+                            const openVal = r.regularMarketOpen && r.regularMarketOpen > 0 ? r.regularMarketOpen : undefined;
                             const chg = p - prev;
                             const pct = prev > 0 ? (chg / prev) * 100 : (r.regularMarketChangePercent || 0);
                             updated[r.symbol] = {
                                 price: p,
                                 previousClose: prev,
+                                open: openVal,
                                 changePercent: pct,
                                 changeAmount: chg,
-                                currency: r.currency || 'USD'
+                                currency: r.currency || (r.symbol === '2559.T' ? 'JPY' : 'USD')
                             };
                         }
                     }
-                    if (Object.keys(updated).length > 0) {
-                        setQuotes(prev => ({ ...prev, ...updated }));
-                    }
                 }
             } catch {}
+
+            // Fallback (e.g. GitHub Pages / static build) if key symbols were not returned by local proxy
+            const missingSyms = ['NQ=F', 'ES=F', '2559.T', 'BTC-CHF'].filter(s => !updated[s]);
+            if (missingSyms.length > 0 && !isCancelled) {
+                try {
+                    const fallbackQuotes = await fetchStockQuotes(missingSyms);
+                    for (const sym of missingSyms) {
+                        const q = fallbackQuotes[sym];
+                        if (q && q.price > 0) {
+                            const prev = q.previousClose && q.previousClose > 0 ? q.previousClose : q.price;
+                            const chg = q.price - prev;
+                            const pct = prev > 0 ? (chg / prev) * 100 : 0;
+                            updated[sym] = {
+                                price: q.price,
+                                previousClose: prev,
+                                open: q.open && q.open > 0 ? q.open : undefined,
+                                changePercent: pct,
+                                changeAmount: chg,
+                                currency: q.currency || (sym === '2559.T' ? 'JPY' : sym === 'BTC-CHF' ? 'CHF' : 'USD')
+                            };
+                        }
+                    }
+                } catch {}
+            }
+
+            if (Object.keys(updated).length > 0 && !isCancelled) {
+                setQuotes(prev => {
+                    const next = { ...prev, ...updated };
+                    try {
+                        localStorage.setItem('portfolio_radar_quotes_cache', JSON.stringify(updated));
+                    } catch {}
+                    return next;
+                });
+            }
         };
         fetchRadarQuotes();
         return () => { isCancelled = true; };
@@ -224,7 +268,13 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
 
     const nqQuote = quotes['NQ=F'] || DEFAULT_RADAR_QUOTES['NQ=F'];
     const esQuote = quotes['ES=F'] || DEFAULT_RADAR_QUOTES['ES=F'];
+    const tokyoQuote = quotes['2559.T'] || DEFAULT_RADAR_QUOTES['2559.T'];
     const btcQuote = quotes['BTC-CHF'] || DEFAULT_RADAR_QUOTES['BTC-CHF'];
+
+    const tokyoIntradayPct = useMemo(() => {
+        if (!tokyoQuote?.price || !tokyoQuote?.open || tokyoQuote.open <= 0) return null;
+        return ((tokyoQuote.price - tokyoQuote.open) / tokyoQuote.open) * 100;
+    }, [tokyoQuote]);
 
     const avgFuturesChange = useMemo(() => {
         const nqPct = nqQuote?.changePercent ?? 0;
@@ -277,6 +327,19 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
     const formatNum = (val: number | undefined, dec = 2) => {
         if (val === undefined || isNaN(val)) return '-';
         return val.toLocaleString('de-CH', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    };
+
+    const openMarketDetail = (
+        symbol: string,
+        name: string,
+        currency: string,
+        tab: string,
+        compare?: { symbol: string; name: string; currency: string }
+    ) => {
+        const compareParams = compare
+            ? `&compare=${encodeURIComponent(compare.symbol)}&compareName=${encodeURIComponent(compare.name)}&compareCurrency=${encodeURIComponent(compare.currency)}`
+            : '';
+        navigate(`/stock/${encodeURIComponent(symbol)}?from=dashboard&tab=${encodeURIComponent(tab)}&name=${encodeURIComponent(name)}&currency=${encodeURIComponent(currency)}${compareParams}`);
     };
 
     return (
@@ -381,9 +444,13 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
             {/* Body */}
             {!isCollapsed && (
                 <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
                         {/* 1. Nasdaq 100 Future */}
-                        <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0">
+                        <div
+                            onClick={() => openMarketDetail('NQ=F', 'Nasdaq 100 Future', 'USD', 'indices')}
+                            title="Chart & Details für Nasdaq 100 Future öffnen"
+                            className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-primary/50 hover:shadow-md active:scale-[0.99] transition-all flex flex-col justify-between min-w-0 cursor-pointer"
+                        >
                             <div className="flex items-center justify-between gap-1">
                                 <span className="text-sm text-muted-foreground font-medium truncate">Nasdaq 100 Future</span>
                                 <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">USD</span>
@@ -407,7 +474,11 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                         </div>
 
                         {/* 2. S&P 500 Future */}
-                        <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0">
+                        <div
+                            onClick={() => openMarketDetail('ES=F', 'S&P 500 Future', 'USD', 'indices')}
+                            title="Chart & Details für S&P 500 Future öffnen"
+                            className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-primary/50 hover:shadow-md active:scale-[0.99] transition-all flex flex-col justify-between min-w-0 cursor-pointer"
+                        >
                             <div className="flex items-center justify-between gap-1">
                                 <span className="text-sm text-muted-foreground font-medium truncate">S&P 500 Future</span>
                                 <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">USD</span>
@@ -430,8 +501,81 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                             </div>
                         </div>
 
-                        {/* 3. Bitcoin 24/7 Sentiment */}
-                        <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0">
+                        {/* 3. All-World Tokio (2559.T · MSCI ACWI) */}
+                        <div
+                            onClick={() => openMarketDetail(
+                                '2559.T',
+                                'All-World Tokio · MSCI ACWI',
+                                'JPY',
+                                'indices',
+                                { symbol: '^N225', name: 'Nikkei 225', currency: 'JPY' }
+                            )}
+                            title="Intraday-Vergleich All-World Tokio 2559.T vs. Nikkei 225 öffnen"
+                            className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-primary/50 hover:shadow-md active:scale-[0.99] transition-all flex flex-col justify-between min-w-0 cursor-pointer"
+                        >
+                            <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-center gap-1 min-w-0">
+                                    <span className="text-sm text-muted-foreground font-medium truncate">All-World Tokio</span>
+                                    <div onClick={(e) => e.stopPropagation()} className="inline-flex">
+                                        <InfoHelp
+                                            title="All-World Tokio · 2559.T"
+                                            items={[
+                                                {
+                                                    term: "Wichtig am Montagmorgen (Intraday-Tendenz)",
+                                                    text: "Bei 2559.T nicht die linke Tages-% beachten, sondern ob der Kurs (bzw. die Linie im Intraday-Chart) nach der Eröffnung um 01:00 Uhr bis 07:30 Uhr weiter steigt oder fällt. Die Tages-% vergleicht mit dem Tokio-Schluss von Freitag 07:30 Uhr und enthält montags zuerst den kompletten US-Freitag."
+                                                },
+                                                {
+                                                    term: "Was bedeutet «Ab 01:00»?",
+                                                    text: "Reine Intraday-Veränderung ab dem Tokio-Eröffnungskurs (01:00 Uhr MEZ) bis zum aktuellen Kurs bzw. Schluss (07:30 Uhr MEZ) – komplett ohne Freitags-Nachholeffekt."
+                                                },
+                                                {
+                                                    term: "Was steckt in 2559.T?",
+                                                    text: "MAXIS MSCI ACWI ETF an der Börse Tokio (Handel Mo–Fr 01:00–07:30 Uhr MEZ). Bildet über 2'300 weltweite Aktien inkl. Asien & Japan ab – praktisch deckungsgleich mit dem FTSE All-World (VWRA.L). Notiert in JPY (USD/JPY-Einfluss beachten)."
+                                                }
+                                            ]}
+                                        />
+                                    </div>
+                                </div>
+                                <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">JPY</span>
+                            </div>
+                            <div className="text-xl lg:text-2xl font-bold tracking-tight text-foreground tabular-nums my-1">
+                                {formatNum(tokyoQuote?.price, 0)}
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                                <span className={cn(
+                                    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs sm:text-sm font-semibold tabular-nums leading-none",
+                                    (tokyoQuote?.changePercent ?? 0) >= 0
+                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                        : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                )}>
+                                    {(tokyoQuote?.changePercent ?? 0) >= 0 ? '+' : ''}{formatNum(tokyoQuote?.changePercent, 2)}%
+                                </span>
+                                {tokyoIntradayPct !== null ? (
+                                    <span
+                                        className={cn(
+                                            "text-xs font-semibold tabular-nums whitespace-nowrap",
+                                            tokyoIntradayPct >= 0
+                                                ? "text-emerald-600 dark:text-emerald-400"
+                                                : "text-rose-600 dark:text-rose-400"
+                                        )}
+                                        title="Reine Intraday-Veränderung ab Tokio-Eröffnung 01:00 Uhr MEZ bis 07:30 Uhr (ohne Freitags-Nachholeffekt)"
+                                    >
+                                        Ab 01:00 {tokyoIntradayPct >= 0 ? '+' : ''}{formatNum(tokyoIntradayPct, 2)}%
+                                    </span>
+                                ) : (
+                                    <span className="text-xs text-muted-foreground font-mono">
+                                        2559.T
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 4. Bitcoin 24/7 Sentiment */}
+                        <div
+                            onClick={() => openMarketDetail('BTC-CHF', 'Bitcoin CHF', 'CHF', 'crypto')}
+                            title="Chart & Details für Bitcoin CHF öffnen"
+                            className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-primary/50 hover:shadow-md active:scale-[0.99] transition-all flex flex-col justify-between min-w-0 cursor-pointer"
+                        >
                             <div className="flex items-center justify-between gap-1">
                                 <span className="text-sm text-muted-foreground font-medium truncate">Bitcoin 24/7</span>
                                 <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">CHF</span>
@@ -454,29 +598,35 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                             </div>
                         </div>
 
-                        {/* 4. Portfolio Früh-Indikation */}
+                        {/* 5. Portfolio Früh-Indikation */}
                         {showPortfolioEstimate && portfolioEstimate && (
-                            <div className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-slate-600 transition-all flex flex-col justify-between min-w-0">
+                            <div
+                                onClick={() => navigate('/market-overview?tab=portfolio')}
+                                title="Bestand in der Marktübersicht öffnen"
+                                className="bg-card dark:bg-[#162136] border border-border dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-primary/50 hover:shadow-md active:scale-[0.99] transition-all flex flex-col justify-between min-w-0 cursor-pointer"
+                            >
                                 <div className="flex items-center justify-between gap-1">
                                     <div className="flex items-center gap-1 min-w-0">
                                         <span className="text-sm font-medium text-blue-500 dark:text-blue-400 truncate">Depot-Frühtendenz</span>
-                                        <InfoHelp
-                                            title="Depot-Frühtendenz"
-                                            items={[
-                                                {
-                                                    term: "Wie wird die Prozentzahl berechnet?",
-                                                    text: "Die Tendenz berechnet sich aus einer positionsgenauen Gewichtung deines Depots nach Währung und Sektor: Schweizer Standardwerte (SMI) fliessen mit einem defensiven Beta von 0.30 ein, europäische Werte mit 0.40 bis 0.50 und US-Titel je nach Branche (Tech vs. Substanz/Energie) mit 0.65 bis 1.00. Das verhindert unrealistische Übertreibungen bei reinen US-Futures-Ausschlägen."
-                                                },
-                                                {
-                                                    term: "Wie entsteht der Franken-Betrag?",
-                                                    text: "Die gewichtete Eröffnungstendenz wird für jede einzelne Aktienposition in CHF umgerechnet und summiert. Daraus ergibt sich die realistische Gesamtauswirkung auf dein Portfolio."
-                                                },
-                                                {
-                                                    term: "Wofür dient diese Schätzung?",
-                                                    text: "Sie gibt dir vor Börseneröffnung eine realistische Hausnummer, wie viel dein Depot bei Handelsstart voraussichtlich im Plus oder Minus stehen wird – noch bevor die ersten Kurse an den Heimatbörsen festgestellt werden."
-                                                }
-                                            ]}
-                                        />
+                                        <div onClick={(e) => e.stopPropagation()} className="inline-flex">
+                                            <InfoHelp
+                                                title="Depot-Frühtendenz"
+                                                items={[
+                                                    {
+                                                        term: "Wie wird die Prozentzahl berechnet?",
+                                                        text: "Die Tendenz berechnet sich aus einer positionsgenauen Gewichtung deines Depots nach Währung und Sektor: Schweizer Standardwerte (SMI) fliessen mit einem defensiven Beta von 0.30 ein, europäische Werte mit 0.40 bis 0.50 und US-Titel je nach Branche (Tech vs. Substanz/Energie) mit 0.65 bis 1.00. Das verhindert unrealistische Übertreibungen bei reinen US-Futures-Ausschlägen."
+                                                    },
+                                                    {
+                                                        term: "Wie entsteht der Franken-Betrag?",
+                                                        text: "Die gewichtete Eröffnungstendenz wird für jede einzelne Aktienposition in CHF umgerechnet und summiert. Daraus ergibt sich die realistische Gesamtauswirkung auf dein Portfolio."
+                                                    },
+                                                    {
+                                                        term: "Wofür dient diese Schätzung?",
+                                                        text: "Sie gibt dir vor Börseneröffnung eine realistische Hausnummer, wie viel dein Depot bei Handelsstart voraussichtlich im Plus oder Minus stehen wird – noch bevor die ersten Kurse an den Heimatbörsen festgestellt werden."
+                                                    }
+                                                ]}
+                                            />
+                                        </div>
                                     </div>
                                     <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded shrink-0">CHF</span>
                                 </div>
@@ -551,7 +701,7 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                                 <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto pt-1 sm:pt-0">
                                     {isWaitingForOpen ? (
                                         <>
-                                            <span className="text-muted-foreground text-[11px]">
+                                            <span className="text-muted-foreground text-xs">
                                                 Live-Abgleich:
                                             </span>
                                             <span className="font-bold px-2 py-0.5 rounded text-xs tabular-nums border bg-amber-500/15 text-amber-500 border-amber-500/30">
@@ -560,7 +710,7 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                                         </>
                                     ) : (
                                         <>
-                                            <span className="text-muted-foreground text-[11px]">
+                                            <span className="text-muted-foreground text-xs">
                                                 {isBetter ? 'Besser als Tendenz:' : 'Schwächer als Tendenz:'}
                                             </span>
                                             <span className={cn(

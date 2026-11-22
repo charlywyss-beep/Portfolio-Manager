@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Info } from 'lucide-react';
 
@@ -57,6 +57,18 @@ interface InfoHelpProps {
  */
 export function InfoHelp({ title, items, footer, trigger, buttonClassName }: InfoHelpProps) {
     const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        if (!open) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                e.stopPropagation();
+                setOpen(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => window.removeEventListener('keydown', handleKeyDown, true);
+    }, [open]);
 
     return (
         <>

@@ -6,10 +6,63 @@ import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
-import { Ruler, X, ArrowLeftRight, Maximize2, Minimize2, HelpCircle, ShieldCheck, Sparkles, TriangleAlert, Sliders, RefreshCw } from 'lucide-react';
+import { Ruler, X, ArrowLeft, ArrowLeftRight, ArrowUpRight, Maximize2, Minimize2, HelpCircle, ShieldCheck, Sparkles, TriangleAlert, Sliders, RefreshCw, GitCompareArrows, Search, Loader2, Check } from 'lucide-react';
 import { cn } from '../utils';
-import { type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
+import { type TimeRange, type ChartDataPoint, fetchStockHistory } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
+import { usePortfolio } from '../context/PortfolioContext';
+
+interface CompareTarget {
+    symbol: string;
+    name: string;
+    currency?: string;
+    badge?: string;
+}
+
+const COMPARE_BENCHMARKS: CompareTarget[] = [
+    { symbol: '^N225', name: 'Nikkei 225', currency: 'JPY', badge: 'Japan' },
+    { symbol: '2559.T', name: 'All-World Tokio', currency: 'JPY', badge: 'MSCI ACWI' },
+    { symbol: 'ES=F', name: 'S&P 500 Future', currency: 'USD', badge: 'US Future' },
+    { symbol: 'NQ=F', name: 'Nasdaq 100 Future', currency: 'USD', badge: 'US Future' },
+    { symbol: '^GSPC', name: 'S&P 500', currency: 'USD', badge: 'Index' },
+    { symbol: '^NDX', name: 'Nasdaq 100', currency: 'USD', badge: 'Index' },
+    { symbol: '^SSMI', name: 'SMI', currency: 'CHF', badge: 'Schweiz' },
+    { symbol: '^GDAXI', name: 'DAX', currency: 'EUR', badge: 'Deutschland' },
+    { symbol: 'VWRA.L', name: 'Vanguard FTSE All-World', currency: 'USD', badge: 'ETF' },
+    { symbol: 'VT', name: 'Vanguard Total World US', currency: 'USD', badge: 'US Vor/Nach' },
+    { symbol: 'BTC-USD', name: 'Bitcoin', currency: 'USD', badge: '24/7' },
+];
+
+export const COMPARE_SWISS_GUIDE_ITEMS = [
+    {
+        term: "Schritt 1 · Warum starten beide Linien links bei 0%?",
+        text: "Im Vergleichsmodus werden beide Kurven links beim Startpunkt auf **0.00%** normiert (`1D`: Eröffnung **01:00 Uhr MEZ** in Tokio; `1W–5J`: erster sichtbarer Handelstag).\n\n**Wichtig am Montagmorgen bei 2559.T:** Beachte nicht die rote/grüne **Tages-%** ganz oben (sie vergleicht mit Freitag 07:30 Uhr und enthält montags zuerst den kompletten US-Freitag). Entscheidend ist allein, ob die Kurven **nach 01:00 Uhr über oder unter der gestrichelten 0%-Linie** weitersteigen oder fallen."
+    },
+    {
+        term: "Schritt 2 · Welche Linie bedeutet was? (Rot/Grün vs. Hellblau)",
+        text: "• **Hauptlinie (Rot/Grün · z. B. All-World Tokio 2559.T):** Echter Welt-ETF (MSCI ACWI, über 2'300 Aktien: ~64% USA, ~15% Europa, ~5% Japan) – praktisch deckungsgleich mit deinem **Vanguard FTSE All-World**.\n\n• **Vergleichslinie (Hellblau · z. B. Nikkei 225 ^N225):** Reiner japanischer Leitindex (100% Japan). Reagiert deutlich stärker auf lokale Japan-News, die Bank of Japan oder den Yen.\n\n• **Tipp:** Über **Vergleichen** kannst du statt Nikkei jederzeit auch **S&P 500 Future (ES=F)** oder **Nasdaq 100 Future (NQ=F)** einblenden – ab Sonntag 24:00 Uhr laufen diese minutengenau parallel zu Tokio (`01:00–07:30 Uhr`)."
+    },
+    {
+        term: "Schritt 3 · Dein Schweizer Morgen-Zeitplan (MEZ / MESZ)",
+        text: "• **00:00 Uhr (So→Mo):** US-Futures (`ES=F`, `NQ=F`) öffnen – erste globale Reaktion auf Wochenend-News.\n• **01:00–03:30 Uhr:** Tokio Vormittags-Session (`2559.T` & `^N225` handeln live).\n• **03:30–04:30 Uhr:** Börsen-Mittagspause in Tokio (kurzes Seitwärtslaufen ist völlig normal).\n• **04:30–07:30 Uhr:** Tokio Nachmittags-Session (Nikkei bis 07:45 Uhr). **Beste Ablesezeit für dich in der Schweiz: ca. 06:45–07:30 Uhr.**\n• **08:00 Uhr (ab 08:15 Uhr in der App):** Tradegate & Frankfurt (`*.F`) starten – erste EUR-Indikationen.\n• **09:00 Uhr (ab 09:15 Uhr in der App):** **SIX Swiss Exchange (`*.SW`)**, Xetra (`*.DE`) & London (`*.L`) eröffnen regulär.\n• **10:00 Uhr:** Offizielle US-Vorbörse (`Pre-Market`) in Echtzeit.\n• **14:30 Uhr:** Wichtige US-Wirtschaftsdaten (Inflation/CPI, Arbeitsmarkt, BIP) – oft der stärkste Impuls vor Wall-Street-Start!\n• **15:30 Uhr:** Wall Street (New York) eröffnet – ab hier geben US-Kassakurse den Takt vor."
+    },
+    {
+        term: "Schritt 4 · Die 4 konkreten Szenarien am Morgen (Checkliste)",
+        text: "• **Szenario A · Beide Linien über 0% (steigend):** Echter weltweiter Rückenwind aus Asien & Futures. Deine All-World-ETFs und Aktien dürften um 09:00 Uhr an der SIX freundlich eröffnen.\n\n• **Szenario B · Beide Linien klar unter 0% (fallend):** Echter globaler Verkaufsdruck. Keine Panik – prüfe in Ruhe, ob ab 09:00 Uhr an der SIX sinnvolle **Kauflimits** erreicht werden.\n\n• **Szenario C · Nikkei stark im Minus (z. B. -3%), 2559.T viel ruhiger (z. B. -1% oder nahe 0%):** Klassischer Japan-/Yen-Effekt! Der Weltmarkt bleibt stabiler als Japan – dein Schweizer/globaler ETF eröffnet meist deutlich gelassener als der Nikkei vermuten lässt.\n\n• **Szenario D · Ab 05:00–07:30 Uhr drehen beide Linien wieder Richtung 0% hoch:** Intraday-Erholung (Dip wird aufgekauft) – oft ein beruhigendes Signal für eine stabile Europa-Eröffnung um 09:00 Uhr."
+    },
+    {
+        term: "Schritt 5 · Schweizer Franken (CHF) & Yen-Effekt richtig einschätzen",
+        text: "Sowohl `2559.T` als auch `^N225` handeln in **Japanischen Yen (JPY)** – dein Depot rechnest du aber in **CHF**:\n\n• **Starker Yen (USD/JPY fällt):** Drückt optisch die JPY-Kurse in Tokio – in **CHF** gerechnet fällt dein Welt-ETF (`VWRA.L` / `VWRL.SW`) dann oft spürbar **weniger stark** als die Yen-Linie anzeigt.\n• **Starker Franken (USD/CHF fällt):** Bremst USD-Positionen für Schweizer Anleger leicht ab.\n• **Praxis-Check:** Ein 5-Sekunden-Blick auf **USD/CHF** in der **Marktübersicht** zeigt dir sofort, ob Währungen zusätzlich drücken oder stützen."
+    },
+    {
+        term: "Schritt 6 · Abstand (Δ) & Mauszeiger richtig ablesen",
+        text: "Fahre mit der Maus über jeden beliebigen Zeitpunkt (z. B. `04:50` oder `07:30 Uhr`) – oben links im Chart erscheinen **beide Prozentwerte ab Start**, **beide Originalkurse** und der exakte **Abstand Δ**:\n\n• **Positiver Abstand (z. B. Δ +1.94%):** Deine Hauptkurve (`2559.T`) hält sich um `1.94%` besser als die Vergleichslinie (`Nikkei 225`).\n• **Negativer Abstand (z. B. Δ -0.80%):** Der Weltmarkt bzw. die US-Futures schwächeln stärker als Japan – dann unbedingt auch **S&P 500 Future (`ES=F`)** gegenchecken."
+    },
+    {
+        term: "Schritt 7 · Konkrete Handlungsregel für Schweizer Anleger vor 09:00 Uhr",
+        text: "• **07:00–07:30 Uhr:** Kurzer Check `2559.T vs. Nikkei 225` (und bei Bedarf `vs. S&P 500 Future`) → du weisst vor Börsenstart genau, ob Ruhe, Rückenwind oder Gegenwind ansteht.\n• **09:00–09:15 Uhr (SIX-Eröffnung):** In den ersten 5–10 Minuten sind die Geld-/Brief-Spannen (Spreads) an der SIX oft unnötig breit. **Niemals «Bestens» direkt um 09:00 Uhr handeln** – setze immer eine **Limit-Order** oder warte bis **09:15 Uhr** (bei US-Aktien idealerweise ab **15:30 Uhr**)."
+    }
+];
 
 export interface MeasurePoint {
     date: string;
@@ -99,6 +152,14 @@ interface PriceHistoryChartProps {
         time?: number | string | null;
         timeText?: string | null;
     } | null;
+    initialCompareTarget?: {
+        symbol: string;
+        name: string;
+        currency?: string;
+    } | null;
+    onOpenCompareSymbol?: (target: { symbol: string; name: string; currency: string }) => void;
+    onReturnToCompare?: () => void;
+    returnToCompareLabel?: string;
 }
 
 export function PriceHistoryChart({
@@ -136,7 +197,11 @@ export function PriceHistoryChart({
     isFullscreen: controlledFullscreen,
     onToggleFullscreen,
     headerActions,
-    extendedHours
+    extendedHours,
+    initialCompareTarget,
+    onOpenCompareSymbol,
+    onReturnToCompare,
+    returnToCompareLabel
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
     const [isNarrowPortrait, setIsNarrowPortrait] = useState(() =>
@@ -168,14 +233,179 @@ export function PriceHistoryChart({
     };
     const [measurePoints, setMeasurePoints] = useState<MeasurePoint[]>([]);
     const lastMeasureClickRef = useRef(0);
-    const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null; session?: 'pre' | 'regular' | 'post' } | null>(null);
+    const [hoveredData, setHoveredData] = useState<{
+        date: string;
+        value: number;
+        sma200?: number | null;
+        session?: 'pre' | 'regular' | 'post';
+        plotValue?: number | null;
+        comparePlotValue?: number | null;
+        compareRawValue?: number | null;
+        compareSession?: 'pre' | 'regular' | 'post';
+        compareDate?: string | null;
+    } | null>(null);
     const [selectedExtremum, setSelectedExtremum] = useState<'high' | 'low' | null>(null);
+
+    // Chart Overlay Comparison State (Variante 1: 1-Chart Normalized % Overlay)
+    const { stocks: portfolioStocks, positions: portfolioPositions } = usePortfolio();
+    const [compareTarget, setCompareTarget] = useState<CompareTarget | null>(() => initialCompareTarget || null);
+    const [compareHistory, setCompareHistory] = useState<ChartDataPoint[] | null>(null);
+    const [compareCurrency, setCompareCurrency] = useState<string>(() => initialCompareTarget?.currency || 'USD');
+    const [compareTimeMode, setCompareTimeMode] = useState<'sync' | 'pre10_1530' | 'us1530' | 'session'>('sync');
+    const [isCompareLoading, setIsCompareLoading] = useState(false);
+    const [compareError, setCompareError] = useState<string | null>(null);
+    const [showComparePicker, setShowComparePicker] = useState(false);
+    const [compareSearch, setCompareSearch] = useState('');
+    const [comparePickerPos, setComparePickerPos] = useState<{ top: number; left: number } | null>(null);
+    const compareBtnRef = useRef<HTMLButtonElement>(null);
+    const comparePopoverRef = useRef<HTMLDivElement>(null);
+
+    // Sync / reset comparison when navigating to another symbol or opening with a preselected compare target
+    const initialCompareKey = initialCompareTarget ? `${initialCompareTarget.symbol}|${initialCompareTarget.name}|${initialCompareTarget.currency || ''}` : '';
+    useEffect(() => {
+        if (initialCompareTarget && initialCompareTarget.symbol.toUpperCase() !== (stockSymbol || '').toUpperCase()) {
+            setCompareTarget(initialCompareTarget);
+            setCompareCurrency(initialCompareTarget.currency || 'USD');
+        } else {
+            setCompareTarget(null);
+            setCompareHistory(null);
+        }
+        setCompareTimeMode('sync');
+        setCompareError(null);
+        setShowComparePicker(false);
+        setCompareSearch('');
+        setHoveredData(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stockSymbol, initialCompareKey]);
+
+    // Position the comparison picker popover cleanly beneath the button (via portal so overflow-x-auto never clips it)
+    useEffect(() => {
+        if (!showComparePicker) return;
+        const updatePosition = () => {
+            const btn = compareBtnRef.current;
+            if (!btn) return;
+            const rect = btn.getBoundingClientRect();
+            const popWidth = Math.min(320, window.innerWidth - 16);
+            const left = Math.max(8, Math.min(rect.left, window.innerWidth - popWidth - 8));
+            const top = Math.min(rect.bottom + 6, window.innerHeight - 360);
+            setComparePickerPos({ top: Math.max(8, top), left });
+        };
+        updatePosition();
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition, true);
+        return () => {
+            window.removeEventListener('resize', updatePosition);
+            window.removeEventListener('scroll', updatePosition, true);
+        };
+    }, [showComparePicker, isFullscreen]);
+
+    // Close compare picker on outside click or Escape
+    useEffect(() => {
+        if (!showComparePicker) return;
+        const handleOutside = (e: PointerEvent) => {
+            const target = e.target as Node | null;
+            if (
+                compareBtnRef.current?.contains(target) ||
+                comparePopoverRef.current?.contains(target)
+            ) {
+                return;
+            }
+            setShowComparePicker(false);
+        };
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                e.stopPropagation();
+                setShowComparePicker(false);
+            }
+        };
+        document.addEventListener('pointerdown', handleOutside);
+        window.addEventListener('keydown', handleKey, true);
+        return () => {
+            document.removeEventListener('pointerdown', handleOutside);
+            window.removeEventListener('keydown', handleKey, true);
+        };
+    }, [showComparePicker]);
+
+    // Context-smart benchmark presets (e.g. viewing 2559.T puts Nikkei 225 first, viewing ^N225 puts All-World Tokio first)
+    const { compareBenchmarks, comparePortfolioItems } = useMemo(() => {
+        const currentSym = (stockSymbol || '').trim().toUpperCase();
+        const priorityBySymbol: Record<string, string[]> = {
+            '2559.T': ['^N225', 'ES=F', 'NQ=F', 'VWRA.L', 'VT', '^GSPC', '^SSMI', 'BTC-USD'],
+            '^N225': ['2559.T', 'ES=F', 'NQ=F', '^GSPC', 'VWRA.L', 'VT', '^SSMI', 'BTC-USD'],
+            'ES=F': ['NQ=F', '2559.T', '^N225', 'VT', '^GSPC', '^SSMI', 'BTC-USD'],
+            'NQ=F': ['ES=F', '2559.T', '^N225', 'VT', '^NDX', '^GSPC', 'BTC-USD'],
+            'VWRA.L': ['VT', '2559.T', 'ES=F', 'NQ=F', '^N225', '^GSPC', '^SSMI'],
+            'VT': ['VWRA.L', '2559.T', 'ES=F', 'NQ=F', '^N225', '^GSPC', '^SSMI'],
+        };
+        const preferredOrder = priorityBySymbol[currentSym]
+            || (currentSym.endsWith('.SW') ? ['^SSMI', '^GSPC', 'VWRA.L', '2559.T', '^N225', 'ES=F'] : []);
+
+        const filteredBenchmarks = COMPARE_BENCHMARKS
+            .filter(b => b.symbol.toUpperCase() !== currentSym)
+            .sort((a, b) => {
+                const ia = preferredOrder.indexOf(a.symbol);
+                const ib = preferredOrder.indexOf(b.symbol);
+                if (ia !== -1 && ib !== -1) return ia - ib;
+                if (ia !== -1) return -1;
+                if (ib !== -1) return 1;
+                return 0;
+            });
+
+        const ownedIds = new Set(portfolioPositions.filter(p => p.shares > 0).map(p => p.stockId));
+        const seenSymbols = new Set<string>([currentSym]);
+        const ownedList: CompareTarget[] = [];
+        const watchList: CompareTarget[] = [];
+
+        for (const s of portfolioStocks) {
+            const symUpper = (s.symbol || '').trim().toUpperCase();
+            if (!symUpper || seenSymbols.has(symUpper)) continue;
+            seenSymbols.add(symUpper);
+            const item: CompareTarget = {
+                symbol: s.symbol,
+                name: s.name || s.symbol,
+                currency: s.currency,
+                badge: ownedIds.has(s.id) ? 'Depot' : 'Watchlist',
+            };
+            if (ownedIds.has(s.id)) ownedList.push(item);
+            else watchList.push(item);
+        }
+
+        ownedList.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+        watchList.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+
+        return {
+            compareBenchmarks: filteredBenchmarks,
+            comparePortfolioItems: [...ownedList, ...watchList],
+        };
+    }, [stockSymbol, portfolioStocks, portfolioPositions]);
+
+    const handleSelectCompareTarget = (target: CompareTarget) => {
+        setCompareTarget(target);
+        setCompareCurrency(target.currency || 'USD');
+        setCompareTimeMode('sync');
+        setCompareError(null);
+        setShowComparePicker(false);
+        setCompareSearch('');
+        // Turn off currency-level tools while % comparison overlay is active
+        setIsMeasureMode(false);
+        setMeasurePoints([]);
+        setShowFibonacci(false);
+        setSelectedExtremum(null);
+    };
+
+    const handleClearCompare = () => {
+        setCompareTarget(null);
+        setCompareHistory(null);
+        setCompareTimeMode('sync');
+        setCompareError(null);
+        setIsCompareLoading(false);
+    };
 
     // Lock body scrolling and listen for Escape key when in fullscreen
     useEffect(() => {
         if (!isFullscreen) return;
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && !showComparePicker) {
                 handleToggleFullscreen();
             }
         };
@@ -186,7 +416,7 @@ export function PriceHistoryChart({
             document.body.style.overflow = prevOverflow;
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isFullscreen]);
+    }, [isFullscreen, showComparePicker]);
 
     useEffect(() => {
         if (!selectedExtremum) return;
@@ -760,6 +990,423 @@ export function PriceHistoryChart({
         return Math.max(0, (end - start) / (1000 * 60 * 60 * 24));
     }, [displayData]);
 
+    // Fetch historical series for active comparison symbol whenever symbol / timeframe / pre-post changes
+    const compareFetchRange = useMemo<TimeRange>(() => {
+        if (selectedRange !== 'BUY') return selectedRange;
+        if (totalDurationDays > 1100) return '5Y';
+        if (totalDurationDays > 365) return '3Y';
+        if (totalDurationDays > 180) return '1Y';
+        if (totalDurationDays > 90) return '6M';
+        return '3M';
+    }, [selectedRange, totalDurationDays]);
+
+    useEffect(() => {
+        if (!compareTarget) {
+            setCompareHistory(null);
+            setIsCompareLoading(false);
+            setCompareError(null);
+            return;
+        }
+
+        let cancelled = false;
+        setIsCompareLoading(true);
+        setCompareError(null);
+
+        // Only request US pre/post-market hours when the comparison symbol itself is a US stock/ETF (never for .L / .SW / .T!)
+        const isCompareUsEquity = !/[.^=-]/.test(compareTarget.symbol);
+        const isPrimaryNonUs = /[.]/.test(stockSymbol || '');
+        const shouldIncludePrePost = selectedRange === '1D' && isCompareUsEquity && (showPrePost || isPrimaryNonUs);
+
+        fetchStockHistory(compareTarget.symbol, compareFetchRange, undefined, {
+            includePrePost: shouldIncludePrePost,
+        })
+            .then((res) => {
+                if (cancelled) return;
+                if (res.data && res.data.length > 0) {
+                    setCompareHistory(res.data);
+                    if (res.currency) setCompareCurrency(res.currency);
+                    setCompareError(null);
+                } else {
+                    setCompareHistory(null);
+                    setCompareError(res.error || 'Keine Kursdaten für diesen Zeitraum');
+                }
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setCompareHistory(null);
+                setCompareError('Vergleichsdaten konnten nicht geladen werden');
+            })
+            .finally(() => {
+                if (!cancelled) setIsCompareLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [compareTarget, compareFetchRange, selectedRange, showPrePost]);
+
+    // Align comparison series with primary series and normalize both to 0.00% at visible chart start
+    const compareOverlay = useMemo(() => {
+        const buildInactive = () => ({
+            isActive: false,
+            chartData: displayData.map(p => ({
+                ...p,
+                plotValue: p.value as number | null,
+                comparePlotValue: null as number | null,
+                compareRawValue: null as number | null,
+                compareSession: undefined as 'pre' | 'regular' | 'post' | undefined,
+                compareDate: null as string | null,
+            })),
+            yAxis: yAxisInfo,
+            summary: null as null | {
+                primaryLastPct: number;
+                compareLastPct: number;
+                compareLastRaw: number;
+                spreadPct: number;
+                primaryLastPoint: { date: string; plotValue: number } | null;
+                lastComparePoint: { date: string; comparePlotValue: number } | null;
+                primaryCloseDate: string | null;
+                comparePostStartDate: string | null;
+                usedSessionFallback: boolean;
+                hasPre10_1530Overlap: boolean;
+                hasUs1530Overlap: boolean;
+                activeTimeMode: 'sync' | 'pre10_1530' | 'us1530' | 'session';
+            },
+        });
+
+        if (!compareTarget || !compareHistory || compareHistory.length === 0 || displayData.length === 0) {
+            return buildInactive();
+        }
+
+        const allSortedCmp = compareHistory
+            .map(p => ({
+                date: p.date,
+                ms: new Date(p.date).getTime(),
+                dayKey: new Date(p.date).toISOString().slice(0, 10),
+                value: p.value,
+                session: p.session,
+            }))
+            .filter(p => !isNaN(p.ms) && Number.isFinite(p.value) && p.value > 0)
+            .sort((a, b) => a.ms - b.ms);
+
+        if (allSortedCmp.length === 0) {
+            return buildInactive();
+        }
+
+        // Check whether both 1D series overlap in:
+        // 1) US Pre-Market window (10:00–15:30 CET while Europe is live)
+        // 2) Wall Street live window (from 15:30 CET onward)
+        let hasPre10_1530Overlap = false;
+        let pre10StartMs = 0;
+        let pre1530EndMs = 0;
+        let hasUs1530Overlap = false;
+        let us1530CutoffMs = 0;
+        if (selectedRange === '1D' && displayData.length > 0) {
+            const firstDate = new Date(displayData[0].date);
+            if (!isNaN(firstDate.getTime())) {
+                const y = firstDate.getFullYear();
+                const m = firstDate.getMonth();
+                const d = firstDate.getDate();
+                pre10StartMs = new Date(y, m, d, 9, 58, 0, 0).getTime();
+                pre1530EndMs = new Date(y, m, d, 15, 32, 0, 0).getTime();
+                us1530CutoffMs = new Date(y, m, d, 15, 25, 0, 0).getTime();
+
+                const primaryPre = displayData.filter(p => {
+                    const t = new Date(p.date).getTime();
+                    return t >= pre10StartMs && t <= pre1530EndMs;
+                });
+                const cmpPre = allSortedCmp.filter(p => p.ms >= pre10StartMs && p.ms <= pre1530EndMs);
+                hasPre10_1530Overlap = primaryPre.length >= 2 && cmpPre.length >= 2;
+
+                const primaryAfter = displayData.filter(p => new Date(p.date).getTime() >= us1530CutoffMs);
+                const cmpAfter = allSortedCmp.filter(p => p.ms >= us1530CutoffMs);
+                hasUs1530Overlap = primaryAfter.length >= 2 && cmpAfter.length >= 2;
+            }
+        }
+
+        const effectiveMode: 'sync' | 'pre10_1530' | 'us1530' | 'session' =
+            selectedRange !== '1D'
+                ? 'sync'
+                : compareTimeMode === 'pre10_1530' && !hasPre10_1530Overlap
+                    ? 'sync'
+                    : compareTimeMode === 'us1530' && !hasUs1530Overlap
+                        ? 'sync'
+                        : compareTimeMode;
+
+        // Slice working datasets depending on 1D compareTimeMode
+        let workingPrimary = displayData;
+        let sortedCmp = allSortedCmp;
+
+        if (selectedRange === '1D' && effectiveMode === 'pre10_1530' && pre10StartMs > 0) {
+            workingPrimary = displayData.filter(p => {
+                const t = new Date(p.date).getTime();
+                return t >= pre10StartMs && t <= pre1530EndMs;
+            });
+            sortedCmp = allSortedCmp.filter(p => p.ms >= pre10StartMs && p.ms <= pre1530EndMs);
+        } else if (selectedRange === '1D' && effectiveMode === 'us1530' && us1530CutoffMs > 0) {
+            workingPrimary = displayData.filter(p => new Date(p.date).getTime() >= us1530CutoffMs);
+            sortedCmp = allSortedCmp.filter(p => p.ms >= us1530CutoffMs);
+        } else if (selectedRange === '1D' && effectiveMode === 'session') {
+            // Unsynced session overlay: strip pre/post hours so both regular market opens align at 0% on the left!
+            const regPrimary = displayData.filter(p => !p.session || p.session === 'regular');
+            if (regPrimary.length >= 2) workingPrimary = regPrimary;
+            const regCmp = allSortedCmp.filter(p => !p.session || p.session === 'regular');
+            if (regCmp.length >= 2) sortedCmp = regCmp;
+        }
+
+        if (workingPrimary.length === 0 || sortedCmp.length === 0) {
+            return buildInactive();
+        }
+
+        const primaryBase = workingPrimary.find(p => Number.isFinite(p.value) && p.value > 0)?.value ?? 0;
+        if (primaryBase <= 0) {
+            return buildInactive();
+        }
+
+        const isIntraday = selectedRange === '1D' || selectedRange === '1W';
+        let matchedRaw: (number | null)[] = new Array(workingPrimary.length).fill(null);
+        const matchedSession: ('pre' | 'regular' | 'post' | undefined)[] = new Array(workingPrimary.length).fill(undefined);
+        const matchedDate: (string | null)[] = new Array(workingPrimary.length).fill(null);
+        let usedSessionFallback = false;
+
+        if (selectedRange === '1D' && effectiveMode === 'session') {
+            // Explicit unsynced mode: align both regular sessions from open (0%) to close
+            usedSessionFallback = true;
+            const n = workingPrimary.length;
+            const m = sortedCmp.length;
+            matchedRaw = workingPrimary.map((_, idx) => {
+                const cmpIdx = n <= 1 ? m - 1 : Math.round((idx / (n - 1)) * (m - 1));
+                const picked = sortedCmp[Math.min(m - 1, Math.max(0, cmpIdx))];
+                matchedSession[idx] = picked.session;
+                matchedDate[idx] = picked.date;
+                return picked.value;
+            });
+        } else if (isIntraday) {
+            const maxGapMs = selectedRange === '1D' ? 95 * 60 * 1000 : 12 * 60 * 60 * 1000;
+            const forwardToleranceMs = 3 * 60 * 1000;
+            const firstCmpMs = sortedCmp[0].ms;
+            const lastCmpMs = sortedCmp[sortedCmp.length - 1].ms;
+            const endCarryMs = selectedRange === '1D' ? 6 * 60 * 1000 : 30 * 60 * 1000;
+            let j = 0;
+
+            for (let i = 0; i < workingPrimary.length; i++) {
+                const t = new Date(workingPrimary[i].date).getTime();
+                if (isNaN(t)) continue;
+                // Stop cleanly before comparison open or after comparison market close (no flat horizontal tail after 17:30!)
+                if (t < firstCmpMs - endCarryMs || t > lastCmpMs + endCarryMs) continue;
+                while (j + 1 < sortedCmp.length && sortedCmp[j + 1].ms <= t + forwardToleranceMs) {
+                    j++;
+                }
+                // Pick the closer of j and j+1 when within tolerance
+                let bestIdx = j;
+                if (j + 1 < sortedCmp.length && Math.abs(sortedCmp[j + 1].ms - t) < Math.abs(sortedCmp[j].ms - t) && Math.abs(sortedCmp[j + 1].ms - t) <= forwardToleranceMs) {
+                    bestIdx = j + 1;
+                }
+                const diff = Math.abs(sortedCmp[bestIdx].ms - t);
+                if (diff <= maxGapMs) {
+                    matchedRaw[i] = sortedCmp[bestIdx].value;
+                    matchedSession[i] = sortedCmp[bestIdx].session;
+                    matchedDate[i] = sortedCmp[bestIdx].date;
+                }
+            }
+
+            const matchedCount = matchedRaw.filter(v => v !== null).length;
+            // Fallback for 1D cross-timezone comparisons (e.g. Tokyo 01:00–07:30 vs US 15:30–22:00):
+            // align by relative session progress so both curves remain directly comparable
+            if (selectedRange === '1D' && matchedCount < 2 && sortedCmp.length >= 2) {
+                usedSessionFallback = true;
+                const n = workingPrimary.length;
+                const m = sortedCmp.length;
+                matchedRaw = workingPrimary.map((_, idx) => {
+                    const cmpIdx = n <= 1 ? m - 1 : Math.round((idx / (n - 1)) * (m - 1));
+                    const picked = sortedCmp[Math.min(m - 1, Math.max(0, cmpIdx))];
+                    matchedSession[idx] = picked.session;
+                    matchedDate[idx] = picked.date;
+                    return picked.value;
+                });
+            }
+        } else {
+            // Daily / weekly alignment by YYYY-MM-DD with holiday carry-forward
+            let j = 0;
+            const firstPrimaryMs = new Date(workingPrimary[0].date).getTime();
+            for (let i = 0; i < workingPrimary.length; i++) {
+                const d = new Date(workingPrimary[i].date);
+                const t = d.getTime();
+                if (isNaN(t)) continue;
+                const pKey = d.toISOString().slice(0, 10);
+                while (j + 1 < sortedCmp.length && sortedCmp[j + 1].dayKey <= pKey) {
+                    j++;
+                }
+                if (sortedCmp[j].dayKey <= pKey) {
+                    matchedRaw[i] = sortedCmp[j].value;
+                    matchedDate[i] = sortedCmp[j].date;
+                } else if (i === 0 && Math.abs(sortedCmp[0].ms - firstPrimaryMs) <= 5 * 86400000) {
+                    matchedRaw[i] = sortedCmp[0].value;
+                    matchedDate[i] = sortedCmp[0].date;
+                }
+            }
+        }
+
+        const compareBase = matchedRaw.find((v): v is number => v !== null && v > 0) ?? 0;
+        const validMatches = matchedRaw.filter(v => v !== null).length;
+
+        if (compareBase <= 0 || validMatches < 2) {
+            return buildInactive();
+        }
+
+        let minPct = 0;
+        let maxPct = 0;
+        let lastComparePoint: { date: string; comparePlotValue: number } | null = null;
+        let compareLastPct = 0;
+        let compareLastRaw = compareBase;
+
+        const chartData: Array<
+            (typeof displayData)[number] & {
+                plotValue: number | null;
+                comparePlotValue: number | null;
+                compareRawValue: number | null;
+                compareSession?: 'pre' | 'regular' | 'post';
+                compareDate?: string | null;
+            }
+        > = workingPrimary.map((p, idx) => {
+            const plotValue = ((p.value - primaryBase) / primaryBase) * 100;
+            const rawCmp = matchedRaw[idx];
+            const comparePlotValue = rawCmp !== null ? ((rawCmp - compareBase) / compareBase) * 100 : null;
+
+            if (Number.isFinite(plotValue)) {
+                minPct = Math.min(minPct, plotValue);
+                maxPct = Math.max(maxPct, plotValue);
+            }
+            if (comparePlotValue !== null && Number.isFinite(comparePlotValue)) {
+                minPct = Math.min(minPct, comparePlotValue);
+                maxPct = Math.max(maxPct, comparePlotValue);
+                compareLastPct = comparePlotValue;
+                compareLastRaw = rawCmp!;
+                lastComparePoint = { date: p.date, comparePlotValue };
+            }
+
+            return {
+                ...p,
+                plotValue,
+                comparePlotValue,
+                compareRawValue: rawCmp,
+                compareSession: matchedSession[idx],
+                compareDate: matchedDate[idx],
+            };
+        });
+
+        const lastPrimaryItem = chartData[chartData.length - 1];
+        const primaryLastPct = lastPrimaryItem?.plotValue ?? 0;
+        const primaryLastPoint = lastPrimaryItem && lastPrimaryItem.plotValue !== null
+            ? { date: lastPrimaryItem.date, plotValue: lastPrimaryItem.plotValue }
+            : null;
+
+        // Extend 1D timeline past European close (e.g. VWRA.L / *.SW closing at 17:30) when comparing with a US ETF/stock (e.g. VT, SPY, QQQ)
+        // in synchronized modes ('sync' or 'us1530') so the US regular session up to 22:00 CET and US after-hours remain visible!
+        let primaryCloseDate: string | null = null;
+        let comparePostStartDate: string | null = null;
+        const isCompareUsEquity = !/[.^=-]/.test(compareTarget.symbol);
+        if (selectedRange === '1D' && !usedSessionFallback && effectiveMode !== 'pre10_1530' && isCompareUsEquity && lastPrimaryItem) {
+            const lastPrimaryMs = new Date(lastPrimaryItem.date).getTime();
+            const tailPoints = sortedCmp.filter(
+                c => c.ms > lastPrimaryMs + 60 * 1000 && c.ms <= lastPrimaryMs + 9 * 60 * 60 * 1000
+            );
+            if (tailPoints.length >= 2) {
+                primaryCloseDate = lastPrimaryItem.date;
+                for (const tp of tailPoints) {
+                    const comparePlotValue = ((tp.value - compareBase) / compareBase) * 100;
+                    if (Number.isFinite(comparePlotValue)) {
+                        minPct = Math.min(minPct, comparePlotValue);
+                        maxPct = Math.max(maxPct, comparePlotValue);
+                        compareLastPct = comparePlotValue;
+                        compareLastRaw = tp.value;
+                        lastComparePoint = { date: tp.date, comparePlotValue };
+                        if (!comparePostStartDate && tp.session === 'post') {
+                            comparePostStartDate = tp.date;
+                        }
+                        chartData.push({
+                            date: tp.date,
+                            value: lastPrimaryItem.value,
+                            sma200: null,
+                            plotValue: null,
+                            comparePlotValue,
+                            compareRawValue: tp.value,
+                            compareSession: tp.session,
+                            compareDate: tp.date,
+                        });
+                    }
+                }
+            }
+        }
+
+        // Build clean % Y-axis ticks covering both curves and 0%
+        const span = Math.max(0.4, maxPct - minPct);
+        const pad = span * 0.1;
+        const rawMin = minPct - pad;
+        const rawMax = maxPct + pad;
+        const rawStep = (rawMax - rawMin) / 4;
+        const power = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        const frac = rawStep / power;
+        let step: number;
+        if (frac < 1.4) step = 1 * power;
+        else if (frac < 2.8) step = 2 * power;
+        else if (frac < 6.5) step = 5 * power;
+        else step = 10 * power;
+
+        let niceMin = Math.floor(rawMin / step) * step;
+        let niceMax = Math.ceil(rawMax / step) * step;
+        let ticks: number[] = [];
+        for (let t = niceMin; t <= niceMax + step * 0.001; t += step) {
+            const rounded = Math.abs(t) < 1e-6 ? 0 : Number(t.toFixed(4));
+            ticks.push(rounded);
+        }
+        if (ticks.length > 7) {
+            step = step * 2;
+            niceMin = Math.floor(rawMin / step) * step;
+            niceMax = Math.ceil(rawMax / step) * step;
+            ticks = [];
+            for (let t = niceMin; t <= niceMax + step * 0.001; t += step) {
+                const rounded = Math.abs(t) < 1e-6 ? 0 : Number(t.toFixed(4));
+                ticks.push(rounded);
+            }
+        }
+
+        const cmpYAxis = {
+            ticks: ticks.length >= 3 ? ticks : undefined,
+            domain: [
+                ticks.length > 0 ? ticks[0] : rawMin,
+                ticks.length > 0 ? ticks[ticks.length - 1] : rawMax,
+            ] as [number, number],
+            step,
+        };
+
+        return {
+            isActive: true,
+            chartData,
+            yAxis: cmpYAxis,
+            summary: {
+                primaryLastPct,
+                compareLastPct,
+                compareLastRaw,
+                spreadPct: primaryLastPct - compareLastPct,
+                primaryLastPoint,
+                lastComparePoint,
+                primaryCloseDate,
+                comparePostStartDate,
+                usedSessionFallback,
+                hasPre10_1530Overlap,
+                hasUs1530Overlap,
+                activeTimeMode: effectiveMode,
+            },
+        };
+    }, [compareTarget, compareHistory, displayData, selectedRange, yAxisInfo, compareTimeMode]);
+
+    const isCompareActive = compareOverlay.isActive;
+    const chartDisplayData = compareOverlay.chartData;
+    const activeYAxisInfo = compareOverlay.yAxis;
+    const activeDomainMin = activeYAxisInfo.domain[0];
+    const activeDomainMax = activeYAxisInfo.domain[1];
+
     const purchaseMarkers = useMemo(() => {
         if (!displayData || displayData.length === 0) return [];
 
@@ -976,16 +1623,33 @@ export function PriceHistoryChart({
             <div className={cn(
                 "flex justify-between gap-2 relative w-full",
                 isFullscreen
-                    ? "flex-nowrap items-center mb-1"
+                    ? "flex-wrap items-start gap-y-1.5 mb-1.5"
                     : "flex-wrap items-start mb-2 md:mb-3 landscape:mb-1.5"
             )}>
                 <div className={cn(
-                    "flex flex-1 min-w-0 pr-1 sm:pr-3",
+                    "flex flex-1 min-w-0 pr-1 sm:pr-2",
                     isFullscreen
-                        ? "flex-col landscape:flex-row landscape:items-center gap-0.5 landscape:gap-2.5"
+                        ? "flex-wrap items-center gap-x-2.5 gap-y-1"
                         : "flex-col gap-0.5"
                 )}>
                     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                        {isFullscreen && onReturnToCompare && (
+                            <button
+                                type="button"
+                                onClick={onReturnToCompare}
+                                className={cn(
+                                    "h-7 inline-flex items-center justify-center leading-none rounded-lg border shadow-sm transition-all group active:scale-95 shrink-0 cursor-pointer",
+                                    returnToCompareLabel
+                                        ? "gap-1.5 px-2.5 py-0 text-xs font-bold bg-sky-500/15 dark:bg-sky-500/20 text-sky-600 dark:text-sky-300 border-sky-500/40 hover:bg-sky-600 hover:text-white hover:border-sky-500 whitespace-nowrap"
+                                        : "w-7 p-0 bg-secondary/90 hover:bg-secondary text-foreground border-foreground/40 hover:border-foreground/75"
+                                )}
+                                title={returnToCompareLabel ? `Zurück zum Vergleich ${returnToCompareLabel}` : 'Zurück'}
+                                aria-label={returnToCompareLabel ? `Zurück zum Vergleich ${returnToCompareLabel}` : 'Zurück'}
+                            >
+                                <ArrowLeft className="size-4 shrink-0 group-hover:-translate-x-0.5 transition-transform" />
+                                {returnToCompareLabel && <span>Zurück zum Vergleich</span>}
+                            </button>
+                        )}
                         {stockLogoUrl && isFullscreen && (
                             <div className="shrink-0 flex items-center justify-center">
                                 <Logo
@@ -1034,10 +1698,10 @@ export function PriceHistoryChart({
 
                     {/* Performance, Kurs, Extended Hours & Hoch/Tief mit exakter Linksbündigkeit bei H: */}
                     <div className={cn(
-                        "relative flex gap-x-3 sm:gap-x-5 gap-y-1 mt-0.5 min-h-[32px] sm:min-h-0",
+                        "relative flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 mt-0.5 min-h-[32px] sm:min-h-0",
                         isFullscreen
-                            ? "flex-wrap landscape:flex-nowrap items-end landscape:items-center landscape:mt-0"
-                            : "flex-wrap items-end"
+                            ? "items-center landscape:mt-0"
+                            : "items-end"
                     )}>
                         {/* Spalte 1 (Links): Performance-Untertitel & Kurs-Zeile */}
                         <div className={cn(
@@ -1340,38 +2004,74 @@ export function PriceHistoryChart({
                                     </span>
                                 </div>
                                 <div className="h-7 w-px bg-border shrink-0" />
-                                <div className="flex flex-col items-end leading-tight">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
-                                        <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
-                                            {formatCurrency(hoveredData.value, displayCurrency, false)}
-                                        </span>
-                                    </div>
-                                    <span className="text-xs font-semibold text-foreground">Kurs</span>
-                                </div>
-                                {hoveredData.sma200 && (
+                                {isCompareActive && compareTarget ? (
                                     <>
-                                        <div className="h-8 w-px bg-border shrink-0" />
-                                        <div className="flex flex-col items-end leading-snug">
+                                        <div className="flex flex-col items-end leading-tight">
                                             <div className="flex items-center gap-1.5">
-                                                <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
+                                                <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
                                                 <span className="font-bold text-xs tabular-nums text-foreground whitespace-nowrap">
-                                                    {formatCurrency(hoveredData.sma200, displayCurrency, false)}
+                                                    {hoveredData.plotValue !== undefined && hoveredData.plotValue !== null
+                                                        ? `${hoveredData.plotValue >= 0 ? '+' : ''}${hoveredData.plotValue.toFixed(2)}%`
+                                                        : 'Geschlossen'}
                                                 </span>
-                                                {(() => {
-                                                    const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
-                                                    return (
-                                                        <span className={cn(
-                                                            "font-bold text-xs tabular-nums",
-                                                            diff >= 0 ? "text-green-500" : "text-red-500"
-                                                        )}>
-                                                            {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
-                                                        </span>
-                                                    );
-                                                })()}
                                             </div>
-                                            <span className="text-xs text-amber-500 font-bold">SMA 200</span>
+                                            <span className="text-xs text-muted-foreground truncate max-w-[96px]">
+                                                {stockSymbol || 'Kurs'}
+                                            </span>
                                         </div>
+                                        {hoveredData.comparePlotValue !== undefined && hoveredData.comparePlotValue !== null && (
+                                            <>
+                                                <div className="h-7 w-px bg-border shrink-0" />
+                                                <div className="flex flex-col items-end leading-tight">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="size-2 rounded-full bg-sky-400 shrink-0 shadow-sm" />
+                                                        <span className="font-bold text-xs tabular-nums text-sky-400 whitespace-nowrap">
+                                                            {hoveredData.comparePlotValue >= 0 ? '+' : ''}{hoveredData.comparePlotValue.toFixed(2)}%
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-xs text-muted-foreground truncate max-w-[96px]">
+                                                        {compareTarget.name}
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex flex-col items-end leading-tight">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
+                                                <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
+                                                    {formatCurrency(hoveredData.value, displayCurrency, false)}
+                                                </span>
+                                            </div>
+                                            <span className="text-xs font-semibold text-foreground">Kurs</span>
+                                        </div>
+                                        {hoveredData.sma200 && (
+                                            <>
+                                                <div className="h-8 w-px bg-border shrink-0" />
+                                                <div className="flex flex-col items-end leading-snug">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
+                                                        <span className="font-bold text-xs tabular-nums text-foreground whitespace-nowrap">
+                                                            {formatCurrency(hoveredData.sma200, displayCurrency, false)}
+                                                        </span>
+                                                        {(() => {
+                                                            const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
+                                                            return (
+                                                                <span className={cn(
+                                                                    "font-bold text-xs tabular-nums",
+                                                                    diff >= 0 ? "text-green-500" : "text-red-500"
+                                                                )}>
+                                                                    {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
+                                                                </span>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                    <span className="text-xs text-amber-500 font-bold">SMA 200</span>
+                                                </div>
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </div>
@@ -1417,7 +2117,7 @@ export function PriceHistoryChart({
                 {(() => {
                     const toolbarToggleClass = "h-7 inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-0 rounded-lg border text-[11px] sm:text-xs font-bold leading-none transition-all shadow-sm whitespace-nowrap cursor-pointer";
                     return (
-                        <div className="flex flex-wrap landscape:flex-nowrap items-center gap-2 landscape:gap-1.5 w-full overflow-x-auto scroller-none">
+                        <div className="flex flex-wrap items-center gap-2 gap-y-1.5 w-full">
                             {/* Group 1: Time range segmented bar */}
                             <div className="flex w-full sm:w-auto bg-muted/50 p-0.5 rounded-lg items-center gap-0.5 overflow-x-auto scroller-none shrink-0">
                                 {(['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
@@ -1459,13 +2159,65 @@ export function PriceHistoryChart({
                             )}
 
                             {/* Group 3: Analysis Tools, Valuation Mode & Fullscreen */}
-                            <div className="flex flex-wrap landscape:flex-nowrap items-center gap-1.5 shrink-0">
+                            <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                                <div className="inline-flex items-center gap-1 shrink-0">
+                                    <button
+                                        ref={compareBtnRef}
+                                        type="button"
+                                        onClick={() => setShowComparePicker(prev => !prev)}
+                                        className={cn(
+                                            toolbarToggleClass,
+                                            compareTarget
+                                                ? "bg-sky-600 hover:bg-sky-500 text-white border-sky-700 ring-1 ring-sky-400/50"
+                                                : "bg-sky-50 dark:bg-sky-900/15 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-500/40 hover:bg-sky-100 dark:hover:bg-sky-900/25"
+                                        )}
+                                        title={compareTarget ? `Vergleich aktiv: ${compareTarget.name} · Klick zum Wechseln` : 'Zweite Linie zum direkten Prozent-Vergleich im Chart einblenden'}
+                                    >
+                                        {isCompareLoading ? (
+                                            <Loader2 className="size-3.5 shrink-0 animate-spin" />
+                                        ) : (
+                                            <GitCompareArrows className="size-3.5 shrink-0" />
+                                        )}
+                                        <span className="text-xs font-bold leading-normal hidden sm:inline max-w-[140px] truncate">
+                                            {compareTarget ? `vs. ${compareTarget.name}` : 'Vergleichen'}
+                                        </span>
+                                    </button>
+                                    {compareTarget && (
+                                        <button
+                                            type="button"
+                                            onClick={handleClearCompare}
+                                            className="h-7 w-7 inline-flex items-center justify-center rounded-lg border border-sky-500/50 bg-sky-500/15 text-sky-600 dark:text-sky-300 hover:bg-rose-500/20 hover:text-rose-500 hover:border-rose-500/50 transition-all shadow-sm cursor-pointer shrink-0 leading-none py-0"
+                                            title="Vergleich beenden"
+                                        >
+                                            <X className="size-3.5 shrink-0" />
+                                        </button>
+                                    )}
+                                    <InfoHelp
+                                        title="Prozent-Vergleich · Schritt-für-Schritt-Anleitung für Schweizer Anleger"
+                                        items={COMPARE_SWISS_GUIDE_ITEMS}
+                                        buttonClassName="h-7 w-7 inline-flex items-center justify-center rounded-lg border border-sky-300 dark:border-sky-500/40 bg-sky-50 dark:bg-sky-900/15 text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-all shadow-2xs cursor-pointer shrink-0"
+                                        trigger={<HelpCircle className="size-3.5 shrink-0" />}
+                                        footer={
+                                            <div className="p-3 rounded-lg bg-sky-500/10 border border-sky-500/25 text-xs">
+                                                <p className="font-bold text-sky-700 dark:text-sky-300 mb-0.5">
+                                                    10-Sekunden-Kurzformel am Morgen (Schweiz):
+                                                </p>
+                                                <p className="text-muted-foreground">
+                                                    <strong>1.</strong> 0%-Linie prüfen (Tages-% ignorieren) → <strong>2.</strong> 2559.T (Welt) mit Nikkei 225 (Japan) &amp; ES=F (US-Future) vergleichen → <strong>3.</strong> Abstand Δ &amp; USD/CHF einordnen → <strong>4.</strong> An der SIX ab 09:15 Uhr ruhig und nur mit Limit handeln.
+                                                </p>
+                                            </div>
+                                        }
+                                    />
+                                </div>
                                 <button
                                     onClick={() => {
                                         setIsMeasureMode(prev => {
                                             const next = !prev;
                                             setMeasurePoints([]);
-                                            if (next) setSelectedExtremum(null);
+                                            if (next) {
+                                                setSelectedExtremum(null);
+                                                handleClearCompare();
+                                            }
                                             return next;
                                         });
                                     }}
@@ -1487,6 +2239,7 @@ export function PriceHistoryChart({
                                             setShowFibonacci(prev => {
                                                 const next = !prev;
                                                 if (next) {
+                                                    handleClearCompare();
                                                     if (!isFullscreen) handleToggleFullscreen();
                                                     handleRangeChange('3M');
                                                 }
@@ -1855,6 +2608,179 @@ export function PriceHistoryChart({
                 </div>
             )}
 
+            {/* Active Compare Legend Strip */}
+            {compareTarget && (
+                <div className="mb-2 px-2.5 py-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 dark:bg-sky-950/30 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 text-xs">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                        <div className="inline-flex items-center gap-1.5 font-bold text-foreground">
+                            <span className={cn("size-2.5 rounded-full shrink-0", isPositive ? "bg-green-500" : "bg-red-500")} />
+                            <span className="truncate max-w-[130px] 2xl:max-w-[180px] leading-normal">{stockName || stockSymbol || 'Aktueller Titel'}</span>
+                            {isCompareActive && compareOverlay.summary && (
+                                <span className={cn(
+                                    "tabular-nums font-extrabold",
+                                    compareOverlay.summary.primaryLastPct >= 0 ? "text-green-600 dark:text-green-400" : "text-rose-500"
+                                )}>
+                                    {compareOverlay.summary.primaryLastPct >= 0 ? '+' : ''}{compareOverlay.summary.primaryLastPct.toFixed(2)}%
+                                </span>
+                            )}
+                        </div>
+                        <span className="text-muted-foreground font-semibold">vs.</span>
+                        <div className="inline-flex items-center gap-1.5 font-bold text-sky-600 dark:text-sky-300">
+                            {onOpenCompareSymbol ? (
+                                <button
+                                    type="button"
+                                    onClick={() => onOpenCompareSymbol({
+                                        symbol: compareTarget.symbol,
+                                        name: compareTarget.name,
+                                        currency: compareCurrency || compareTarget.currency || 'USD',
+                                    })}
+                                    className="inline-flex items-center gap-1 font-bold text-sky-600 dark:text-sky-300 hover:text-sky-500 dark:hover:text-sky-200 hover:underline underline-offset-2 transition-colors cursor-pointer group"
+                                    title={`${compareTarget.name} (${compareTarget.symbol}) direkt im Chart öffnen`}
+                                >
+                                    <span className="size-2.5 rounded-full bg-sky-400 shrink-0" />
+                                    <span className="truncate max-w-[135px] 2xl:max-w-[180px] leading-normal">{compareTarget.name}</span>
+                                    <span className="hidden 2xl:inline text-xs font-mono text-muted-foreground">{compareTarget.symbol}</span>
+                                    <ArrowUpRight className="size-3.5 shrink-0 opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                </button>
+                            ) : (
+                                <>
+                                    <span className="size-2.5 rounded-full bg-sky-400 shrink-0" />
+                                    <span className="truncate max-w-[135px] 2xl:max-w-[180px] leading-normal">{compareTarget.name}</span>
+                                    <span className="hidden 2xl:inline text-xs font-mono text-muted-foreground">{compareTarget.symbol}</span>
+                                </>
+                            )}
+                            {isCompareLoading ? (
+                                <span className="inline-flex items-center gap-1 text-muted-foreground font-medium">
+                                    <Loader2 className="size-3 animate-spin" />
+                                    Lädt…
+                                </span>
+                            ) : compareError ? (
+                                <span className="text-rose-500 font-semibold">{compareError}</span>
+                            ) : isCompareActive && compareOverlay.summary ? (
+                                <span className="tabular-nums font-extrabold text-sky-600 dark:text-sky-300">
+                                    {compareOverlay.summary.compareLastPct >= 0 ? '+' : ''}{compareOverlay.summary.compareLastPct.toFixed(2)}%
+                                </span>
+                            ) : null}
+                        </div>
+                        {isCompareActive && compareOverlay.summary && (
+                            <span
+                                className={cn(
+                                    "h-7 inline-flex items-center justify-center gap-1 px-2 py-0 rounded-md border font-bold tabular-nums leading-none whitespace-nowrap",
+                                    compareOverlay.summary.spreadPct >= 0
+                                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                        : "bg-rose-500/15 border-rose-500/30 text-rose-600 dark:text-rose-400"
+                                )}
+                                title={`Abstand: ${compareOverlay.summary.spreadPct >= 0 ? '+' : ''}${compareOverlay.summary.spreadPct.toFixed(2)}%`}
+                            >
+                                <span className="hidden 2xl:inline">Abstand</span>
+                                <span className="2xl:hidden">Δ</span>
+                                <span>{compareOverlay.summary.spreadPct >= 0 ? '+' : ''}{compareOverlay.summary.spreadPct.toFixed(2)}%</span>
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 shrink-0 ml-auto">
+                        {selectedRange === '1D' && isCompareActive && compareOverlay.summary && (
+                            <div
+                                className="h-7 inline-flex items-center p-0.5 rounded-md border border-border/80 bg-background/70 shrink-0"
+                                title="Zeitachsen-Synchronisierung im 1D-Vergleich umschalten"
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() => setCompareTimeMode('sync')}
+                                    className={cn(
+                                        "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                        compareOverlay.summary.activeTimeMode === 'sync'
+                                            ? "bg-sky-600 text-white shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    )}
+                                    title="Echte Schweizer Uhrzeit synchronisiert (ganzer Tag inkl. US-Vorbörse & US-Abend)"
+                                >
+                                    Zeit-Sync
+                                </button>
+                                {compareOverlay.summary.hasPre10_1530Overlap && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCompareTimeMode('pre10_1530')}
+                                        className={cn(
+                                            "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                            compareOverlay.summary.activeTimeMode === 'pre10_1530'
+                                                ? "bg-sky-600 text-white shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                        title="Fokus US-Vorbörse 10:00 bis 15:30 Uhr gegen laufenden Europa-Chart · beide starten um 10:00 Uhr bei 0%"
+                                    >
+                                        10:00–15:30
+                                    </button>
+                                )}
+                                {compareOverlay.summary.hasUs1530Overlap && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCompareTimeMode('us1530')}
+                                        className={cn(
+                                            "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                            compareOverlay.summary.activeTimeMode === 'us1530'
+                                                ? "bg-sky-600 text-white shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                        title="Startet exakt um 15:30 Uhr bei 0% · Fokus auf Live-Handel Europa + USA 15:30–17:30 Uhr"
+                                    >
+                                        Ab 15:30
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setCompareTimeMode('session')}
+                                    className={cn(
+                                        "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                        compareOverlay.summary.activeTimeMode === 'session'
+                                            ? "bg-sky-600 text-white shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    )}
+                                    title="Zeitachsen-Sync aus · legt beide regulären Börsenstarts links auf 0% übereinander"
+                                >
+                                    Ohne Sync
+                                </button>
+                            </div>
+                        )}
+                        {selectedRange !== '1D' && isCompareActive && compareOverlay.summary && (
+                            <span className="text-xs text-muted-foreground hidden md:inline">
+                                Normiert ab Start 0%
+                            </span>
+                        )}
+                        <InfoHelp
+                            title="Prozent-Vergleich · Schritt-für-Schritt-Anleitung für Schweizer Anleger"
+                            items={COMPARE_SWISS_GUIDE_ITEMS}
+                            buttonClassName="h-7 inline-flex items-center justify-center gap-1 px-2 py-0 rounded-md border border-sky-500/40 bg-sky-500/15 hover:bg-sky-500/25 text-xs font-bold leading-none text-sky-600 dark:text-sky-300 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                            trigger={
+                                <>
+                                    <HelpCircle className="size-3.5 shrink-0" />
+                                    <span className="hidden sm:inline">Anleitung</span>
+                                </>
+                            }
+                            footer={
+                                <div className="p-3 rounded-lg bg-sky-500/10 border border-sky-500/25 text-xs">
+                                    <p className="font-bold text-sky-700 dark:text-sky-300 mb-0.5">
+                                        10-Sekunden-Kurzformel am Morgen (Schweiz):
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        <strong>1.</strong> 0%-Linie prüfen (Tages-% ignorieren) → <strong>2.</strong> 2559.T (Welt) mit Nikkei 225 (Japan) &amp; ES=F (US-Future) vergleichen → <strong>3.</strong> Abstand Δ &amp; USD/CHF einordnen → <strong>4.</strong> An der SIX ab 09:15 Uhr ruhig und nur mit Limit handeln.
+                                    </p>
+                                </div>
+                            }
+                        />
+                        <button
+                            type="button"
+                            onClick={handleClearCompare}
+                            className="h-7 inline-flex items-center justify-center gap-1 px-2 2xl:px-2.5 py-0 rounded-md border border-border/80 bg-background/80 hover:bg-rose-500/15 hover:text-rose-500 hover:border-rose-500/40 text-xs font-semibold leading-none text-muted-foreground transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                            title="Vergleich ausblenden"
+                        >
+                            <X className="size-3.5 shrink-0" />
+                            <span className="hidden 2xl:inline">Schliessen</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className={cn(
                 "relative w-full min-w-0",
                 isFullscreen
@@ -1863,7 +2789,7 @@ export function PriceHistoryChart({
             )}>
                 {/* Desktop Dynamic Hover Overlay (Fixed position inside chart - zero layout shift / zero flicker) */}
                 {hoveredData && (
-                    <div className="hidden sm:flex items-center gap-3.5 text-sm z-20 pointer-events-none absolute top-1.5 left-2 bg-background/90 dark:bg-[#0b1222]/90 backdrop-blur-sm border border-border/70 rounded-lg px-3 py-1.5 shadow-lg">
+                    <div className="hidden sm:flex items-center gap-3.5 text-sm z-20 pointer-events-none absolute bottom-7 left-2 bg-background/60 dark:bg-[#0b1222]/60 backdrop-blur-md border border-border/60 rounded-lg px-3 py-1.5 shadow-lg">
                         <div className="flex flex-col items-start leading-tight">
                             <span className="font-bold text-sm text-foreground whitespace-nowrap">
                                 {(() => {
@@ -1878,44 +2804,131 @@ export function PriceHistoryChart({
                             </span>
                         </div>
                         <div className="h-7 w-px bg-border" />
-                        <div className="flex flex-col items-start leading-tight">
-                            <div className="flex items-center gap-1.5">
-                                <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
-                                <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
-                                    {formatCurrency(hoveredData.value, displayCurrency, false)}
-                                </span>
-                            </div>
-                            <span className="text-xs font-semibold text-muted-foreground">
-                                {hoveredData.session === 'pre'
-                                    ? 'Kurs · Vorbörse'
-                                    : hoveredData.session === 'post'
-                                        ? 'Kurs · Nachbörse'
-                                        : 'Kurs'}
-                            </span>
-                        </div>
-                        {hoveredData.sma200 && (
+                        {isCompareActive && compareTarget ? (
                             <>
-                                <div className="h-7 w-px bg-border" />
+                                <div className="flex flex-col items-start leading-tight">
+                                    {hoveredData.plotValue !== undefined && hoveredData.plotValue !== null ? (
+                                        <>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
+                                                <span className={cn(
+                                                    "font-bold text-sm tabular-nums whitespace-nowrap",
+                                                    hoveredData.plotValue >= 0 ? "text-green-600 dark:text-green-400" : "text-rose-500"
+                                                )}>
+                                                    {hoveredData.plotValue >= 0 ? '+' : ''}{hoveredData.plotValue.toFixed(2)}%
+                                                </span>
+                                                <span className="text-xs font-semibold tabular-nums text-muted-foreground whitespace-nowrap">
+                                                    · {formatCurrency(hoveredData.value, displayCurrency, false)}
+                                                </span>
+                                            </div>
+                                            <span className="text-xs font-semibold text-muted-foreground truncate max-w-[180px]">
+                                                {stockSymbol || stockName || 'Kurs'}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="size-2 rounded-full bg-slate-400 shrink-0" />
+                                                <span className="font-bold text-xs text-muted-foreground whitespace-nowrap">
+                                                    Börsenschluss
+                                                </span>
+                                            </div>
+                                            <span className="text-xs font-semibold text-muted-foreground truncate max-w-[180px]">
+                                                {stockSymbol || stockName || 'Kurs'}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                                {hoveredData.comparePlotValue !== undefined && hoveredData.comparePlotValue !== null && (
+                                    <>
+                                        <div className="h-7 w-px bg-border" />
+                                        <div className="flex flex-col items-start leading-tight">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="size-2 rounded-full bg-sky-400 shrink-0 shadow-sm" />
+                                                <span className="font-bold text-sm tabular-nums text-sky-500 dark:text-sky-300 whitespace-nowrap">
+                                                    {hoveredData.comparePlotValue >= 0 ? '+' : ''}{hoveredData.comparePlotValue.toFixed(2)}%
+                                                </span>
+                                                {hoveredData.compareRawValue !== undefined && hoveredData.compareRawValue !== null && (
+                                                    <span className="text-xs font-semibold tabular-nums text-muted-foreground whitespace-nowrap">
+                                                        · {formatCurrency(hoveredData.compareRawValue, compareCurrency, false)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="text-xs font-semibold text-sky-600 dark:text-sky-400 truncate max-w-[230px]">
+                                                {compareTarget.name}
+                                                {compareOverlay.summary?.usedSessionFallback && hoveredData.compareDate
+                                                    ? ` · ${new Date(hoveredData.compareDate).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
+                                                    : hoveredData.compareSession === 'pre'
+                                                        ? ' · US-Vorbörse'
+                                                        : hoveredData.compareSession === 'post'
+                                                            ? ' · US-Nachbörse'
+                                                            : ''}
+                                            </span>
+                                        </div>
+                                        {hoveredData.plotValue !== undefined && hoveredData.plotValue !== null && (
+                                            <>
+                                                <div className="h-7 w-px bg-border" />
+                                                <div className="flex flex-col items-start leading-tight">
+                                                    {(() => {
+                                                        const spread = hoveredData.plotValue - hoveredData.comparePlotValue;
+                                                        return (
+                                                            <span className={cn(
+                                                                "font-bold text-sm tabular-nums whitespace-nowrap",
+                                                                spread >= 0 ? "text-emerald-500" : "text-rose-500"
+                                                            )}>
+                                                                Δ {spread >= 0 ? '+' : ''}{spread.toFixed(2)}%
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                    <span className="text-xs font-semibold text-muted-foreground">Abstand</span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <>
                                 <div className="flex flex-col items-start leading-tight">
                                     <div className="flex items-center gap-1.5">
-                                        <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
+                                        <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
                                         <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
-                                            {formatCurrency(hoveredData.sma200, displayCurrency, false)}
+                                            {formatCurrency(hoveredData.value, displayCurrency, false)}
                                         </span>
-                                        {(() => {
-                                            const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
-                                            return (
-                                                <span className={cn(
-                                                    "font-bold text-sm tabular-nums",
-                                                    diff >= 0 ? "text-green-500" : "text-red-500"
-                                                )}>
-                                                    {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
-                                                </span>
-                                            );
-                                        })()}
                                     </div>
-                                    <span className="text-xs text-amber-500 font-bold">SMA 200</span>
+                                    <span className="text-xs font-semibold text-muted-foreground">
+                                        {hoveredData.session === 'pre'
+                                            ? 'Kurs · Vorbörse'
+                                            : hoveredData.session === 'post'
+                                                ? 'Kurs · Nachbörse'
+                                                : 'Kurs'}
+                                    </span>
                                 </div>
+                                {hoveredData.sma200 && (
+                                    <>
+                                        <div className="h-7 w-px bg-border" />
+                                        <div className="flex flex-col items-start leading-tight">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
+                                                <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
+                                                    {formatCurrency(hoveredData.sma200, displayCurrency, false)}
+                                                </span>
+                                                {(() => {
+                                                    const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
+                                                    return (
+                                                        <span className={cn(
+                                                            "font-bold text-sm tabular-nums",
+                                                            diff >= 0 ? "text-green-500" : "text-red-500"
+                                                        )}>
+                                                            {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
+                                                        </span>
+                                                    );
+                                                })()}
+                                            </div>
+                                            <span className="text-xs text-amber-500 font-bold">SMA 200</span>
+                                        </div>
+                                    </>
+                                )}
                             </>
                         )}
                     </div>
@@ -1930,15 +2943,23 @@ export function PriceHistoryChart({
                         minHeight={1}
                     >
                         <AreaChart
-                            data={displayData}
-                            margin={{ top: selectedRange === '1D' && showPrePost && hasPrePostData ? 26 : 14, right: 0, left: 0, bottom: 4 }}
+                            data={chartDisplayData}
+                            margin={{
+                                top: (selectedRange === '1D' && showPrePost && hasPrePostData)
+                                    || (isCompareActive && Boolean(compareOverlay.summary?.primaryCloseDate || compareOverlay.summary?.comparePostStartDate))
+                                    ? 26
+                                    : 14,
+                                right: 0,
+                                left: 0,
+                                bottom: 4
+                            }}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);
                                 } else if (data?.activeLabel) {
                                     // Fallback if activePayload is missing but we have a label (date)
                                     // This can happen when moving fast
-                                    const point = displayData.find(d => d.date === data.activeLabel);
+                                    const point = chartDisplayData.find(d => d.date === data.activeLabel);
                                     if (point) setHoveredData(point);
                                 }
                             }}
@@ -2027,6 +3048,36 @@ export function PriceHistoryChart({
                                     return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
                                 }}
                                 ticks={(() => {
+                                    if (chartDisplayData.length === 0) return undefined;
+
+                                    // 1D extended comparison (e.g. VWRA.L 09:05–17:30 + VT 17:30–22:00/02:00):
+                                    // guarantee key session boundary timestamps (17:30 Börsenschluss, 22:00 US-Schluss, last point) appear cleanly on X-axis
+                                    if (selectedRange === '1D' && isCompareActive && compareOverlay.summary?.primaryCloseDate) {
+                                        const keyDates = [
+                                            chartDisplayData[0].date,
+                                            compareOverlay.summary.primaryCloseDate,
+                                            compareOverlay.summary.comparePostStartDate,
+                                            chartDisplayData[chartDisplayData.length - 1].date,
+                                        ].filter((d): d is string => Boolean(d));
+
+                                        const targetCount = isNarrowPortrait ? 6 : (isFullscreen ? 14 : 9);
+                                        const stepIdx = Math.max(1, Math.floor(chartDisplayData.length / targetCount));
+                                        const picked = new Set<string>(keyDates);
+                                        const minGapMs = (isNarrowPortrait ? 75 : 42) * 60 * 1000;
+                                        const keyMs = keyDates.map(d => new Date(d).getTime());
+
+                                        for (let i = stepIdx; i < chartDisplayData.length - 1; i += stepIdx) {
+                                            const dStr = chartDisplayData[i].date;
+                                            const t = new Date(dStr).getTime();
+                                            const tooCloseToKey = keyMs.some(km => Math.abs(t - km) < minGapMs);
+                                            if (!tooCloseToKey) {
+                                                picked.add(dStr);
+                                            }
+                                        }
+
+                                        return Array.from(picked).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+                                    }
+
                                     if (displayData.length === 0) return undefined;
 
                                     const lastPoint = displayData[displayData.length - 1];
@@ -2171,20 +3222,29 @@ export function PriceHistoryChart({
 
                                     return undefined;
                                 })()}
-                                minTickGap={['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 30}
-                                interval={['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 'preserveStartEnd'}
+                                minTickGap={['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'].includes(selectedRange) || (selectedRange === '1D' && isCompareActive && Boolean(compareOverlay.summary?.primaryCloseDate)) ? 0 : 30}
+                                interval={['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'].includes(selectedRange) || (selectedRange === '1D' && isCompareActive && Boolean(compareOverlay.summary?.primaryCloseDate)) ? 0 : 'preserveStartEnd'}
                             />
                             <YAxis
-                                domain={[domainMin, domainMax]}
-                                ticks={yAxisInfo.ticks}
+                                domain={[activeDomainMin, activeDomainMax]}
+                                ticks={activeYAxisInfo.ticks}
                                 hide={false}
                                 orientation="right"
-                                tick={{ fontSize: 10, fill: '#e2e8f0' }}
+                                tick={{ fontSize: 12, fill: '#e2e8f0' }}
                                 tickFormatter={(val) => {
-                                    if (yAxisInfo.step >= 1 && (Number.isInteger(val) || Math.abs(val - Math.round(val)) < 1e-4)) {
+                                    if (isCompareActive) {
+                                        const decimals = activeYAxisInfo.step >= 1 ? 0 : activeYAxisInfo.step >= 0.1 ? 1 : 2;
+                                        const sign = val > 0 ? '+' : '';
+                                        const formatted = new Intl.NumberFormat('de-CH', {
+                                            minimumFractionDigits: decimals,
+                                            maximumFractionDigits: decimals,
+                                        }).format(val);
+                                        return `${sign}${formatted}%`;
+                                    }
+                                    if (activeYAxisInfo.step >= 1 && (Number.isInteger(val) || Math.abs(val - Math.round(val)) < 1e-4)) {
                                         return Math.round(val).toString();
                                     }
-                                    const decimals = yAxisInfo.step >= 1 ? 0 : yAxisInfo.step >= 0.1 ? 1 : yAxisInfo.step >= 0.01 ? 2 : 3;
+                                    const decimals = activeYAxisInfo.step >= 1 ? 0 : activeYAxisInfo.step >= 0.1 ? 1 : activeYAxisInfo.step >= 0.01 ? 2 : 3;
                                     return new Intl.NumberFormat('de-CH', {
                                         minimumFractionDigits: decimals,
                                         maximumFractionDigits: decimals,
@@ -2192,9 +3252,82 @@ export function PriceHistoryChart({
                                 }}
                                 axisLine={false}
                                 tickLine={false}
-                                width={38}
+                                width={isCompareActive ? 54 : 44}
                                 mirror={false}
                             />
+                            {/* Zero baseline when normalized % comparison overlay is active */}
+                            {isCompareActive && (
+                                <ReferenceLine
+                                    y={0}
+                                    stroke="#64748b"
+                                    strokeWidth={1.25}
+                                    strokeDasharray="4 4"
+                                    strokeOpacity={0.85}
+                                />
+                            )}
+                            {/* Session boundary dividers on extended 1D comparison (e.g. Börsenschluss 17:30 + US-Schluss 22:00 → Nachbörse) */}
+                            {isCompareActive && selectedRange === '1D' && compareOverlay.summary?.primaryCloseDate && (() => {
+                                const closeDate = compareOverlay.summary.primaryCloseDate!;
+                                const closeTimeStr = new Date(closeDate).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+                                const postDate = compareOverlay.summary.comparePostStartDate;
+                                const postTimeStr = postDate ? new Date(postDate).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }) : '';
+                                const postIdx = postDate ? chartDisplayData.findIndex(p => p.date === postDate) : -1;
+                                const postNearRightEdge = postIdx >= 0 && chartDisplayData.length > 5 && ((chartDisplayData.length - 1 - postIdx) / chartDisplayData.length) < 0.16;
+                                return (
+                                    <>
+                                        <ReferenceLine
+                                            x={closeDate}
+                                            stroke="#f59e0b"
+                                            strokeWidth={1.5}
+                                            strokeDasharray="4 3"
+                                            strokeOpacity={0.85}
+                                            label={(props: any) => {
+                                                const { viewBox } = props || {};
+                                                if (!viewBox) return <g />;
+                                                const { x, y } = viewBox;
+                                                return (
+                                                    <text
+                                                        x={x - 6}
+                                                        y={y - 8}
+                                                        textAnchor="end"
+                                                        fill="#fbbf24"
+                                                        fontSize={12}
+                                                        fontWeight={700}
+                                                    >
+                                                        ← Börsenschluss {closeTimeStr}
+                                                    </text>
+                                                );
+                                            }}
+                                        />
+                                        {postDate && (
+                                            <ReferenceLine
+                                                x={postDate}
+                                                stroke="#818cf8"
+                                                strokeWidth={1.5}
+                                                strokeDasharray="4 3"
+                                                strokeOpacity={0.85}
+                                                label={(props: any) => {
+                                                    const { viewBox } = props || {};
+                                                    if (!viewBox) return <g />;
+                                                    const { x, y } = viewBox;
+                                                    return (
+                                                        <text
+                                                            x={postNearRightEdge ? x - 6 : x + 6}
+                                                            y={y - 8}
+                                                            textAnchor={postNearRightEdge ? 'end' : 'start'}
+                                                            fill="#a5b4fc"
+                                                            fontSize={12}
+                                                            fontWeight={700}
+                                                        >
+                                                            {postNearRightEdge ? `← US-Schluss ${postTimeStr}` : `US-Schluss ${postTimeStr} · Nachbörse →`}
+                                                        </text>
+                                                    );
+                                                }}
+                                            />
+                                        )}
+                                    </>
+                                );
+                            })()}
                             {/* Extended Hours Session Dividers (1D when Vor-/Nachbörse active) */}
                             {selectedRange === '1D' && showPrePost && hasPrePostData && (() => {
                                 const firstReg = hasPre ? displayData.find(p => p.session === 'regular') : null;
@@ -2270,6 +3403,8 @@ export function PriceHistoryChart({
                                     </>
                                 );
                             })()}
+                            {!isCompareActive && (
+                                <>
                             {/* 1. Kaufpreis (Ø Kauf) - Prominent in Weiß (neutral & unabhängig von Bewertung) */}
                             {effectivePurchasePrice && effectivePurchasePrice >= domainMin && effectivePurchasePrice <= domainMax && (
                                 <ReferenceLine
@@ -2620,6 +3755,8 @@ export function PriceHistoryChart({
                                     }}
                                 />
                             ))}
+                            </>
+                            )}
                             <Tooltip
                                 content={() => null}
                                 cursor={{ stroke: 'var(--primary)', strokeWidth: 1, strokeDasharray: '4 4' }}
@@ -2627,31 +3764,71 @@ export function PriceHistoryChart({
                             />
                             <Area
                                 type="monotone"
-                                dataKey="value"
+                                dataKey={isCompareActive ? "plotValue" : "value"}
                                 stroke={isPositive ? "#22c55e" : "#ef4444"}
                                 strokeWidth={2}
-                                fillOpacity={1}
+                                fillOpacity={isCompareActive ? 0.5 : 1}
                                 fill="url(#colorValue)"
-                            />
-                            {/* SMA 200 Line */}
-                            <Area
-                                type="monotone"
-                                dataKey="sma200"
-                                stroke="#fbbf24" // Amber-400
-                                strokeWidth={2}
-                                strokeDasharray="5 5"
-                                fill="none"
-                                connectNulls
                                 isAnimationActive={false}
-                                activeDot={{ r: 4, fill: '#fbbf24' }}
                             />
+                            {/* Normalized Comparison Overlay Line */}
+                            {isCompareActive && (
+                                <Area
+                                    type="monotone"
+                                    dataKey="comparePlotValue"
+                                    stroke="#38bdf8"
+                                    strokeWidth={2.25}
+                                    fill="none"
+                                    fillOpacity={0}
+                                    dot={false}
+                                    connectNulls
+                                    isAnimationActive={false}
+                                    activeDot={{ r: 4.5, fill: '#38bdf8', stroke: '#ffffff', strokeWidth: 1.5 }}
+                                />
+                            )}
+                            {/* SMA 200 Line (hidden during normalized % comparison) */}
+                            {!isCompareActive && (
+                                <Area
+                                    type="monotone"
+                                    dataKey="sma200"
+                                    stroke="#fbbf24" // Amber-400
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    fill="none"
+                                    connectNulls
+                                    isAnimationActive={false}
+                                    activeDot={{ r: 4, fill: '#fbbf24' }}
+                                />
+                            )}
                             {/* Live End-Point Dot on current price (like Yahoo Finance) */}
-                            {displayData.length > 0 && (() => {
-                                const lastPoint = displayData[displayData.length - 1];
+                            {chartDisplayData.length > 0 && (() => {
+                                if (isCompareActive && compareOverlay.summary?.primaryLastPoint) {
+                                    const pt = compareOverlay.summary.primaryLastPoint;
+                                    const liveDotColor = isPositive ? '#22c55e' : '#ef4444';
+                                    return (
+                                        <ReferenceDot
+                                            key={`live-endpoint-${pt.date}-pct`}
+                                            x={pt.date}
+                                            y={pt.plotValue}
+                                            r={5}
+                                            shape={(props: any) => {
+                                                const { cx, cy } = props;
+                                                if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+                                                return (
+                                                    <g className="pointer-events-none select-none" style={{ outline: 'none' }} tabIndex={-1}>
+                                                        <circle cx={cx} cy={cy} r={8} fill={liveDotColor} fillOpacity={0.25} />
+                                                        <circle cx={cx} cy={cy} r={4} fill={liveDotColor} stroke="#ffffff" strokeWidth={1.5} />
+                                                    </g>
+                                                );
+                                            }}
+                                        />
+                                    );
+                                }
+                                const lastPoint = chartDisplayData[chartDisplayData.length - 1];
                                 const liveDotColor = lastPoint.session === 'post' ? '#818cf8' : lastPoint.session === 'pre' ? '#f59e0b' : (isPositive ? '#22c55e' : '#ef4444');
                                 return (
                                     <ReferenceDot
-                                        key={`live-endpoint-${lastPoint.date}`}
+                                        key={`live-endpoint-${lastPoint.date}-px`}
                                         x={lastPoint.date}
                                         y={lastPoint.value}
                                         r={5}
@@ -2668,12 +3845,229 @@ export function PriceHistoryChart({
                                     />
                                 );
                             })()}
+                            {/* Live End-Point Dot on comparison overlay */}
+                            {isCompareActive && compareOverlay.summary?.lastComparePoint && (
+                                <ReferenceDot
+                                    key={`compare-endpoint-${compareOverlay.summary.lastComparePoint.date}`}
+                                    x={compareOverlay.summary.lastComparePoint.date}
+                                    y={compareOverlay.summary.lastComparePoint.comparePlotValue}
+                                    r={5}
+                                    shape={(props: any) => {
+                                        const { cx, cy } = props;
+                                        if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+                                        return (
+                                            <g className="pointer-events-none select-none" style={{ outline: 'none' }} tabIndex={-1}>
+                                                <circle cx={cx} cy={cy} r={8} fill="#38bdf8" fillOpacity={0.25} />
+                                                <circle cx={cx} cy={cy} r={4} fill="#38bdf8" stroke="#ffffff" strokeWidth={1.5} />
+                                            </g>
+                                        );
+                                    }}
+                                />
+                            )}
                         </AreaChart>
                     </ResponsiveContainer>
                 )}
             </div>
         </div>
     );
+
+    // Custom app-themed comparison picker popover rendered via portal so overflow-x-auto / fullscreen never clip it
+    const comparePickerPortal = (showComparePicker && comparePickerPos && typeof document !== 'undefined') ? createPortal(
+        (() => {
+            const q = compareSearch.trim().toLowerCase();
+            const filteredBenchmarks = q
+                ? compareBenchmarks.filter(item =>
+                    item.name.toLowerCase().includes(q) ||
+                    item.symbol.toLowerCase().includes(q) ||
+                    (item.badge && item.badge.toLowerCase().includes(q))
+                )
+                : compareBenchmarks;
+            const filteredPortfolio = q
+                ? comparePortfolioItems.filter(item =>
+                    item.name.toLowerCase().includes(q) ||
+                    item.symbol.toLowerCase().includes(q) ||
+                    (item.badge && item.badge.toLowerCase().includes(q))
+                )
+                : comparePortfolioItems;
+
+            const customTicker = compareSearch.trim().toUpperCase();
+            const hasExactMatch = [...filteredBenchmarks, ...filteredPortfolio].some(
+                i => i.symbol.toUpperCase() === customTicker
+            );
+            const showCustomTickerOption = customTicker.length >= 1 && !hasExactMatch && customTicker !== (stockSymbol || '').toUpperCase();
+
+            return (
+                <div
+                    ref={comparePopoverRef}
+                    style={{ top: comparePickerPos.top, left: comparePickerPos.left }}
+                    className="fixed z-[10050] w-[min(320px,calc(100vw-16px))] bg-card border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+                >
+                    <div className="p-2.5 border-b border-border bg-muted/30">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="text-xs font-bold text-foreground">Vergleichs-Titel wählen</span>
+                            {compareTarget && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        handleClearCompare();
+                                        setShowComparePicker(false);
+                                    }}
+                                    className="text-xs font-semibold text-rose-500 hover:text-rose-400 cursor-pointer"
+                                >
+                                    Entfernen
+                                </button>
+                            )}
+                        </div>
+                        <div className="relative">
+                            <Search className="size-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <input
+                                type="text"
+                                value={compareSearch}
+                                onChange={(e) => setCompareSearch(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const first = filteredBenchmarks[0] || filteredPortfolio[0];
+                                        if (first) {
+                                            handleSelectCompareTarget(first);
+                                        } else if (showCustomTickerOption) {
+                                            handleSelectCompareTarget({
+                                                symbol: customTicker,
+                                                name: customTicker,
+                                                badge: 'Ticker',
+                                            });
+                                        }
+                                    }
+                                }}
+                                placeholder="Suchen z. B. Nikkei, 2559.T, S&P…"
+                                autoFocus
+                                className="w-full h-8 pl-8 pr-7 rounded-lg border border-border bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
+                            />
+                            {compareSearch && (
+                                <button
+                                    type="button"
+                                    onClick={() => setCompareSearch('')}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                                    title="Suche leeren"
+                                >
+                                    <X className="size-3.5" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="max-h-[300px] overflow-y-auto p-1.5 space-y-2">
+                        {filteredBenchmarks.length > 0 && (
+                            <div>
+                                <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+                                    Empfohlen · Märkte &amp; Indizes
+                                </div>
+                                <div className="space-y-0.5">
+                                    {filteredBenchmarks.map((item) => {
+                                        const isSelected = compareTarget?.symbol.toUpperCase() === item.symbol.toUpperCase();
+                                        return (
+                                            <button
+                                                key={`bench-${item.symbol}`}
+                                                type="button"
+                                                onClick={() => handleSelectCompareTarget(item)}
+                                                className={cn(
+                                                    "w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors cursor-pointer",
+                                                    isSelected
+                                                        ? "bg-sky-500/20 text-sky-600 dark:text-sky-300 font-bold"
+                                                        : "hover:bg-muted/70 text-foreground"
+                                                )}
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="font-semibold truncate">{item.name}</div>
+                                                    <div className="text-xs text-muted-foreground font-mono truncate">{item.symbol}</div>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    {item.badge && (
+                                                        <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-xs font-medium">
+                                                            {item.badge}
+                                                        </span>
+                                                    )}
+                                                    {isSelected && <Check className="size-3.5 text-sky-500 shrink-0" />}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {filteredPortfolio.length > 0 && (
+                            <div>
+                                <div className="px-2 py-1 text-xs font-semibold text-muted-foreground border-t border-border/60 pt-2">
+                                    Depot &amp; Watchlist
+                                </div>
+                                <div className="space-y-0.5">
+                                    {filteredPortfolio.map((item) => {
+                                        const isSelected = compareTarget?.symbol.toUpperCase() === item.symbol.toUpperCase();
+                                        return (
+                                            <button
+                                                key={`port-${item.symbol}`}
+                                                type="button"
+                                                onClick={() => handleSelectCompareTarget(item)}
+                                                className={cn(
+                                                    "w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors cursor-pointer",
+                                                    isSelected
+                                                        ? "bg-sky-500/20 text-sky-600 dark:text-sky-300 font-bold"
+                                                        : "hover:bg-muted/70 text-foreground"
+                                                )}
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="font-semibold truncate">{item.name}</div>
+                                                    <div className="text-xs text-muted-foreground font-mono truncate">{item.symbol}</div>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    {item.badge && (
+                                                        <span className={cn(
+                                                            "px-1.5 py-0.5 rounded text-xs font-medium",
+                                                            item.badge === 'Depot'
+                                                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                                                : "bg-muted text-muted-foreground"
+                                                        )}>
+                                                            {item.badge}
+                                                        </span>
+                                                    )}
+                                                    {isSelected && <Check className="size-3.5 text-sky-500 shrink-0" />}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {showCustomTickerOption && (
+                            <div className="border-t border-border/60 pt-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => handleSelectCompareTarget({
+                                        symbol: customTicker,
+                                        name: customTicker,
+                                        badge: 'Ticker',
+                                    })}
+                                    className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-left text-xs bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-300 font-semibold transition-colors cursor-pointer"
+                                >
+                                    <span className="truncate">Symbol direkt vergleichen: <span className="font-mono font-bold">{customTicker}</span></span>
+                                    <GitCompareArrows className="size-3.5 shrink-0" />
+                                </button>
+                            </div>
+                        )}
+
+                        {filteredBenchmarks.length === 0 && filteredPortfolio.length === 0 && !showCustomTickerOption && (
+                            <div className="px-3 py-4 text-center text-xs text-muted-foreground">
+                                Keine passenden Titel gefunden
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        })(),
+        document.body
+    ) : null;
 
     if (isFullscreen && typeof document !== 'undefined') {
         return (
@@ -2695,9 +4089,15 @@ export function PriceHistoryChart({
                     </button>
                 </div>
                 {createPortal(chartContent, document.body)}
+                {comparePickerPortal}
             </>
         );
     }
 
-    return chartContent;
+    return (
+        <>
+            {chartContent}
+            {comparePickerPortal}
+        </>
+    );
 }
