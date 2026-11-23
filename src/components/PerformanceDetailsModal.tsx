@@ -167,14 +167,17 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     });
 
     const sortedPositions = [...filteredPositions].sort((a, b) => {
-        // 1. Regel bei allen Spalten: Zuerst geöffnete Börsen (Live-Handel), danach geschlossene Börsen
-        const stateA = estimateMarketState(a.stock.symbol, a.stock.currency);
-        const stateB = estimateMarketState(b.stock.symbol, b.stock.currency);
-        const isOpenA = (a.stock.marketState === 'REGULAR' || (!a.stock.marketState && stateA === 'REGULAR')) && !a.stock.isMock;
-        const isOpenB = (b.stock.marketState === 'REGULAR' || (!b.stock.marketState && stateB === 'REGULAR')) && !b.stock.isMock;
+        // 1. Regel (ausgenommen Gesamt-Performance % & CHF): Zuerst geöffnete Börsen (Live-Handel), danach geschlossene Börsen
+        const isTotalPerfSort = sortConfig.key === 'totalPct' || sortConfig.key === 'totalChf';
+        if (!isTotalPerfSort) {
+            const stateA = estimateMarketState(a.stock.symbol, a.stock.currency);
+            const stateB = estimateMarketState(b.stock.symbol, b.stock.currency);
+            const isOpenA = (a.stock.marketState === 'REGULAR' || (!a.stock.marketState && stateA === 'REGULAR')) && !a.stock.isMock;
+            const isOpenB = (b.stock.marketState === 'REGULAR' || (!b.stock.marketState && stateB === 'REGULAR')) && !b.stock.isMock;
 
-        if (isOpenA !== isOpenB) {
-            return isOpenA ? -1 : 1;
+            if (isOpenA !== isOpenB) {
+                return isOpenA ? -1 : 1;
+            }
         }
 
         // Innerhalb derselben Gruppe (beide offen oder beide geschlossen): Nach gewählter Spalte sortieren
