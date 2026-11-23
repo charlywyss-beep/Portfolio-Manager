@@ -4,80 +4,68 @@ interface UseAutoRefreshOptions {
     onRefresh: () => void;
     intervalMs?: number; // Default: 5 minutes
     enabled?: boolean; // Default: true
+    lastRefreshAt?: Date | null;
 }
 
 /**
- * Auto-refresh hook that triggers a callback every X minutes during trading hours (09:00-22:00)
- * Pauses when tab is not visible for performance
+ * Auto-refresh hook that triggers a callback every X minutes during weekday trading hours (Mon-Fri 09:00-22:00)
+ * Pauses when tab is not visible for performance and syncs cleanly with lastRefreshAt so it doesn't drift.
  */
 export function useAutoRefresh({
     onRefresh,
     intervalMs = 5 * 60 * 1000, // 5 minutes
-    enabled = true
+    enabled = true,
+    lastRefreshAt = null
 }: UseAutoRefreshOptions) {
     const intervalRef = useRef<number | null>(null);
     const onRefreshRef = useRef(onRefresh);
-    const lastRefreshTimeRef = useRef<number>(Date.now());
+    const lastRefreshTimeRef = useRef<number>(lastRefreshAt ? lastRefreshAt.getTime() : Date.now());
 
     // Update ref when onRefresh changes
     useEffect(() => {
         onRefreshRef.current = onRefresh;
     }, [onRefresh]);
 
+    // Sync internal timer when a manual/external refresh succeeds
+    useEffect(() => {
+        if (lastRefreshAt) {
+            const ts = lastRefreshAt.getTime();
+            if (ts > lastRefreshTimeRef.current) {
+                lastRefreshTimeRef.current = ts;
+            }
+        }
+    }, [lastRefreshAt]);
+
     useEffect(() => {
         if (!enabled) return;
 
         const isTradingHours = () => {
             const now = new Date();
+            const day = now.getDay();
+            // Skip Saturday (6) & Sunday (0)
+            if (day === 0 || day === 6) return false;
             const hours = now.getHours();
             // Trading hours: 09:00-22:00 (covers SIX, LSE, NYSE, NASDAQ)
             return hours >= 9 && hours < 22;
         };
 
+        const checkAndRefresh = () => {
+            if (document.hidden || !isTradingHours()) return;
+            const elapsed = Date.now() - lastRefreshTimeRef.current;
+            if (elapsed >= intervalMs) {
+                lastRefreshTimeRef.current = Date.now();
+                onRefreshRef.current();
+            }
+        };
+
         const handleVisibilityChange = () => {
-            if (document.hidden) {
-                // Pause when tab is hidden
-                if (intervalRef.current) {
-                    clearInterval(intervalRef.current);
-                    intervalRef.current = null;
-                }
-            } else {
-                // Resume when tab becomes visible
-                // Only trigger refresh if at least intervalMs has elapsed since last refresh
-                const elapsed = Date.now() - lastRefreshTimeRef.current;
-                if (elapsed >= intervalMs && isTradingHours()) {
-                    lastRefreshTimeRef.current = Date.now();
-                    onRefreshRef.current();
-                }
-                startInterval();
+            if (!document.hidden) {
+                checkAndRefresh();
             }
         };
 
-        const startInterval = () => {
-            // Clear existing interval if any
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-
-            // Only start if in trading hours and tab is visible
-            if (isTradingHours() && !document.hidden) {
-                intervalRef.current = setInterval(() => {
-                    if (isTradingHours()) {
-                        lastRefreshTimeRef.current = Date.now();
-                        onRefreshRef.current();
-                    } else {
-                        // Stop interval if outside trading hours
-                        if (intervalRef.current) {
-                            clearInterval(intervalRef.current);
-                            intervalRef.current = null;
-                        }
-                    }
-                }, intervalMs);
-            }
-        };
-
-        // Start interval
-        startInterval();
+        // Check every 30s so background throttling or manual refreshes never cause 6-8 min drift
+        intervalRef.current = window.setInterval(checkAndRefresh, 30 * 1000);
 
         // Listen for visibility changes
         document.addEventListener('visibilitychange', handleVisibilityChange);

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import type { Position, Stock } from '../types';
 import { MOCK_POSITIONS, MOCK_STOCKS } from '../data/mockData';
 import { fetchStockQuotes, fetchStockPricePrecise } from '../services/yahoo-finance';
@@ -244,6 +244,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     });
 
     const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
+    const lastCheckedAtRef = useRef<number>(lastGlobalRefresh ? lastGlobalRefresh.getTime() : 0);
 
     // Synchronized Timer Tick (v3.12.70)
     const [refreshTick, setRefreshTick] = useState(0);
@@ -697,17 +698,35 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     const refreshAllPrices = useCallback(async (force: boolean = false, skipThrottleUpdate: boolean = false) => {
         if (isGlobalRefreshing) return;
 
-        // Throttle: If last refresh was less than 2 minutes ago, and this is NOT a forced refresh, skip.
-        if (!force && lastGlobalRefresh) {
-            const timeSinceLastRefresh = new Date().getTime() - lastGlobalRefresh.getTime();
-            if (timeSinceLastRefresh < 2 * 60 * 1000) { // 2 minutes cooldown
-                console.log("Global Refresh: Throttled (Last refresh was recent). Skipping.");
+        // Throttle: If last check was less than 2 minutes ago, and this is NOT a forced refresh, skip.
+        if (!force && lastCheckedAtRef.current > 0) {
+            const timeSinceLastCheck = Date.now() - lastCheckedAtRef.current;
+            if (timeSinceLastCheck < 2 * 60 * 1000) { // 2 minutes cooldown
+                console.log("Global Refresh: Throttled (Last check was recent). Skipping.");
                 return;
             }
         }
 
         setIsGlobalRefreshing(true);
         console.log("Global Refresh: Starting...", { force, skipThrottleUpdate });
+
+        // Snapshot current prices to detect whether Yahoo actually delivered at least one new price
+        const prevPriceMap = new Map<string, number>();
+        stocks.forEach(s => {
+            if (s.symbol) prevPriceMap.set(s.symbol.toUpperCase(), s.currentPrice || 0);
+        });
+        let hasAnyPriceChange = false;
+        const detectPriceChange = (batch: Record<string, { price?: number | null }>) => {
+            for (const [sym, val] of Object.entries(batch)) {
+                if (typeof val?.price === 'number' && val.price > 0) {
+                    const prevPrice = prevPriceMap.get(sym.toUpperCase());
+                    if (prevPrice !== undefined && Math.abs(val.price - prevPrice) > 0.0001) {
+                        hasAnyPriceChange = true;
+                        prevPriceMap.set(sym.toUpperCase(), val.price);
+                    }
+                }
+            }
+        };
 
         try {
             const symbols = stocks.map(s => s.symbol).filter(Boolean);
@@ -720,6 +739,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             console.log(`[Global Refresh] Batch Quotes fetching for ${symbols.length} assets...`);
             const updates = await fetchStockQuotes(symbols);
             if (updates && Object.keys(updates).length > 0) {
+                detectPriceChange(updates);
                 updateStockPricesBatch(updates);
             }
 
@@ -747,6 +767,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     });
                 }
                 if (Object.keys(results).length > 0) {
+                    detectPriceChange(results);
                     updateStockPricesBatch(results);
                 }
             }
@@ -754,9 +775,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         } catch (e) {
             console.error("Global Refresh Failed", e);
         } finally {
-            // Always set timestamp to show we checked (unless it's a background metadata fix)
             if (!skipThrottleUpdate) {
-                setLastGlobalRefresh(new Date());
+                lastCheckedAtRef.current = Date.now();
+                // Only reset "Vor 0 Min" when Yahoo actually delivered at least one changed price (or on very first load)
+                if (hasAnyPriceChange || !lastGlobalRefresh) {
+                    setLastGlobalRefresh(new Date());
+                }
                 // Force an immediate refresh tick to update all labels simultaneously
                 setRefreshTick(prev => prev + 1);
             }
@@ -764,11 +788,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }
     }, [stocks, isGlobalRefreshing, lastGlobalRefresh]);
 
-    // Auto-refresh every 5 minutes (Global)
+    // Auto-refresh every 5 minutes (Global, Mon-Fri 09:00-22:00)
     useAutoRefresh({
         onRefresh: () => refreshAllPrices(false),
         intervalMs: 5 * 60 * 1000,
-        enabled: true
+        enabled: true,
+        lastRefreshAt: lastGlobalRefresh
     });
 
     // One-time safe migration: convert unowned US / foreign-listed Watchlist ETFs to SIX (.SW) UCITS tickers
