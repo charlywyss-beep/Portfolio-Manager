@@ -215,19 +215,19 @@ export function FairValueCalculator() {
 
     const handleSaveBuyLimit = (valToSave?: string, explicitSource?: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual') => {
         const raw = valToSave !== undefined ? valToSave : buyLimitInput;
-        const parsed = parseFloat(raw.replace(',', '.'));
+        const parsed = parseFloat(raw.replace(/['\s]/g, '').replace(',', '.'));
         const newLimit = !isNaN(parsed) && parsed > 0 ? parsed : undefined;
 
         let resolvedType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
         if (newLimit) {
-            if (explicitSource && explicitSource !== 'manual') {
+            if (explicitSource) {
                 resolvedType = explicitSource;
-            } else if (currentStock?.targetPrice && Math.abs(newLimit - currentStock.targetPrice) <= 0.05 && currentStock.targetPriceType) {
-                resolvedType = currentStock.targetPriceType;
             } else if (Math.abs(newLimit - calculation.buyPrice) <= 0.05) {
                 resolvedType = valuationProfile;
             } else if (Math.abs(newLimit - calculation.fairValue) <= 0.05) {
                 resolvedType = 'fairValue';
+            } else if (currentStock?.targetPrice && Math.abs(newLimit - currentStock.targetPrice) <= 0.05 && currentStock.targetPriceType) {
+                resolvedType = currentStock.targetPriceType;
             } else {
                 resolvedType = 'manual';
             }

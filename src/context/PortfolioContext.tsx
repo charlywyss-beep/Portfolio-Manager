@@ -546,11 +546,14 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setStocks(prev => {
             const trimmedId = String(id).trim();
             const upperId = trimmedId.toUpperCase();
-            const index = prev.findIndex(s =>
-                String(s.id) === trimmedId ||
-                (s.symbol && s.symbol.toUpperCase() === upperId) ||
-                (s.isin && s.isin.toUpperCase() === upperId)
-            );
+            // Always match exact stock ID first so e.g. id="rio" (RIO.L) never collides with an earlier symbol="RIO"
+            let index = prev.findIndex(s => String(s.id).trim() === trimmedId);
+            if (index === -1) {
+                index = prev.findIndex(s =>
+                    (s.symbol && s.symbol.toUpperCase() === upperId) ||
+                    (s.isin && s.isin.toUpperCase() === upperId)
+                );
+            }
             if (index === -1) return prev;
 
             const stock = prev[index];
@@ -588,11 +591,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setStocks(prev => {
             const trimmedId = String(id).trim();
             const upperId = trimmedId.toUpperCase();
-            const index = prev.findIndex(s =>
-                String(s.id) === trimmedId ||
-                (s.symbol && s.symbol.toUpperCase() === upperId) ||
-                (s.isin && s.isin.toUpperCase() === upperId)
-            );
+            let index = prev.findIndex(s => String(s.id).trim() === trimmedId);
+            if (index === -1) {
+                index = prev.findIndex(s =>
+                    (s.symbol && s.symbol.toUpperCase() === upperId) ||
+                    (s.isin && s.isin.toUpperCase() === upperId)
+                );
+            }
             if (index === -1) return prev;
 
             const s = prev[index];

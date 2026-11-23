@@ -567,33 +567,36 @@ export function EditDividendPage() {
             if (trimmedTp !== '') {
                 const parsedTp = parseFloat(trimmedTp.replace(',', '.'));
                 if (!isNaN(parsedTp) && parsedTp > 0) {
+                    const priceActuallyChanged = !stock?.targetPrice || Math.abs(parsedTp - stock.targetPrice) > 0.01;
                     updates.targetPrice = parsedTp;
-                    updates.targetPriceType = 'manual';
+                    if (priceActuallyChanged) {
+                        updates.targetPriceType = 'manual';
 
-                    // Synchronize manual mode in fairValueParams as well
-                    const now = new Date().toISOString();
-                    let map: Record<string, any> = {};
-                    try {
-                        const mapRaw = localStorage.getItem('fair_value_params_map');
-                        if (mapRaw) map = JSON.parse(mapRaw);
-                    } catch {}
-                    const symKey = (symbol || stock?.symbol || '').toUpperCase();
-                    const existingLocal = (symKey ? map[symKey] : null) || {};
-                    const existingParams = stock?.fairValueParams || {};
-                    const nextEntry = {
-                        ...existingParams,
-                        ...existingLocal,
-                        isCustom: true,
-                        valuationMode: 'manual' as const,
-                        manualTargetPrice: parsedTp,
-                        updatedAt: now
-                    };
-                    updates.fairValueParams = nextEntry;
-                    if (symKey) {
-                        map[symKey] = nextEntry;
+                        // Synchronize manual mode in fairValueParams only when user actually changed targetPrice
+                        const now = new Date().toISOString();
+                        let map: Record<string, any> = {};
                         try {
-                            localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                            const mapRaw = localStorage.getItem('fair_value_params_map');
+                            if (mapRaw) map = JSON.parse(mapRaw);
                         } catch {}
+                        const symKey = (symbol || stock?.symbol || '').toUpperCase();
+                        const existingLocal = (symKey ? map[symKey] : null) || {};
+                        const existingParams = stock?.fairValueParams || {};
+                        const nextEntry = {
+                            ...existingParams,
+                            ...existingLocal,
+                            isCustom: true,
+                            valuationMode: 'manual' as const,
+                            manualTargetPrice: parsedTp,
+                            updatedAt: now
+                        };
+                        updates.fairValueParams = nextEntry;
+                        if (symKey) {
+                            map[symKey] = nextEntry;
+                            try {
+                                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                            } catch {}
+                        }
                     }
                 }
             } else {
@@ -1242,6 +1245,9 @@ export function EditDividendPage() {
                                         const isModelMatchByType = savedTargetType === (currentMode === 'risk' ? 'risk' : currentMode === 'quality' ? 'quality' : 'conservative');
                                         const isModelMatchByPrice = calcBuyPrice !== null && hasCustomTarget && Math.abs(parsedTarget - calcBuyPrice) <= 0.05;
                                         const isModelBuyPriceActive = (isModelMatchByType || isModelMatchByPrice) && currentMode !== 'manual';
+                                        const isFairValueMatchByType = savedTargetType === 'fairValue';
+                                        const isFairValueMatchByPrice = effectiveFairValue > 0 && hasCustomTarget && Math.abs(parsedTarget - effectiveFairValue) <= 0.05;
+                                        const isFairValueTargetActive = !isModelBuyPriceActive && (isFairValueMatchByType || isFairValueMatchByPrice) && currentMode !== 'manual';
 
                                         const handleToggleFvMode = () => {
                                             if (!symKey) return;
@@ -1406,10 +1412,20 @@ export function EditDividendPage() {
                                                         <div className="flex items-center gap-2">
                                                             <label className="text-sm font-medium">Kauflimit</label>
                                                             {hasCustomTarget && !isModelBuyPriceActive && (
-                                                                <span className="h-6 px-2 text-[11px] font-semibold rounded-md bg-pink-500/15 text-pink-400 border border-pink-500/30 flex items-center gap-1 shadow-xs">
-                                                                    <Check className="size-3 shrink-0" />
-                                                                    <span>{parsedTarget.toFixed(2)} Aktiv (Manuell)</span>
-                                                                </span>
+                                                                isFairValueTargetActive ? (
+                                                                    <span className={cn(
+                                                                        "h-7 px-2 text-xs font-semibold rounded-md border inline-flex items-center justify-center leading-none py-0 gap-1 shadow-xs",
+                                                                        modeMeta.badge
+                                                                    )}>
+                                                                        <Check className="size-3 shrink-0" />
+                                                                        <span>{parsedTarget.toFixed(2)} Aktiv Fairer Wert {currentMode === 'risk' ? 'C' : currentMode === 'quality' ? 'B' : 'A'}</span>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="h-7 px-2 text-xs font-semibold rounded-md bg-pink-500/15 text-pink-400 border border-pink-500/30 inline-flex items-center justify-center leading-none py-0 gap-1 shadow-xs">
+                                                                        <Check className="size-3 shrink-0" />
+                                                                        <span>{parsedTarget.toFixed(2)} Aktiv Manuell</span>
+                                                                    </span>
+                                                                )
                                                             )}
                                                         </div>
                                                         {calcBuyPrice !== null && (
@@ -1459,9 +1475,10 @@ export function EditDividendPage() {
                                                                 setTargetPrice(val.toFixed(2));
                                                                 if (currentStockObj) {
                                                                     const isModelMatch = calcBuyPrice !== null && Math.abs(val - calcBuyPrice) <= 0.05;
+                                                                    const isFvMatch = effectiveFairValue > 0 && Math.abs(val - effectiveFairValue) <= 0.05;
                                                                     updateStock(currentStockObj.id, {
                                                                         targetPrice: val,
-                                                                        targetPriceType: isModelMatch ? modeMeta.targetType : 'manual'
+                                                                        targetPriceType: isModelMatch ? modeMeta.targetType : (isFvMatch && currentMode !== 'manual' ? 'fairValue' : 'manual')
                                                                     });
                                                                 }
                                                             }
@@ -1473,9 +1490,10 @@ export function EditDividendPage() {
                                                                     setTargetPrice(val.toFixed(2));
                                                                     if (currentStockObj) {
                                                                         const isModelMatch = calcBuyPrice !== null && Math.abs(val - calcBuyPrice) <= 0.05;
+                                                                        const isFvMatch = effectiveFairValue > 0 && Math.abs(val - effectiveFairValue) <= 0.05;
                                                                         updateStock(currentStockObj.id, {
                                                                             targetPrice: val,
-                                                                            targetPriceType: isModelMatch ? modeMeta.targetType : 'manual'
+                                                                            targetPriceType: isModelMatch ? modeMeta.targetType : (isFvMatch && currentMode !== 'manual' ? 'fairValue' : 'manual')
                                                                         });
                                                                     }
                                                                 }
@@ -1485,7 +1503,7 @@ export function EditDividendPage() {
                                                         onFocus={(e) => e.target.select()}
                                                         className={cn(
                                                             "w-full h-11 px-3 py-2 rounded-lg border text-lg font-mono font-medium mt-auto transition-colors focus:outline-none",
-                                                            isModelBuyPriceActive
+                                                            (isModelBuyPriceActive || isFairValueTargetActive)
                                                                 ? modeMeta.input
                                                                 : hasCustomTarget
                                                                     ? "border-pink-500/60 focus:border-pink-400 text-pink-400 bg-pink-500/5"
