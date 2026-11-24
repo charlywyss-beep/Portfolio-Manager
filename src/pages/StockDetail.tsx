@@ -14,7 +14,7 @@ import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
-import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue } from '../utils/fairValue';
+import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue, computeStockSupportZones } from '../utils/fairValue';
 import { translateSector } from '../utils/sectorTranslation';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { getEuropeanTicker, EUROPEAN_MARKET_INFO_ITEMS, type EuropeanIndicationQuote } from '../utils/europeanMarket';
@@ -521,6 +521,20 @@ export function StockDetail() {
             ? ((stock.targetPrice && stock.targetPrice > 0) ? stock.targetPrice : buyPrice)
             : buyPrice;
 
+        const dcfSafetyForZones = smartAutoConservative ? calculateDcfFairValue(smartAutoConservative, effectivePrice) : null;
+        const dcfQualityForZones = smartAutoQuality ? calculateDcfFairValue(smartAutoQuality, effectivePrice) : null;
+        const supportZones = effectivePrice > 0
+            ? computeStockSupportZones({
+                currentPrice: effectivePrice,
+                dcfSafety: dcfSafetyForZones,
+                dcfQuality: dcfQualityForZones,
+                fiftyDayAverage: (stock as any)?.fiftyDayAverage,
+                twoHundredDayAverage: (stock as any)?.twoHundredDayAverage,
+                fiftyTwoWeekHigh: (stock as any)?.fiftyTwoWeekHigh,
+                fiftyTwoWeekLow: (stock as any)?.fiftyTwoWeekLow,
+            })
+            : [];
+
         return {
             mode: currentMode,
             fairValue,
@@ -534,7 +548,8 @@ export function StockDetail() {
             smartAutoRisk,
             activeParams,
             symKey,
-            effectivePrice
+            effectivePrice,
+            supportZones
         };
     }, [stock, fvModeTick]);
 
@@ -1786,7 +1801,8 @@ export function StockDetail() {
                             modelBuyPrice: calcBuyPrice,
                             futurePrice: calcFuturePrice,
                             resolvedTargetType,
-                            activeParams
+                            activeParams,
+                            supportZones
                         } = valuationData;
 
                         const existingBackup = stock?.fairValueParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
@@ -1938,6 +1954,49 @@ export function StockDetail() {
                                         {calcFuturePrice !== null && calcFuturePrice > 0 ? formatCurrency(calcFuturePrice, stock.currency, false) : '-'}
                                     </span>
                                 </div>
+                                {supportZones && supportZones.length > 0 && (() => {
+                                    const activeZone = supportZones.find(z => Boolean(z.badgeText)) || null;
+                                    const displayZone = activeZone || supportZones[0];
+                                    const curLabel = stock.currency === 'GBp' ? 'GBP' : stock.currency;
+                                    const zoneBadge = activeZone
+                                        ? activeZone.id === 'zone1'
+                                            ? { label: 'Aktuell in Zone 1', cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/35', priceCls: 'text-emerald-400' }
+                                            : activeZone.id === 'zone2'
+                                                ? { label: 'Aktuell in Zone 2', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/35', priceCls: 'text-amber-400' }
+                                                : { label: 'Aktuell in Crash-Zone', cls: 'bg-rose-500/15 text-rose-400 border-rose-500/40', priceCls: 'text-rose-400' }
+                                        : null;
+                                    return (
+                                        <div
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/fair-value?stock=${encodeURIComponent(String(stock.symbol || stock.id))}`);
+                                            }}
+                                            className="flex justify-between items-center gap-2 py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm cursor-pointer hover:bg-accent/40 rounded px-1 -mx-1 transition-colors"
+                                            title="Klick öffnet Unterstützungs- & Kaufzonen im Fairer-Wert-Rechner"
+                                        >
+                                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                                {zoneBadge ? (
+                                                    <span className={cn(
+                                                        "px-1.5 py-0.5 rounded text-xs font-bold border leading-none whitespace-nowrap",
+                                                        zoneBadge.cls
+                                                    )}>
+                                                        {zoneBadge.label}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted-foreground shrink-0">
+                                                        Kaufzone 1
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className={cn(
+                                                "font-mono font-medium tabular-nums whitespace-nowrap shrink-0",
+                                                zoneBadge ? zoneBadge.priceCls : "text-foreground"
+                                            )}>
+                                                ~{displayZone.minPrice.toFixed(2)} – {displayZone.maxPrice.toFixed(2)} {curLabel}
+                                            </span>
+                                        </div>
+                                    );
+                                })()}
                                 {position && position.shares > 0 && calcFuturePrice !== null && calcFuturePrice > 0 && (() => {
                                     const invested = position.shares * position.buyPriceAvg;
                                     const expectedVal = position.shares * calcFuturePrice;
