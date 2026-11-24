@@ -1377,6 +1377,111 @@ function circularDayOfYearDistance(isoA: string, isoB: string): number {
  * 2) 2-Jahres-Dividendenhistorie (events=div) + automatische Frequenz- & Zahltag-Offset-Logik
  * 3) Intelligente Fortschreibung vergangener Termine aufs nächste Jahr / den nächsten Monat (Mo–Fr)
  */
+// Curated Symbol -> ISIN map for instant DivvyDiary resolution when Yahoo omits ISIN (common for US/UK tickers)
+const KNOWN_SYMBOL_ISINS: Record<string, string> = {
+    // US Dividend & Value Stocks
+    'MO': 'US02209S1033',
+    'PM': 'US7181721090',
+    'PEP': 'US7134481081',
+    'KO': 'US1912161007',
+    'GIS': 'US3703341046',
+    'PG': 'US7427181091',
+    'JNJ': 'US4781601046',
+    'ABBV': 'US00287Y1091',
+    'MCD': 'US5801351017',
+    'WMT': 'US9311421039',
+    'O': 'US7561091049',
+    'MAIN': 'US56035L1044',
+    'VICI': 'US9256521090',
+    'CVX': 'US1667641005',
+    'XOM': 'US30231G1022',
+    'COP': 'US20825C1045',
+    'PBR': 'US71654V4086',
+    'PBR-A': 'US71654V1017',
+    'BRK-B': 'US0846707026',
+    'JPM': 'US46625H1005',
+    'BAC': 'US0605051046',
+    'V': 'US92826C8394',
+    'MA': 'US57636Q1040',
+    'HD': 'US4370761029',
+    'UNH': 'US91324P1021',
+    'MRK': 'US58933Y1055',
+    'PFE': 'US7170811035',
+    'T': 'US00206R1023',
+    'VZ': 'US92343V1044',
+    'IBM': 'US4592001014',
+    'CSCO': 'US17275R1023',
+    'TXN': 'US8825081040',
+    'AVGO': 'US11135F1012',
+    // US Tech / Magnificent 7
+    'NVDA': 'US67066G1040',
+    'AAPL': 'US0378331005',
+    'MSFT': 'US5949181045',
+    'GOOG': 'US02079K1079',
+    'GOOGL': 'US02079K3059',
+    'AMZN': 'US0231351067',
+    'META': 'US30303M1027',
+    'TSLA': 'US88160R1014',
+    'AMD': 'US0079031078',
+    'NFLX': 'US64110L1061',
+    'ORCL': 'US68389X1054',
+    'COST': 'US22160K1051',
+    // Switzerland (.SW)
+    'NESN.SW': 'CH0038863350',
+    'NOVN.SW': 'CH0012005267',
+    'ROG.SW': 'CH0012032048',
+    'ZURN.SW': 'CH0011075394',
+    'SREN.SW': 'CH0126881561',
+    'UBSG.SW': 'CH0244767585',
+    'ABBN.SW': 'CH0012221716',
+    'HOLN.SW': 'CH0012214059',
+    'SIKA.SW': 'CH0418792922',
+    'GIVN.SW': 'CH0010645932',
+    'LONN.SW': 'CH0013841017',
+    'SCMN.SW': 'CH0008742519',
+    'SLHN.SW': 'CH0014852781',
+    'HELN.SW': 'CH0466642201',
+    'PGHN.SW': 'CH0024608827',
+    'GEBN.SW': 'CH0030170408',
+    // UK & Europe
+    'BATS.L': 'GB0002875804',
+    'BTI': 'US1104481072',
+    'RIO.L': 'GB0007188757',
+    'RIO': 'US7672041008',
+    'BP.L': 'GB0007980591',
+    'SHEL': 'GB00BP6MXD84',
+    'SHEL.L': 'GB00BP6MXD84',
+    'R6C0.DE': 'GB00BP6MXD84',
+    'TTE.PA': 'FR0000120271',
+    'ABEA.DE': 'US02079K3059',
+    'ALV.DE': 'DE0008404005',
+    'MUV2.DE': 'DE0008430026',
+    'SIE.DE': 'DE0007236101',
+    'SAP.DE': 'DE0007164600',
+    'BAS.DE': 'DE000BASF111',
+    'DTE.DE': 'DE0005557508',
+    // Popular UCITS ETFs
+    'VHYL.SW': 'IE00B8GKDB10',
+    'VHYL.AS': 'IE00B8GKDB10',
+    'VHYL.L': 'IE00B8GKDB10',
+    'VWRA.L': 'IE00BK5BQT80',
+    'VWRA.SW': 'IE00BK5BQT80',
+    'VWRL.SW': 'IE00B3RBWM25',
+    'CSNDX.SW': 'IE00B53SZB19',
+    'EQQQ.SW': 'IE0032077012',
+    'SWDA.SW': 'IE00B4L5Y983',
+    'VUSA.SW': 'IE00B3XXRP09',
+    'TDIV.SW': 'NL0011683594',
+    'FUSD.SW': 'IE00BYXVGX24',
+    'WINC.AS': 'IE000KJPDY61',
+};
+
+export function resolveKnownIsin(symbol?: string | null): string | null {
+    const clean = (symbol || '').trim().toUpperCase();
+    if (!clean) return null;
+    return KNOWN_SYMBOL_ISINS[clean] || null;
+}
+
 export async function fetchSmartDividendSchedule(
     symbol: string,
     options?: {
@@ -1388,7 +1493,7 @@ export async function fetchSmartDividendSchedule(
     }
 ): Promise<SmartDividendScheduleResult> {
     const cleanSym = (symbol || '').trim();
-    const initialIsin = (options?.isin || '').trim().toUpperCase();
+    const initialIsin = (options?.isin || '').trim().toUpperCase() || resolveKnownIsin(cleanSym) || '';
     const fallbackFreq: DividendScheduleFrequency =
         options?.currentFrequency === 'monthly' ||
         options?.currentFrequency === 'quarterly' ||

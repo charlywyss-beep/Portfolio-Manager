@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
 import { getWithholdingTaxRate, detectStockCountry, COUNTRY_TAX_RATES } from '../utils/tax';
-import { fetchStockHistory, fetchStockQuote, fetchSmartDividendSchedule, type DividendSlotSource, type SmartDividendHistoryItem } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote, fetchSmartDividendSchedule, resolveKnownIsin, type DividendSlotSource, type SmartDividendHistoryItem } from '../services/yahoo-finance';
 import { getDivvyDiaryApiKey } from '../services/divvydiary';
 import { cn } from '../utils';
 import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue } from '../utils/fairValue';
@@ -160,7 +160,8 @@ export function EditDividendPage() {
     useEffect(() => {
         if (stock) {
             setSymbol(stock.symbol || ''); // Pre-fill symbol
-            setIsin(stock.isin || ''); // Pre-fill ISIN
+            const autoIsin = stock.isin || resolveKnownIsin(stock.symbol) || '';
+            setIsin(autoIsin); // Pre-fill ISIN (with automatic lookup if missing)
             const existingSector = stock.sector ? translateSector(stock.sector) : '';
             setSector(existingSector); // Pre-fill Sector
             if (!existingSector && stock.symbol) {
@@ -350,6 +351,7 @@ export function EditDividendPage() {
 
             if (result.resolvedIsin && !isin.trim()) {
                 setIsin(result.resolvedIsin);
+                setIsDirty(true);
             }
 
             if (result.error || result.slots.length === 0) {
@@ -1938,44 +1940,104 @@ export function EditDividendPage() {
                             {/* Dates Section - Only show if frequency is not 'none' */}
                             {frequency !== 'none' && (() => {
                                 const termineBtnBase = "h-7 inline-flex items-center justify-center gap-1.5 px-2.5 py-0 rounded-md text-xs font-medium leading-none border transition-colors whitespace-nowrap";
-                                const renderSlotBadge = (idx: number) => {
+                                const todayMidnight = new Date();
+                                todayMidnight.setHours(0, 0, 0, 0);
+                                const getDaysFromToday = (iso?: string): number | null => {
+                                    if (!iso) return null;
+                                    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                                    if (!m) return null;
+                                    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+                                    return Math.round((d.getTime() - todayMidnight.getTime()) / 86400000);
+                                };
+
+                                const renderExDateBadges = (idx: number, exDateStr?: string, payDateStr?: string) => {
+                                    const exDays = getDaysFromToday(exDateStr);
+                                    const payDays = getDaysFromToday(payDateStr);
                                     const src = slotSources[idx];
-                                    if (!src) return null;
-                                    if (src === 'paid') {
+
+                                    return (
+                                        <>
+                                            {exDays !== null && exDays < 0 && (
+                                                <span
+                                                    className={cn(
+                                                        "inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold leading-none border",
+                                                        payDays !== null && payDays >= 0
+                                                            ? "bg-[#e61919] dark:bg-[#ff2424] text-white border-[#e61919] dark:border-[#ff2424]"
+                                                            : "bg-muted text-muted-foreground border-border"
+                                                    )}
+                                                    title={payDays !== null && payDays >= 0 ? 'Ex-Tag vorbei — Auszahlung steht noch aus' : 'Ex-Tag liegt in der Vergangenheit'}
+                                                >
+                                                    Vorbei
+                                                </span>
+                                            )}
+                                            {exDays === 0 && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold leading-none bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40">
+                                                    Heute
+                                                </span>
+                                            )}
+                                            {exDays !== null && exDays > 0 && (
+                                                <span
+                                                    className={cn(
+                                                        "inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold leading-none border tabular-nums",
+                                                        exDays <= 14
+                                                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/35"
+                                                            : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                                    )}
+                                                    title={`Ex-Tag in ${exDays} Tagen`}
+                                                >
+                                                    In {exDays} T
+                                                </span>
+                                            )}
+                                            {src === 'official' && (exDays === null || exDays >= 0) && (
+                                                <span
+                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold leading-none bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                                                    title="Offiziell gemeldeter Termin"
+                                                >
+                                                    Offiziell
+                                                </span>
+                                            )}
+                                            {src === 'history' && (exDays === null || exDays >= 0) && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30">
+                                                    Bestätigt
+                                                </span>
+                                            )}
+                                            {src === 'projected' && (exDays === null || exDays >= 0) && (
+                                                <span
+                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                                                    title="Kommender Termin — aus Vorjahr geschätzt"
+                                                >
+                                                    Geschätzt
+                                                </span>
+                                            )}
+                                        </>
+                                    );
+                                };
+
+                                const renderPayDateBadges = (exDateStr?: string, payDateStr?: string) => {
+                                    const exDays = getDaysFromToday(exDateStr);
+                                    const payDays = getDaysFromToday(payDateStr);
+                                    if (payDays === null) return null;
+                                    if (payDays < 0) {
                                         return (
                                             <span
-                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-muted text-muted-foreground border border-border"
-                                                title="Termin liegt in der Vergangenheit — bereits ausbezahlt"
+                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold leading-none bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                                                title="Zahltag liegt in der Vergangenheit — bereits ausbezahlt"
                                             >
                                                 Bezahlt
                                             </span>
                                         );
                                     }
-                                    if (src === 'official') {
+                                    if (exDays !== null && exDays < 0) {
                                         return (
                                             <span
-                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold leading-none bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
-                                                title="Offiziell von Yahoo Finance gemeldet"
+                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold leading-none bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/35 tabular-nums"
+                                                title="Ex-Tag vorbei — Auszahlung steht bevor"
                                             >
-                                                Offiziell
+                                                {payDays === 0 ? 'Zahltag heute' : `Ausstehend · in ${payDays} T`}
                                             </span>
                                         );
                                     }
-                                    if (src === 'history') {
-                                        return (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30">
-                                                Bestätigt
-                                            </span>
-                                        );
-                                    }
-                                    return (
-                                        <span
-                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30"
-                                            title="Kommender Termin — aus Vorjahr geschätzt"
-                                        >
-                                            Geschätzt
-                                        </span>
-                                    );
+                                    return null;
                                 };
                                 const divvyUrl = isin.trim()
                                     ? `https://divvydiary.com/symbols/${encodeURIComponent(isin.trim().toUpperCase())}`
@@ -2159,11 +2221,11 @@ export function EditDividendPage() {
                                                 <div key={idx} className="grid grid-cols-2 gap-4 pb-4 border-b border-border/50 last:border-0 last:pb-0">
                                                     <div className="space-y-1">
                                                         <div className="flex justify-between items-center gap-1.5">
-                                                            <div className="flex items-center gap-1.5">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
                                                                 <label className="text-xs text-muted-foreground font-medium uppercase">
                                                                     {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Ex-Datum
                                                                 </label>
-                                                                {renderSlotBadge(idx)}
+                                                                {renderExDateBadges(idx, date.exDate, date.payDate)}
                                                             </div>
                                                             {date.exDate && (
                                                                 <button
@@ -2189,6 +2251,7 @@ export function EditDividendPage() {
                                                                 <label className="text-xs text-muted-foreground font-medium uppercase">
                                                                     {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahl-Datum
                                                                 </label>
+                                                                {renderPayDateBadges(date.exDate, date.payDate)}
                                                                 {slotExtraPayDates[idx]?.map((extraIso, eIdx) => {
                                                                     const [ey, em, ed] = extraIso.split('-');
                                                                     const fmt = (ed && em && ey) ? `${ed}.${em}.${ey}` : extraIso;
@@ -2228,9 +2291,9 @@ export function EditDividendPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-center gap-1.5">
-                                                    <div className="flex items-center gap-1.5">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
                                                         <label className="text-sm font-medium">Ex-Datum</label>
-                                                        {renderSlotBadge(0)}
+                                                        {renderExDateBadges(0, exDate, payDate)}
                                                     </div>
                                                     {exDate && (
                                                         <button
@@ -2255,8 +2318,11 @@ export function EditDividendPage() {
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <label className="text-sm font-medium">Zahl-Datum</label>
+                                                <div className="flex justify-between items-center gap-1.5">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <label className="text-sm font-medium">Zahl-Datum</label>
+                                                        {renderPayDateBadges(exDate, payDate)}
+                                                    </div>
                                                     {payDate && (
                                                         <button
                                                             type="button"
