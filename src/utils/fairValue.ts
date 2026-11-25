@@ -139,8 +139,11 @@ export const ETF_PRESETS: Record<string, EtfPreset> = {
 
     // NASDAQ 100 ETFs (Accumulating / Distributing) - Index in USD
     'CSNDX.SW':{ distribution: 'accumulating', eps: 60.25, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 10.5, growthB: 11.5, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, label: 'NASDAQ-100 Index-EPS' },
+    'SXRV.DE': { distribution: 'accumulating', eps: parseFloat((60.25 * (ETF_PRESET_BASE_USD_PER_CHF / ETF_PRESET_BASE_EUR_PER_CHF)).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'EUR', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 10.5, growthB: 11.5, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, label: 'NASDAQ-100 Index-EPS' },
     'EQQQ.SW': { distribution: 'distributing', eps: 26.75, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
+    'EQQQ.DE': { distribution: 'distributing', eps: parseFloat((26.75 * (ETF_PRESET_BASE_USD_PER_CHF / ETF_PRESET_BASE_EUR_PER_CHF)).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'EUR', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.30, label: 'NASDAQ-100 Index-EPS' },
     'QQQ':     { distribution: 'distributing', eps: 25.90, baseCurrency: 'USD', quoteCurrency: 'USD', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 10.0, growthB: 11.0, peA: 20.0, peB: 23.0, pe5A: 22.0, pe5B: 25.0, fallbackDiv: 0.55, label: 'NASDAQ-100 Index-EPS' },
+    'VWCE.DE': { distribution: 'accumulating', eps: parseFloat((9.05 * (ETF_PRESET_BASE_USD_PER_CHF / ETF_PRESET_BASE_EUR_PER_CHF)).toFixed(3)), baseCurrency: 'USD', quoteCurrency: 'EUR', asOf: ETF_PRESET_DEFAULT_AS_OF, growthA: 8.0, growthB: 8.5, peA: 17.5, peB: 19.0, pe5A: 18.5, pe5B: 20.5, label: 'FTSE All-World Index-EPS' },
 };
 
 /**

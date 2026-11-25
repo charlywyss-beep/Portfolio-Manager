@@ -547,21 +547,9 @@ export function WatchlistPerformanceModal({
         return enrichedData;
     }, [enrichedData, opportunityFilter]);
 
-    // Sorting
+    // Sorting (pure value-based ranking across all exchanges so e.g. Xetra EUR and US listings compare directly)
     const sortedData = useMemo(() => {
-        const groupOpenFirst = selectedPeriod === '1D' && (sortConfig.key === 'gain' || sortConfig.key === 'rank');
         return [...displayData].sort((a, b) => {
-            if (groupOpenFirst) {
-                const stateA = estimateMarketState(a.stock.symbol, a.stock.currency);
-                const stateB = estimateMarketState(b.stock.symbol, b.stock.currency);
-                const isOpenA = stateA === 'REGULAR';
-                const isOpenB = stateB === 'REGULAR';
-
-                if (isOpenA !== isOpenB) {
-                    return isOpenA ? -1 : 1;
-                }
-            }
-
             const dir = sortConfig.direction === 'desc' ? -1 : 1;
             if (sortConfig.key === 'gain' || sortConfig.key === 'rank') {
                 if (selectedPeriod === 'BUY') {
