@@ -584,43 +584,55 @@ export function Dashboard() {
                     {/* Performance Card with Timeframe Selection */}
                     <div
                         onClick={(e) => { e.stopPropagation(); setShowPerformanceDetails(true); }}
-                        className="p-4 sm:p-5 2xl:p-6 rounded-xl bg-card border border-border shadow-sm order-2 md:order-2 cursor-pointer hover:border-primary/40 transition-colors"
+                        className="p-4 sm:p-5 2xl:p-6 rounded-xl bg-card border border-border shadow-sm order-2 md:order-2 cursor-pointer hover:border-primary/40 transition-colors min-w-0"
                     >
-                        <div className="flex justify-between items-center h-10 mb-4">
+                        <div className="flex justify-between items-center gap-1.5 min-h-10 mb-4 flex-wrap">
                             <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 shrink-0">
                                 <TrendingUp className="size-6" />
                             </div>
 
-                            <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="flex items-center gap-1 min-w-0 flex-wrap justify-end">
                                 {/* Refresh Button (Only for 1D) */}
-                                {performancePeriod === '1D' && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); refreshAllPrices(true); }}
-                                        disabled={isGlobalRefreshing}
-                                        className={cn(
-                                            "h-7 px-2.5 rounded-lg border text-xs font-medium inline-flex items-center justify-center gap-1.5 leading-none py-0 transition-all shadow-sm",
-                                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                            "active:scale-95",
-                                            isGlobalRefreshing && "opacity-50 cursor-not-allowed"
-                                        )}
-                                        title="Preise jetzt aktualisieren"
-                                    >
-                                        <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
-                                        <span className="hidden sm:inline">
-                                            {isGlobalRefreshing
-                                                ? 'Aktualisiere...'
-                                                : lastGlobalRefresh
-                                                    ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                                    : 'Aktualisieren'}
-                                        </span>
-                                    </button>
-                                )}
+                                {performancePeriod === '1D' && (() => {
+                                    const elapsedMins = lastGlobalRefresh
+                                        ? Math.max(0, Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000))
+                                        : null;
+                                    const refreshLabel = isGlobalRefreshing
+                                        ? 'Lädt...'
+                                        : elapsedMins === null
+                                            ? 'Update'
+                                            : elapsedMins >= 1440
+                                                ? `${Math.floor(elapsedMins / 1440)} T`
+                                                : elapsedMins >= 60
+                                                    ? `${Math.floor(elapsedMins / 60)} Std.`
+                                                    : `${elapsedMins} Min`;
+                                    const refreshTitle = elapsedMins !== null
+                                        ? `Zuletzt aktualisiert vor ${elapsedMins >= 60 ? `${Math.floor(elapsedMins / 60)} Std. ${elapsedMins % 60} Min` : `${elapsedMins} Min`} – Preise jetzt aktualisieren`
+                                        : 'Preise jetzt aktualisieren';
+
+                                    return (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); refreshAllPrices(true); }}
+                                            disabled={isGlobalRefreshing}
+                                            className={cn(
+                                                "h-7 px-2 rounded-lg border text-xs font-medium inline-flex items-center justify-center gap-1 leading-none py-0 transition-all shadow-sm whitespace-nowrap shrink-0",
+                                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                                "active:scale-95",
+                                                isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                                            )}
+                                            title={refreshTitle}
+                                        >
+                                            <RefreshCw className={cn("size-3.5 shrink-0", isGlobalRefreshing && "animate-spin")} />
+                                            <span className="hidden sm:inline">{refreshLabel}</span>
+                                        </button>
+                                    );
+                                })()}
 
                                 {/* Details Button (Only for 1D) */}
                                 {performancePeriod === '1D' && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setShowPerformanceDetails(true); }}
-                                        className="h-7 px-2.5 rounded-lg border border-border/80 dark:border-slate-600 bg-background hover:bg-accent text-foreground text-xs font-medium inline-flex items-center justify-center leading-none py-0 transition-colors shadow-2xs hover:border-border dark:hover:border-slate-500"
+                                        className="h-7 px-2 rounded-lg border border-border/80 dark:border-slate-600 bg-background hover:bg-accent text-foreground text-xs font-medium inline-flex items-center justify-center leading-none py-0 transition-colors shadow-2xs hover:border-border dark:hover:border-slate-500 whitespace-nowrap shrink-0"
                                         title="Performance Details öffnen"
                                     >
                                         Details
@@ -628,9 +640,9 @@ export function Dashboard() {
                                 )}
 
                                 {/* Timeframe Selector */}
-                                <div className="relative">
+                                <div className="relative shrink-0">
                                     <select
-                                        className="h-7 appearance-none bg-background border border-border/80 dark:border-slate-600 rounded-lg text-xs font-medium pl-2.5 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 leading-none py-0 inline-flex items-center"
+                                        className="h-7 appearance-none bg-background border border-border/80 dark:border-slate-600 rounded-lg text-xs font-medium pl-2 pr-5 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 leading-none py-0 inline-flex items-center"
                                         value={performancePeriod}
                                         onClick={(e) => e.stopPropagation()}
                                         onChange={(e) => setPerformancePeriod(e.target.value)}
@@ -642,7 +654,7 @@ export function Dashboard() {
                                         <option value="6M">6 Monate</option>
                                         <option value="1Y">Jahr</option>
                                     </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-muted-foreground">
                                         <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                                     </div>
                                 </div>
