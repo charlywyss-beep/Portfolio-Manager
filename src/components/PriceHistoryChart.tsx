@@ -82,6 +82,7 @@ export interface MeasurePoint {
     value: number;
     label?: string;
     extremumType?: 'high' | 'low';
+    purchaseTag?: string;
 }
 
 
@@ -1552,6 +1553,26 @@ export function PriceHistoryChart({
         });
     };
 
+    const handlePurchaseMeasure = (marker: (typeof purchaseMarkers)[number]) => {
+        const tag = purchaseMarkers.length > 1 ? `K${marker.index + 1}` : 'K';
+        const newPt: MeasurePoint = {
+            date: marker.dateKey,
+            value: marker.effectivePrice,
+            label: purchaseMarkers.length > 1 ? `Kauf ${marker.index + 1}` : 'Kauf',
+            purchaseTag: tag
+        };
+        setSelectedExtremum(null);
+        setMeasurePoints(prev => {
+            if (prev.length >= 2) {
+                return [newPt];
+            }
+            if (prev.length === 1 && prev[0].purchaseTag === tag && prev[0].date === newPt.date) {
+                return [];
+            }
+            return [...prev, newPt];
+        });
+    };
+
     const formatPointDate = (dateStr: string) => {
         try {
             const d = new Date(dateStr);
@@ -2416,59 +2437,68 @@ export function PriceHistoryChart({
             </div>
 
             {isMeasureMode && (
-                <div className="w-full sm:w-auto relative sm:absolute sm:top-2 sm:right-2 z-20 my-2 sm:my-0 animate-in fade-in slide-in-from-right-2 max-w-full sm:max-w-none">
-                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl shadow-2xl border border-blue-400/30 flex items-center justify-between sm:justify-start gap-1.5 sm:gap-3 text-xs sm:text-sm overflow-x-auto scroller-none">
+                <div className={cn(
+                    "w-full sm:w-auto relative sm:absolute z-20 my-2 sm:my-0 animate-in fade-in max-w-full",
+                    isFullscreen
+                        ? "sm:top-1.5 sm:left-[54%] sm:right-auto sm:max-w-[calc(46%-140px)] slide-in-from-top-1"
+                        : "sm:top-2 sm:right-2 slide-in-from-right-2"
+                )}>
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-2.5 sm:px-3 py-1.5 rounded-xl shadow-2xl border border-blue-400/30 flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 text-xs overflow-x-auto scroller-none">
                         {measurement ? (
-                            <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
                                 <div className={cn(
-                                    "flex flex-col items-center leading-tight px-2.5 py-1 rounded-lg border shadow-sm",
+                                    "flex flex-col items-center leading-tight px-2 py-0.5 rounded-lg border shadow-sm",
                                     measurement.percent > 0
                                         ? "bg-emerald-600 text-white border-emerald-500"
                                         : measurement.percent < 0
                                             ? "bg-rose-600 text-white border-rose-500"
                                             : "bg-white/20 text-white border-white/30"
                                 )}>
-                                    <span className="text-base sm:text-lg font-black whitespace-nowrap text-white">
+                                    <span className="text-sm sm:text-base font-black whitespace-nowrap text-white">
                                         {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                     </span>
-                                    <span className="text-[11px] sm:text-xs font-bold text-white/95 whitespace-nowrap">
+                                    <span className="text-xs font-bold text-white/95 whitespace-nowrap">
                                         {measurement.diff > 0 ? '+' : ''}{formatCurrency(measurement.diff, displayCurrency, false)}
                                     </span>
                                 </div>
                                 <div className="h-7 w-px bg-white/20" />
-                                <div className="flex flex-col text-[10px] sm:text-xs text-white font-medium leading-tight gap-0.5">
-                                    <div className="flex justify-between items-center gap-2 sm:gap-3">
-                                        <span className="font-bold text-blue-100 flex items-center gap-1.5">
-                                            <span className="w-7 shrink-0">Von:</span>
+                                <div className="flex flex-col text-xs text-white font-medium leading-tight gap-0.5">
+                                    <div className="flex justify-between items-center gap-1.5 sm:gap-2">
+                                        <span className="font-bold text-blue-100 flex items-center gap-1">
+                                            <span className="w-6 shrink-0">Von:</span>
                                             {measurement.p1.extremumType === 'high' ? (
-                                                <span className="bg-emerald-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
+                                                <span className="bg-emerald-600 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
                                             ) : measurement.p1.extremumType === 'low' ? (
-                                                <span className="bg-rose-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
+                                                <span className="bg-rose-600 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
+                                            ) : measurement.p1.purchaseTag ? (
+                                                <span className="bg-amber-500 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-amber-400 shadow-sm">{measurement.p1.purchaseTag}</span>
                                             ) : (
                                                 <span className="w-4 shrink-0" />
                                             )}
                                         </span>
-                                        <span className="tabular-nums text-white font-bold">
+                                        <span className="tabular-nums text-white font-bold whitespace-nowrap">
                                             {formatCurrency(measurement.p1.value, displayCurrency, false)}
-                                            <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-normal">
+                                            <span className="ml-1 text-xs text-blue-200 font-normal">
                                                 {formatPointDate(measurement.p1.date)}
                                             </span>
                                         </span>
                                     </div>
-                                    <div className="flex justify-between items-center gap-2 sm:gap-3">
-                                        <span className="font-bold text-blue-100 flex items-center gap-1.5">
-                                            <span className="w-7 shrink-0">Bis:</span>
+                                    <div className="flex justify-between items-center gap-1.5 sm:gap-2">
+                                        <span className="font-bold text-blue-100 flex items-center gap-1">
+                                            <span className="w-6 shrink-0">Bis:</span>
                                             {measurement.p2.extremumType === 'high' ? (
-                                                <span className="bg-emerald-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
+                                                <span className="bg-emerald-600 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
                                             ) : measurement.p2.extremumType === 'low' ? (
-                                                <span className="bg-rose-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
+                                                <span className="bg-rose-600 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
+                                            ) : measurement.p2.purchaseTag ? (
+                                                <span className="bg-amber-500 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-amber-400 shadow-sm">{measurement.p2.purchaseTag}</span>
                                             ) : (
                                                 <span className="w-4 shrink-0" />
                                             )}
                                         </span>
-                                        <span className="tabular-nums text-white font-bold">
+                                        <span className="tabular-nums text-white font-bold whitespace-nowrap">
                                             {formatCurrency(measurement.p2.value, displayCurrency, false)}
-                                            <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-normal">
+                                            <span className="ml-1 text-xs text-blue-200 font-normal">
                                                 {formatPointDate(measurement.p2.date)}
                                             </span>
                                         </span>
@@ -2479,7 +2509,7 @@ export function PriceHistoryChart({
                                         e.stopPropagation();
                                         setMeasurePoints(prev => [prev[1], prev[0]]);
                                     }}
-                                    className="bg-white/20 hover:bg-white/30 p-1.5 rounded-lg transition-colors flex items-center justify-center text-white shrink-0"
+                                    className="bg-white/20 hover:bg-white/30 p-1.5 rounded-lg transition-colors flex items-center justify-center text-white shrink-0 cursor-pointer"
                                     title="Richtung umkehren (Start ⇄ Ziel)"
                                 >
                                     <ArrowLeftRight className="size-3.5" />
@@ -2492,13 +2522,15 @@ export function PriceHistoryChart({
                                     <span className="text-xs font-bold whitespace-nowrap flex items-center gap-1.5 text-white">
                                         <span>1. Punkt:</span>
                                         {measurePoints[0].extremumType === 'high' ? (
-                                            <span className="bg-emerald-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
+                                            <span className="bg-emerald-600 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-emerald-500 shadow-sm">H</span>
                                         ) : measurePoints[0].extremumType === 'low' ? (
-                                            <span className="bg-rose-600 text-white text-[9.5px] px-1.5 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
+                                            <span className="bg-rose-600 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-rose-500 shadow-sm">T</span>
+                                        ) : measurePoints[0].purchaseTag ? (
+                                            <span className="bg-amber-500 text-white text-xs px-1 h-4 flex items-center justify-center rounded font-black shrink-0 border border-amber-400 shadow-sm">{measurePoints[0].purchaseTag}</span>
                                         ) : null}
                                         <span className="tabular-nums text-white font-bold">{formatCurrency(measurePoints[0].value, displayCurrency, false)}</span>
                                     </span>
-                                    <span className="text-[10px] text-blue-100">Jetzt 2. Punkt wählen: [H], [T] oder im Chart</span>
+                                    <span className="text-xs text-blue-100">2. Punkt wählen: H, T, Kauf oder im Chart</span>
                                 </div>
                             </div>
                         ) : (
@@ -2506,20 +2538,20 @@ export function PriceHistoryChart({
                                 <Ruler className="size-4 text-blue-200 shrink-0" />
                                 <div className="flex flex-col leading-tight">
                                     <span className="text-xs font-bold whitespace-nowrap">Messmodus aktiv</span>
-                                    <span className="text-[10px] text-blue-100">1. Punkt wählen: [H], [T] oder im Chart</span>
+                                    <span className="text-xs text-blue-100">1. Punkt wählen: H, T, Kauf oder im Chart</span>
                                 </div>
                             </div>
                         )}
 
                         {/* Quick H / T selection buttons in toolbar (untereinander ausgerichtet) */}
-                        <div className="flex flex-col gap-1 pl-1.5 sm:pl-2 border-l border-white/20 justify-center">
+                        <div className="flex flex-col gap-1 pl-1.5 border-l border-white/20 justify-center shrink-0">
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleExtremumMeasure('high');
                                 }}
                                 className={cn(
-                                    "px-2 py-0.5 rounded text-[10px] font-bold transition-all flex items-center justify-between gap-1.5 border min-w-[62px]",
+                                    "px-2 py-0.5 rounded text-xs font-bold transition-all flex items-center justify-between gap-1.5 border min-w-[58px] cursor-pointer leading-none",
                                     highMeasureIdx >= 0
                                         ? "bg-emerald-600 text-white border-white/40 shadow-sm"
                                         : "bg-white/20 hover:bg-white/30 text-white border-white/20"
@@ -2534,9 +2566,9 @@ export function PriceHistoryChart({
                             >
                                 <span className="text-white">Hoch</span>
                                 {highMeasureIdx >= 0 ? (
-                                    <span className="bg-black/30 text-white px-1 rounded text-[8.5px] font-bold leading-none py-0.5">P{highMeasureIdx + 1}</span>
+                                    <span className="bg-black/30 text-white px-1 rounded text-xs font-bold leading-none">P{highMeasureIdx + 1}</span>
                                 ) : (
-                                    <span className="text-[9px] text-white/50 font-bold leading-none">H</span>
+                                    <span className="text-xs text-white/60 font-bold leading-none">H</span>
                                 )}
                             </button>
 
@@ -2546,7 +2578,7 @@ export function PriceHistoryChart({
                                     handleExtremumMeasure('low');
                                 }}
                                 className={cn(
-                                    "px-2 py-0.5 rounded text-[10px] font-bold transition-all flex items-center justify-between gap-1.5 border min-w-[62px]",
+                                    "px-2 py-0.5 rounded text-xs font-bold transition-all flex items-center justify-between gap-1.5 border min-w-[58px] cursor-pointer leading-none",
                                     lowMeasureIdx >= 0
                                         ? "bg-rose-600 text-white border-white/40 shadow-sm"
                                         : "bg-white/20 hover:bg-white/30 text-white border-white/20"
@@ -2561,21 +2593,57 @@ export function PriceHistoryChart({
                             >
                                 <span className="text-white">Tief</span>
                                 {lowMeasureIdx >= 0 ? (
-                                    <span className="bg-black/30 text-white px-1 rounded text-[8.5px] font-bold leading-none py-0.5">P{lowMeasureIdx + 1}</span>
+                                    <span className="bg-black/30 text-white px-1 rounded text-xs font-bold leading-none">P{lowMeasureIdx + 1}</span>
                                 ) : (
-                                    <span className="text-[9px] text-white/50 font-bold leading-none">T</span>
+                                    <span className="text-xs text-white/60 font-bold leading-none">T</span>
                                 )}
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-1 pl-1.5 sm:pl-2 border-l border-white/20">
+                        {/* Quick Kauf 1 / Kauf 2 ... buttons in toolbar */}
+                        {selectedRange !== '1D' && purchaseMarkers.length > 0 && (
+                            <div className={cn(
+                                "pl-1.5 border-l border-white/20 shrink-0",
+                                purchaseMarkers.length > 1 ? "grid grid-rows-2 grid-flow-col gap-1" : "flex flex-col justify-center"
+                            )}>
+                                {purchaseMarkers.map((marker) => {
+                                    const tag = purchaseMarkers.length > 1 ? `K${marker.index + 1}` : 'Kauf';
+                                    const matchTag = purchaseMarkers.length > 1 ? `K${marker.index + 1}` : 'K';
+                                    const mIdx = measurePoints.findIndex(p => p.purchaseTag === matchTag && p.date === marker.dateKey);
+                                    return (
+                                        <button
+                                            key={marker.id}
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePurchaseMeasure(marker);
+                                            }}
+                                            className={cn(
+                                                "px-2 py-0.5 rounded text-xs font-bold transition-all flex items-center justify-between gap-1 border cursor-pointer leading-none whitespace-nowrap",
+                                                mIdx >= 0
+                                                    ? "bg-amber-500 text-white border-white/40 shadow-sm"
+                                                    : "bg-white/20 hover:bg-white/30 text-white border-white/20"
+                                            )}
+                                            title={`${marker.tooltipText} als Messpunkt wählen`}
+                                        >
+                                            <span>{tag}</span>
+                                            {mIdx >= 0 && (
+                                                <span className="bg-black/30 text-white px-1 rounded text-xs font-bold leading-none">P{mIdx + 1}</span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-1 pl-1.5 border-l border-white/20 shrink-0">
                             <button
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setShowFibonacci(prev => {
                                         const next = !prev;
-                                        if (next) {
+                                        if (next && measurePoints.length < 2 && selectedRange === '1D') {
                                             if (!isFullscreen) handleToggleFullscreen();
                                             handleRangeChange('3M');
                                         }
@@ -2583,12 +2651,12 @@ export function PriceHistoryChart({
                                     });
                                 }}
                                 className={cn(
-                                    "px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer",
+                                    "h-7 px-2 rounded text-xs font-bold transition-all inline-flex items-center justify-center leading-none gap-1 cursor-pointer",
                                     showFibonacci
                                         ? "bg-purple-500 text-white shadow-sm"
                                         : "bg-white/20 hover:bg-white/30 text-white"
                                 )}
-                                title="Fibonacci-Linien für diesen Messbereich ein-/ausblenden"
+                                title="Fibonacci-Linien speziell für diesen 2-Punkte-Messbereich ein-/ausblenden"
                             >
                                 <span className="font-serif font-black text-xs">Φ</span>
                                 <span>Fibo</span>
@@ -2599,7 +2667,7 @@ export function PriceHistoryChart({
                                         e.stopPropagation();
                                         setMeasurePoints([]);
                                     }}
-                                    className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer"
+                                    className="h-7 bg-white/20 hover:bg-white/30 px-2 rounded text-xs font-bold inline-flex items-center justify-center leading-none transition-colors cursor-pointer"
                                     title="Messung zurücksetzen"
                                 >
                                     Neu
@@ -2611,7 +2679,7 @@ export function PriceHistoryChart({
                                     setIsMeasureMode(false);
                                     setMeasurePoints([]);
                                 }}
-                                className="bg-white/20 hover:bg-white/40 p-1.5 rounded-full transition-colors cursor-pointer"
+                                className="h-7 w-7 bg-white/20 hover:bg-white/40 rounded-full inline-flex items-center justify-center transition-colors cursor-pointer"
                                 title="Messen beenden"
                             >
                                 <X className="size-3.5" />
