@@ -2691,17 +2691,17 @@ export function PriceHistoryChart({
                             </span>
                         )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 shrink-0 ml-auto">
+                    <div className="flex flex-wrap items-center justify-between sm:justify-end gap-1.5 w-full sm:w-auto sm:shrink-0 sm:ml-auto min-w-0 max-w-full">
                         {selectedRange === '1D' && isCompareActive && compareOverlay.summary && (
                             <div
-                                className="h-7 inline-flex items-center p-0.5 rounded-md border border-border/80 bg-background/70 shrink-0"
+                                className="h-7 inline-flex items-center p-0.5 rounded-md border border-border/80 bg-background/70 min-w-0 max-w-full overflow-x-auto no-scrollbar"
                                 title="Zeitachsen-Synchronisierung im 1D-Vergleich umschalten"
                             >
                                 <button
                                     type="button"
                                     onClick={() => setCompareTimeMode('sync')}
                                     className={cn(
-                                        "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                        "h-6 inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
                                         compareOverlay.summary.activeTimeMode === 'sync'
                                             ? "bg-sky-600 text-white shadow-sm"
                                             : "text-muted-foreground hover:text-foreground"
@@ -2715,7 +2715,7 @@ export function PriceHistoryChart({
                                     disabled={!compareOverlay.summary.hasPre10_1530Overlap}
                                     onClick={() => compareOverlay.summary?.hasPre10_1530Overlap && setCompareTimeMode('pre10_1530')}
                                     className={cn(
-                                        "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
+                                        "h-6 inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
                                         !compareOverlay.summary.hasPre10_1530Overlap
                                             ? "opacity-40 cursor-not-allowed text-muted-foreground"
                                             : compareOverlay.summary.activeTimeMode === 'pre10_1530'
@@ -2735,7 +2735,7 @@ export function PriceHistoryChart({
                                     disabled={!compareOverlay.summary.hasUs1530Overlap}
                                     onClick={() => compareOverlay.summary?.hasUs1530Overlap && setCompareTimeMode('us1530')}
                                     className={cn(
-                                        "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
+                                        "h-6 inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
                                         !compareOverlay.summary.hasUs1530Overlap
                                             ? "opacity-40 cursor-not-allowed text-muted-foreground"
                                             : compareOverlay.summary.activeTimeMode === 'us1530'
@@ -2754,7 +2754,7 @@ export function PriceHistoryChart({
                                     type="button"
                                     onClick={() => setCompareTimeMode('session')}
                                     className={cn(
-                                        "h-6 inline-flex items-center justify-center px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                        "h-6 inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
                                         compareOverlay.summary.activeTimeMode === 'session'
                                             ? "bg-sky-600 text-white shadow-sm"
                                             : "text-muted-foreground hover:text-foreground"
