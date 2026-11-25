@@ -143,11 +143,20 @@ export function Watchlist() {
 
         // 1. Stocks matching open orders in orderBook (strictly placed orders)
         openOrders.forEach(order => {
-            const found = stocks.find(s =>
-                (order.stockId && s.id === order.stockId) ||
-                (order.stockSymbol && s.symbol.toLowerCase() === order.stockSymbol.toLowerCase()) ||
-                (order.stockIsin && s.isin && s.isin.toLowerCase() === order.stockIsin.toLowerCase())
-            );
+            // Prefer exact stockId or exact symbol match; only fall back to ISIN if currency matches too
+            // (prevents e.g. an EUR order on EQQQ.DE from being hijacked by a USD listing EQQQ.SW with the same ISIN)
+            const orderSymLower = (order.stockSymbol || '').toLowerCase();
+            const orderCurUpper = (order.currency || '').toUpperCase();
+            const found =
+                (order.stockId ? stocks.find(s => s.id === order.stockId) : undefined) ||
+                (orderSymLower ? stocks.find(s => s.symbol.toLowerCase() === orderSymLower) : undefined) ||
+                (order.stockIsin
+                    ? stocks.find(s =>
+                        s.isin &&
+                        s.isin.toLowerCase() === order.stockIsin!.toLowerCase() &&
+                        (!orderCurUpper || (s.currency || '').toUpperCase() === orderCurUpper)
+                    )
+                    : undefined);
             if (found) {
                 if (!addedStockIds.has(String(found.id))) {
                     const enhancedStock: Stock = {
@@ -162,6 +171,8 @@ export function Watchlist() {
                 // Synthesize stock if order was created for symbol not yet in stocks
                 const synthId = order.stockId || `order_${order.id}`;
                 if (!addedStockIds.has(String(synthId))) {
+                    const isLikelyEtfOrder = /\b(ETF|UCITS|MSCI|FTSE|NASDAQ|S&P|ALL-WORLD)\b/i.test(order.stockName || '')
+                        || /^(EQQQ|SXRV|CSNDX|VWCE|VWRA|VWRL|VHYL|SWDA|IWDA|VUSA|TDIV|FUSD|WINC)\b/i.test(order.stockSymbol || '');
                     const synthStock: Stock = {
                         id: synthId,
                         name: order.stockName,
@@ -172,8 +183,8 @@ export function Watchlist() {
                         previousClose: order.limitPrice,
                         targetPrice: order.mode === 'buy' ? order.limitPrice : undefined,
                         sellLimit: order.mode === 'sell' ? order.limitPrice : undefined,
-                        type: 'stock',
-                        sector: 'Auftrag',
+                        type: isLikelyEtfOrder ? 'etf' : 'stock',
+                        sector: isLikelyEtfOrder ? 'ETF' : 'Auftrag',
                         dividendYield: order.grossYield || 0,
                         dividendFrequency: order.dividendFrequency || 'quarterly',
                     };

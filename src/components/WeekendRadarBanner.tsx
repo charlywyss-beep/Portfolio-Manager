@@ -656,7 +656,9 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                     {/* Frühstart-Abgleich: Frühtendenz vs. Wahre Tagesperformance */}
                     {portfolioEstimate && totals.dailyGain !== undefined && (() => {
                         const isWeekend = marketPhase.status === 'weekend';
-                        const isWaitingForOpen = !isWeekend && !totals.isAnyMarketActiveToday;
+                        const nowLocal = new Date();
+                        const isBeforeEuropeanOpen = nowLocal.getDay() >= 1 && nowLocal.getDay() <= 5 && nowLocal.getHours() < 9;
+                        const isWaitingForOpen = !isWeekend && (!totals.isAnyMarketActiveToday || isBeforeEuropeanOpen);
                         const diffCHF = totals.dailyGain - portfolioEstimate.gainCHF;
                         const isBetter = diffCHF >= 0;
 

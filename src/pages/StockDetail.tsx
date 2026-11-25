@@ -119,15 +119,37 @@ export function StockDetail() {
         if (stockFromContext || !id) return null;
         const paramName = searchParams.get('name');
         const paramCurrency = searchParams.get('currency');
+        const matchingOrder = (orderBook || []).find(o =>
+            o.stockId === id ||
+            o.stockSymbol?.toLowerCase() === id.toLowerCase()
+        );
+        const symUpper = (matchingOrder?.stockSymbol || id).toUpperCase();
+        const inferredCurrencyFromSuffix =
+            /\.(DE|PA|AS|MI|MC|BR|VI|F)$/.test(symUpper) ? 'EUR'
+            : symUpper.endsWith('.SW') ? 'CHF'
+            : symUpper.endsWith('.L') ? 'GBP'
+            : symUpper.endsWith('.T') ? 'JPY'
+            : 'USD';
+        const resolvedName = paramName
+            ? decodeURIComponent(paramName)
+            : (matchingOrder?.stockName || symUpper);
+        const resolvedCurrency = paramCurrency
+            ? decodeURIComponent(paramCurrency)
+            : (matchingOrder?.currency || inferredCurrencyFromSuffix);
+        const isLikelyEtfFallback = /\b(ETF|UCITS|MSCI|FTSE|NASDAQ|S&P|ALL-WORLD)\b/i.test(resolvedName) || /^(EQQQ|SXRV|CSNDX|VWCE|VWRA|VWRL|VHYL|SWDA|IWDA|VUSA|TDIV|FUSD|WINC)\b/i.test(symUpper);
+
         return {
             id: id,
-            symbol: id.toUpperCase(),
-            name: paramName ? decodeURIComponent(paramName) : id.toUpperCase(),
-            currentPrice: 0,
-            currency: paramCurrency ? decodeURIComponent(paramCurrency) : 'USD',
-            type: 'stock'
+            symbol: symUpper,
+            name: resolvedName,
+            isin: matchingOrder?.stockIsin || '',
+            currentPrice: matchingOrder?.limitPrice || 0,
+            currency: resolvedCurrency,
+            type: isLikelyEtfFallback ? 'etf' : 'stock',
+            dividendYield: matchingOrder?.grossYield || 0,
+            dividendFrequency: matchingOrder?.dividendFrequency || 'quarterly',
         };
-    }, [stockFromContext, id, searchParams]);
+    }, [stockFromContext, id, searchParams, orderBook]);
 
     const [virtualStock, setVirtualStock] = useState<any>(() => resolvedVirtualFallback);
 

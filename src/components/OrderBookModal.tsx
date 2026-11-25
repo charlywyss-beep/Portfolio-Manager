@@ -148,7 +148,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
             onClick={onClose}
         >
             <div
-                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl h-[580px] md:h-[620px] max-h-[92vh] max-h-[92dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-foreground my-auto"
+                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-6xl h-[86vh] md:h-[88vh] max-h-[92vh] max-h-[92dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-foreground my-auto"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -160,7 +160,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                         <div>
                             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                 <h2 className="text-base sm:text-lg font-bold">Auftragsbuch</h2>
-                                <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 whitespace-nowrap">
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 whitespace-nowrap">
                                     Offene Aufträge & Limite
                                 </span>
                             </div>

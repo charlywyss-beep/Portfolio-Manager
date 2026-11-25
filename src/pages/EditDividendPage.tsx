@@ -50,7 +50,7 @@ export function EditDividendPage() {
     const { stockId } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
+    const { stocks, positions, orderBook, updateStockDividend, updateStockPrice, updateStock, addStock } = usePortfolio();
     const { rates, formatCurrency } = useCurrencyFormatter();
 
     // Scroll directly to target section if requested via query or hash
@@ -122,6 +122,15 @@ export function EditDividendPage() {
         const foundPos = positions.find(p => p.id === rawId || p.stockId === rawId);
         return foundPos ? stocks.find(s => s.id === foundPos.stockId) : undefined;
     })();
+
+    const matchingOrderFallback = !stock && rawId
+        ? (orderBook || []).find(o =>
+            o.stockId === rawId ||
+            `order_${o.id}` === rawId ||
+            o.stockSymbol?.toLowerCase() === rawId.toLowerCase() ||
+            o.stockIsin?.toLowerCase() === rawId.toLowerCase()
+        )
+        : undefined;
 
     const currentStockId = stock?.id || rawId;
 
@@ -249,8 +258,42 @@ export function EditDividendPage() {
             setScheduleFeedback(null);
             setSlotSources({});
             setSlotExtraPayDates({});
+        } else if (matchingOrderFallback) {
+            const sym = (matchingOrderFallback.stockSymbol || rawId || '').toUpperCase();
+            setStockNameOverride(matchingOrderFallback.stockName || sym);
+            setSymbol(sym);
+            setIsin(matchingOrderFallback.stockIsin || resolveKnownIsin(sym) || '');
+            const isLikelyEtfOrder = /\b(ETF|UCITS|MSCI|FTSE|NASDAQ|S&P|ALL-WORLD)\b/i.test(matchingOrderFallback.stockName || '') || /^(EQQQ|SXRV|CSNDX|VWCE|VWRA|VWRL|VHYL|SWDA|IWDA|VUSA|TDIV|FUSD|WINC)\b/i.test(sym);
+            setSector(isLikelyEtfOrder ? 'ETF' : '');
+            const orderPrice = matchingOrderFallback.limitPrice ? matchingOrderFallback.limitPrice.toFixed(2) : '';
+            setPrice(orderPrice);
+            if (matchingOrderFallback.mode === 'buy' && orderPrice) {
+                setTargetPrice(orderPrice);
+            } else if (matchingOrderFallback.mode === 'sell' && orderPrice) {
+                setSellLimit(orderPrice);
+            }
+            const inferredCur = (matchingOrderFallback.currency as Currency)
+                || (/\.(DE|PA|AS|MI|MC|BR|VI|F)$/.test(sym) ? 'EUR'
+                    : sym.endsWith('.SW') ? 'CHF'
+                    : sym.endsWith('.L') ? 'GBP'
+                    : 'USD');
+            setCurrency(inferredCur);
+            const orderFreq = matchingOrderFallback.dividendFrequency || 'quarterly';
+            setFrequency(orderFreq as any);
+            if (matchingOrderFallback.grossYield && matchingOrderFallback.grossYield > 0) {
+                setYieldPercent(matchingOrderFallback.grossYield.toFixed(2));
+                if (matchingOrderFallback.limitPrice && matchingOrderFallback.limitPrice > 0) {
+                    const factor = getFrequencyFactor(orderFreq);
+                    const perPeriod = ((matchingOrderFallback.limitPrice * (matchingOrderFallback.grossYield / 100)) / factor);
+                    setAmount(perPeriod.toFixed(2));
+                }
+            }
+            setIsDirty(false);
+            setScheduleFeedback(null);
+            setSlotSources({});
+            setSlotExtraPayDates({});
         }
-    }, [stock?.id, stock?.symbol]);
+    }, [stock?.id, stock?.symbol, matchingOrderFallback?.id]);
 
 
     // Handlers
@@ -534,8 +577,31 @@ export function EditDividendPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const targetId = stock?.id || currentStockId;
+        let targetId = stock?.id || currentStockId;
         if (!targetId) return;
+
+        // If this security came from the OrderBook and isn't in `stocks` yet, create it first so all edits persist
+        if (!stock) {
+            const symUpper = (symbol || matchingOrderFallback?.stockSymbol || rawId || '').trim().toUpperCase();
+            const parsedPrice = parseFloat((price || '').replace(',', '.')) || matchingOrderFallback?.limitPrice || 0;
+            const resolvedName = (stockNameOverride || matchingOrderFallback?.stockName || symUpper).trim();
+            const isLikelyEtfNew = sector.toUpperCase() === 'ETF' || /\b(ETF|UCITS|MSCI|FTSE|NASDAQ|S&P|ALL-WORLD)\b/i.test(resolvedName);
+            targetId = addStock({
+                symbol: symUpper,
+                name: resolvedName,
+                isin: isin.trim().toUpperCase() || resolveKnownIsin(symUpper) || undefined,
+                sector: sector.trim() || (isLikelyEtfNew ? 'ETF' : 'Allgemein'),
+                type: isLikelyEtfNew ? 'etf' : 'stock',
+                currency: currency || 'EUR',
+                currentPrice: parsedPrice,
+                previousClose: parsedPrice,
+                logoUrl: logoUrl || undefined,
+                targetPrice: targetPrice ? parseFloat(targetPrice.replace(',', '.')) || undefined : undefined,
+                targetPriceType: targetPrice ? 'manual' : undefined,
+                sellLimit: sellLimit ? parseFloat(sellLimit.replace(',', '.')) || undefined : undefined,
+                fairValue: fairValue ? parseFloat(fairValue.replace(',', '.')) || undefined : undefined,
+            });
+        }
 
         // Update Price
         if (price && (!stock || parseFloat(price.replace(',', '.')) !== stock.currentPrice)) {
