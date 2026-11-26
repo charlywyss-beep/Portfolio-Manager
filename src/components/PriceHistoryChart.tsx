@@ -2364,7 +2364,6 @@ export function PriceHistoryChart({
                             </div>
                         )}
                     </div>
-                    {isFullscreen && measureBannerElement}
                 </div>
                 {isFullscreen && (
                     <div className="flex flex-col landscape:flex-row items-end landscape:items-center justify-between landscape:justify-end gap-2.5 sm:gap-3.5 landscape:gap-2 shrink-0 ml-auto self-stretch landscape:self-auto z-10 pb-0.5 landscape:pb-0">
@@ -2606,8 +2605,11 @@ export function PriceHistoryChart({
                                 )}
                             </div>
 
-                            {/* Group 4: Bestand & Gewinn/Verlust auf Bestand (nur für Bestandes-Aktien / ETFs) */}
-                            {positionMetrics && (
+                            {/* Messfeld im Vollbild direkt rechts neben Sicherheit A (bricht bei kleinem Fenster automatisch um) */}
+                            {isFullscreen && measureBannerElement}
+
+                            {/* Group 4: Bestand & Gewinn/Verlust auf Bestand (nur für Bestandes-Aktien / ETFs, im Vollbild-Messmodus ausgeblendet damit Platz für das Messfeld bleibt) */}
+                            {positionMetrics && !(isFullscreen && isMeasureMode) && (
                                 <div
                                     className="h-7 inline-flex items-center leading-none py-0 px-2.5 sm:px-3 rounded-lg border border-border/80 bg-muted/40 text-[11px] sm:text-xs font-mono tabular-nums shrink-0 whitespace-nowrap gap-2 sm:gap-2.5 sm:ml-auto shadow-2xs"
                                     title={(() => {
