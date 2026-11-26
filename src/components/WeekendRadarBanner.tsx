@@ -6,7 +6,7 @@ import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { InfoHelp } from './InfoHelp';
 import { cn } from '../utils';
-import { fetchStockQuotes } from '../services/yahoo-finance';
+import { fetchStockQuotes, fetchStockHistory, type ChartDataPoint } from '../services/yahoo-finance';
 
 interface RadarQuote {
     price: number;
@@ -15,6 +15,53 @@ interface RadarQuote {
     changePercent: number;
     changeAmount: number;
     currency?: string;
+}
+
+interface EuCloseRefCache {
+    targetEuCloseMs: number;
+    esRefPrice: number | null;
+    nqRefPrice: number | null;
+}
+
+function getPreviousEuropeanCloseMs(now: Date = new Date()): number {
+    const d = new Date(now);
+    const day = d.getDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
+    let daysBack = 1;
+    if (day === 1) daysBack = 3;      // Mon -> Fri 17:30
+    else if (day === 0) daysBack = 2; // Sun -> Fri 17:30
+    else daysBack = 1;                // Tue–Sat -> previous day 17:30
+    d.setDate(d.getDate() - daysBack);
+    d.setHours(17, 30, 0, 0);
+    return d.getTime();
+}
+
+function findPriceNearTimestamp(points: ChartDataPoint[] | null | undefined, targetMs: number, maxDiffMs = 90 * 60 * 1000): number | null {
+    if (!points || points.length === 0) return null;
+    let bestPrice: number | null = null;
+    let bestDiff = Infinity;
+    for (const pt of points) {
+        if (!pt || !Number.isFinite(pt.value) || pt.value <= 0) continue;
+        const ms = new Date(pt.date).getTime();
+        if (!Number.isFinite(ms)) continue;
+        const diff = Math.abs(ms - targetMs);
+        if (diff < bestDiff) {
+            bestDiff = diff;
+            bestPrice = pt.value;
+        }
+    }
+    return bestDiff <= maxDiffMs ? bestPrice : null;
+}
+
+function isEuropeanListedPosition(pos: any): boolean {
+    const sym = (pos?.stock?.symbol || '').trim().toUpperCase();
+    const cur = (pos?.stock?.currency || '').trim().toUpperCase();
+    if (/\.(SW|VX|DE|F|L|PA|AS|MI|MC|BR|VI|ST|HE|CO|OL|LS|IR|BE|DU|HM|MU|SG|HA)$/.test(sym)) {
+        return true;
+    }
+    if (cur === 'CHF' || cur === 'EUR' || cur === 'GBP' || cur === 'GBX') {
+        return true;
+    }
+    return false;
 }
 
 const DEFAULT_RADAR_QUOTES: Record<string, RadarQuote> = {
@@ -30,40 +77,45 @@ interface WeekendRadarBannerProps {
     showPortfolioEstimate?: boolean;
 }
 
-// Helper: Position-specific beta and index reference based on regional home market, ETF type, sector & dividend profile
+// Helper: Position-specific beta and index reference based on index type, home market, sector & dividend profile
 function getPositionEstimatedBeta(pos: any, nqPct: number, esPct: number) {
     const cur = (pos.stock?.currency || 'USD').toUpperCase();
+    const sym = (pos.stock?.symbol || '').trim().toUpperCase();
     const sector = (pos.stock?.sector || '').toLowerCase();
+    const country = (pos.stock?.country || '').toLowerCase();
     const name = (pos.stock?.name || '').toLowerCase();
     const type = (pos.stock?.type || '').toLowerCase();
-    const isEtf = type === 'etf' || name.includes('etf') || name.includes('ftse') || name.includes('msci') || name.includes('vanguard') || name.includes('ishares');
+    const isEtf = type === 'etf' || name.includes('etf') || name.includes('ucits') || name.includes('ftse') || name.includes('msci') || name.includes('vanguard') || name.includes('ishares') || name.includes('invesco');
     const yieldPct = Number(pos.stock?.dividendYield || 0);
-    const isHighDiv = yieldPct >= 3.0 || name.includes('dividend') || name.includes('income') || name.includes('aristocrat');
+    const isHighDiv = yieldPct >= 3.0 || name.includes('dividend') || name.includes('income') || name.includes('aristocrat') || name.includes('high div');
 
-    const isTech = sector.includes('tech') || 
-                   sector.includes('software') || 
-                   sector.includes('semiconductor') || 
+    const isTech = sector.includes('tech') ||
+                   sector.includes('software') ||
+                   sector.includes('semiconductor') ||
                    sector.includes('halbleiter') ||
-                   sector.includes('it') || 
+                   sector.includes('it') ||
                    sector.includes('kommunikation') ||
-                   sector.includes('communication');
+                   sector.includes('communication') ||
+                   name.includes('nasdaq') ||
+                   name.includes('semiconductor') ||
+                   name.includes('technology');
 
-    const isDefensive = sector.includes('energie') || 
-                        sector.includes('energy') || 
+    const isDefensive = sector.includes('energie') ||
+                        sector.includes('energy') ||
                         sector.includes('öl') ||
                         sector.includes('oil') ||
                         sector.includes('gas') ||
-                        sector.includes('versorger') || 
-                        sector.includes('utilities') || 
-                        sector.includes('gesundheit') || 
-                        sector.includes('health') || 
-                        sector.includes('pharma') || 
-                        sector.includes('konsum') || 
-                        sector.includes('staples') || 
+                        sector.includes('versorger') ||
+                        sector.includes('utilities') ||
+                        sector.includes('gesundheit') ||
+                        sector.includes('health') ||
+                        sector.includes('pharma') ||
+                        sector.includes('konsum') ||
+                        sector.includes('staples') ||
                         sector.includes('tabak') ||
                         sector.includes('tobacco') ||
-                        sector.includes('immobilien') || 
-                        sector.includes('real estate') || 
+                        sector.includes('immobilien') ||
+                        sector.includes('real estate') ||
                         sector.includes('reit') ||
                         sector.includes('rohstoff') ||
                         sector.includes('material') ||
@@ -71,57 +123,73 @@ function getPositionEstimatedBeta(pos: any, nqPct: number, esPct: number) {
                         sector.includes('bank') ||
                         sector.includes('versicher');
 
-    // 1. ETFs: Berücksichtigt Welt-Streuung und Dividenden-Strategie
+    // 1. ETFs: Index-Typ hat IMMER Vorrang vor der Handelswährung (z. B. EQQQ.DE in EUR = Nasdaq-100!)
     if (isEtf) {
-        const isWorld = name.includes('world') || name.includes('all-world') || name.includes('acwi') || name.includes('global');
-        if (cur === 'CHF') {
-            return { basePct: esPct, beta: 0.20 };
+        const isNasdaqEtf = name.includes('nasdaq') || name.includes('eqqq') || name.includes('qqq') ||
+            /^(EQQQ|SXRV|QQQ|QQQM|CNDX|NQSE|ANAV|CSNDX)\b/.test(sym);
+        if (isNasdaqEtf) {
+            return { basePct: nqPct, beta: 0.95 };
         }
-        if (isWorld && isHighDiv) {
-            // z. B. Vanguard FTSE All-World High Dividend
-            return { basePct: esPct, beta: 0.30 };
+
+        const isSp500OrUsEtf = name.includes('s&p') || name.includes('sp500') || name.includes('us quality') || name.includes('us equity') || name.includes('usa') ||
+            /^(SPY|VOO|IVV|CSPX|VUAA|VUSA|SXR8|FUSD|FUSA|QDVG|QDVE)\b/.test(sym);
+        if (isSp500OrUsEtf) {
+            return { basePct: esPct, beta: isHighDiv ? 0.78 : 0.95 };
         }
+
+        const isWorld = name.includes('world') || name.includes('all-world') || name.includes('acwi') || name.includes('global') ||
+            /^(VWRA|VWCE|VWRL|VWRP|VT|IWDA|SWDA|EUNL|SSAC|SPYI|WEBN|2559)\b/.test(sym);
         if (isWorld) {
-            // z. B. Vanguard FTSE All-World (weltweit gestreut, nur ~60% US)
-            return { basePct: esPct, beta: 0.38 };
+            // Welt-ETF (~64% USA + korrelierte globale Märkte): real ~0.85, High-Dividend ~0.65
+            return { basePct: esPct, beta: isHighDiv ? 0.65 : 0.85 };
+        }
+
+        if (isTech) {
+            return { basePct: nqPct, beta: 0.90 };
         }
         if (isHighDiv) {
-            return { basePct: esPct, beta: 0.35 };
+            return { basePct: esPct, beta: 0.60 };
         }
-        if (cur === 'EUR') {
-            return { basePct: esPct, beta: 0.40 };
-        }
-        if (isTech) {
-            return { basePct: nqPct, beta: 0.85 };
-        }
+        return { basePct: esPct, beta: 0.70 };
+    }
+
+    // 2. US-Unternehmen (auch als EUR/CHF-Zweitlisting wie Alphabet ABEA.DE, NVIDIA NVD.DE etc.)
+    const isUsCompany = cur === 'USD' ||
+        country.includes('usa') ||
+        country.includes('united states') ||
+        country.includes('vereinigte staaten') ||
+        /\b(alphabet|google|apple|microsoft|nvidia|amazon|meta platforms|tesla|broadcom|netflix|amd|palantir|berkshire|visa|mastercard|coca-cola|pepsico|johnson|procter|abbvie|exxon|chevron|mcdonald|walmart|costco|jpmorgan)\b/.test(name);
+    if (isUsCompany) {
+        if (isTech) return { basePct: nqPct, beta: 0.95 };
+        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.50 };
+        return { basePct: esPct, beta: 0.75 };
+    }
+
+    // 3. Schweizer Einzeltitel (CHF: Nestlé, Novartis, Roche, Swiss Re...)
+    if (cur === 'CHF') {
+        if (isTech) return { basePct: nqPct, beta: 0.65 };
+        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.30 };
+        return { basePct: esPct, beta: 0.40 };
+    }
+
+    // 4. UK & Commonwealth (GBP: BAT, Unilever, Shell, Rio Tinto etc.)
+    if (cur === 'GBP' || cur === 'GBX') {
+        if (isTech) return { basePct: nqPct, beta: 0.70 };
+        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.35 };
+        return { basePct: esPct, beta: 0.45 };
+    }
+
+    // 5. Europäische Einzeltitel (EUR)
+    if (cur === 'EUR') {
+        if (isTech) return { basePct: nqPct, beta: 0.80 };
+        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.40 };
         return { basePct: esPct, beta: 0.55 };
     }
 
-    // 2. Schweizer Einzeltitel (CHF: Nestlé, Novartis, Roche, Swiss Re... historisch extrem defensiv & krisenresistent)
-    if (cur === 'CHF') {
-        if (isTech) return { basePct: nqPct, beta: 0.50 };
-        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.15 };
-        return { basePct: esPct, beta: 0.20 };
-    }
-
-    // 3. UK & Commonwealth (GBP: BAT, Unilever, Shell, Rio Tinto etc.)
-    if (cur === 'GBP' || cur === 'GBp') {
-        if (isTech) return { basePct: nqPct, beta: 0.60 };
-        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.20 };
-        return { basePct: esPct, beta: 0.25 };
-    }
-
-    // 4. Europäische Titel (EUR: Dividenden-Schwergewichte)
-    if (cur === 'EUR') {
-        if (isTech) return { basePct: nqPct, beta: 0.70 };
-        if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.25 };
-        return { basePct: esPct, beta: 0.35 };
-    }
-
-    // 5. US-Aktien & ADRs (USD)
-    if (isTech) return { basePct: nqPct, beta: 0.95 };
-    if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.35 };
-    return { basePct: esPct, beta: 0.55 };
+    // Fallback
+    if (isTech) return { basePct: nqPct, beta: 0.90 };
+    if (isDefensive || isHighDiv) return { basePct: esPct, beta: 0.45 };
+    return { basePct: esPct, beta: 0.65 };
 }
 
 export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: WeekendRadarBannerProps) {
@@ -168,7 +236,26 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
         return merged;
     });
 
-    // Fresh fetch in background (local proxy with GitHub Pages fallback via fetchStockQuotes)
+    // Cached European 17:30 close reference prices for ES=F and NQ=F (captures 17:30–22:00 US catch-up gap!)
+    const targetEuCloseMs = useMemo(() => getPreviousEuropeanCloseMs(), []);
+    const [euCloseRef, setEuCloseRef] = useState<EuCloseRefCache>(() => {
+        try {
+            const raw = localStorage.getItem('portfolio_radar_eu_close_cache');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.targetEuCloseMs === targetEuCloseMs) {
+                    return {
+                        targetEuCloseMs,
+                        esRefPrice: typeof parsed.esRefPrice === 'number' ? parsed.esRefPrice : null,
+                        nqRefPrice: typeof parsed.nqRefPrice === 'number' ? parsed.nqRefPrice : null,
+                    };
+                }
+            }
+        } catch {}
+        return { targetEuCloseMs, esRefPrice: null, nqRefPrice: null };
+    });
+
+    // Fresh fetch in background (local proxy with GitHub Pages fallback via fetchStockQuotes + 5d futures for 17:30 EU-close gap)
     useEffect(() => {
         let isCancelled = false;
         const fetchRadarQuotes = async () => {
@@ -231,10 +318,29 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                     return next;
                 });
             }
+
+            // Fetch 1W (5d, 15m) intraday futures history to anchor European-listed positions to last 17:30 CET close
+            try {
+                const [esHist, nqHist] = await Promise.all([
+                    fetchStockHistory('ES=F', '1W'),
+                    fetchStockHistory('NQ=F', '1W'),
+                ]);
+                if (!isCancelled) {
+                    const esRefPrice = findPriceNearTimestamp(esHist?.data, targetEuCloseMs);
+                    const nqRefPrice = findPriceNearTimestamp(nqHist?.data, targetEuCloseMs);
+                    if (esRefPrice !== null || nqRefPrice !== null) {
+                        const nextRef: EuCloseRefCache = { targetEuCloseMs, esRefPrice, nqRefPrice };
+                        setEuCloseRef(nextRef);
+                        try {
+                            localStorage.setItem('portfolio_radar_eu_close_cache', JSON.stringify(nextRef));
+                        } catch {}
+                    }
+                }
+            } catch {}
         };
         fetchRadarQuotes();
         return () => { isCancelled = true; };
-    }, []);
+    }, [targetEuCloseMs]);
 
     // Phase calculation
     const marketPhase = useMemo(() => {
@@ -282,16 +388,28 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
         return (nqPct + esPct) / 2;
     }, [nqQuote, esQuote]);
 
-    // Portfolio estimate (realistic position-weighted based on currency & sector)
+    // Portfolio estimate (realistic position-weighted + 17:30 European-close US catch-up gap for EU-listed ETFs & stocks)
     const portfolioEstimate = useMemo(() => {
         const stockVal = totals.totalValueStock || 0;
         if (stockVal <= 0) return null;
 
-        const nqPct = nqQuote?.changePercent ?? 0;
-        const esPct = esQuote?.changePercent ?? 0;
+        const nqUsClosePct = nqQuote?.changePercent ?? 0;
+        const esUsClosePct = esQuote?.changePercent ?? 0;
+
+        const computeEuClosePct = (livePrice: number | undefined, refPrice: number | null, fallbackPct: number): number => {
+            if (!livePrice || livePrice <= 0 || !refPrice || refPrice <= 0) return fallbackPct;
+            const rawPct = ((livePrice - refPrice) / refPrice) * 100;
+            if (!Number.isFinite(rawPct) || Math.abs(rawPct) > 25) return fallbackPct;
+            return rawPct;
+        };
+
+        const esEuClosePct = computeEuClosePct(esQuote?.price, euCloseRef.esRefPrice, esUsClosePct);
+        const nqEuClosePct = computeEuClosePct(nqQuote?.price, euCloseRef.nqRefPrice, nqUsClosePct);
+        const hasEuCloseGap = euCloseRef.esRefPrice !== null || euCloseRef.nqRefPrice !== null;
 
         if (enrichedPositions && enrichedPositions.length > 0) {
             let totalEstimatedGainCHF = 0;
+            let totalGapGainCHF = 0;
             let calculatedValCHF = 0;
 
             for (const pos of enrichedPositions) {
@@ -301,28 +419,48 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                 if (posValCHF <= 0) continue;
 
                 calculatedValCHF += posValCHF;
-                const { basePct, beta } = getPositionEstimatedBeta(pos, nqPct, esPct);
+                const isEuListed = isEuropeanListedPosition(pos);
+                const posNqPct = isEuListed ? nqEuClosePct : nqUsClosePct;
+                const posEsPct = isEuListed ? esEuClosePct : esUsClosePct;
+
+                const { basePct, beta } = getPositionEstimatedBeta(pos, posNqPct, posEsPct);
                 const posExpectedPct = basePct * beta;
                 totalEstimatedGainCHF += posValCHF * (posExpectedPct / 100);
+
+                if (isEuListed && hasEuCloseGap) {
+                    const { basePct: usOnlyBasePct } = getPositionEstimatedBeta(pos, nqUsClosePct, esUsClosePct);
+                    const gapDeltaPct = (basePct - usOnlyBasePct) * beta;
+                    totalGapGainCHF += posValCHF * (gapDeltaPct / 100);
+                }
             }
 
             if (calculatedValCHF > 0) {
                 const weightedPct = (totalEstimatedGainCHF / calculatedValCHF) * 100;
+                const gapPct = (totalGapGainCHF / calculatedValCHF) * 100;
                 return {
                     pct: weightedPct,
-                    gainCHF: totalEstimatedGainCHF
+                    gainCHF: totalEstimatedGainCHF,
+                    gapCHF: totalGapGainCHF,
+                    gapPct,
+                    hasEuCloseGap,
+                    esAfterEuGapPct: esEuClosePct - esUsClosePct,
+                    nqAfterEuGapPct: nqEuClosePct - nqUsClosePct,
                 };
             }
         }
 
-        // Fallback: Realistisches defensives Misch-Beta von 0.25 (statt 0.85) für Dividenden-/Welt-Depot
-        const estimatedChangePct = avgFuturesChange * 0.25;
+        const estimatedChangePct = avgFuturesChange * 0.55;
         const estimatedGainCHF = stockVal * (estimatedChangePct / 100);
         return {
             pct: estimatedChangePct,
-            gainCHF: estimatedGainCHF
+            gainCHF: estimatedGainCHF,
+            gapCHF: 0,
+            gapPct: 0,
+            hasEuCloseGap: false,
+            esAfterEuGapPct: 0,
+            nqAfterEuGapPct: 0,
         };
-    }, [totals.totalValueStock, enrichedPositions, rates, nqQuote, esQuote, avgFuturesChange]);
+    }, [totals.totalValueStock, enrichedPositions, rates, nqQuote, esQuote, euCloseRef, avgFuturesChange]);
 
     const formatNum = (val: number | undefined, dec = 2) => {
         if (val === undefined || isNaN(val)) return '-';
@@ -396,12 +534,12 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
 
                         {/* Mobile Badges Row: Status + Tendenz - identical shape, height and style */}
                         <div className="flex items-center gap-2 flex-wrap sm:hidden pt-0.5">
-                            <span className={cn("h-6 px-2.5 rounded-full border leading-none inline-flex items-center justify-center gap-1.5 shrink-0 text-[11px] font-bold", marketPhase.badgeClass)}>
+                            <span className={cn("h-7 px-2.5 rounded-full border leading-none inline-flex items-center justify-center gap-1.5 shrink-0 text-xs font-bold", marketPhase.badgeClass)}>
                                 <span className="size-1.5 rounded-full bg-current animate-pulse" />
                                 {marketPhase.label}
                             </span>
                             <div className={cn(
-                                "h-6 px-2.5 rounded-full border leading-none inline-flex items-center justify-center gap-1.5 shrink-0 text-[11px] font-bold shadow-2xs whitespace-nowrap",
+                                "h-7 px-2.5 rounded-full border leading-none inline-flex items-center justify-center gap-1.5 shrink-0 text-xs font-bold shadow-2xs whitespace-nowrap",
                                 avgFuturesChange >= 0
                                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
                                     : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
@@ -610,19 +748,19 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                                         <span className="text-sm font-medium text-blue-500 dark:text-blue-400 truncate">Depot-Frühtendenz</span>
                                         <div onClick={(e) => e.stopPropagation()} className="inline-flex">
                                             <InfoHelp
-                                                title="Depot-Frühtendenz"
+                                                title="Depot-Frühtendenz · Berechnung inkl. US-Nachholeffekt"
                                                 items={[
                                                     {
-                                                        term: "Wie wird die Prozentzahl berechnet?",
-                                                        text: "Die Tendenz berechnet sich aus einer positionsgenauen Gewichtung deines Depots nach Währung und Sektor: Schweizer Standardwerte (SMI) fliessen mit einem defensiven Beta von 0.30 ein, europäische Werte mit 0.40 bis 0.50 und US-Titel je nach Branche (Tech vs. Substanz/Energie) mit 0.65 bis 1.00. Das verhindert unrealistische Übertreibungen bei reinen US-Futures-Ausschlägen."
+                                                        term: "1. US-Nachholeffekt ab 17:30 Uhr MEZ (Europa-Schluss)",
+                                                        text: "Europäische ETFs & Aktien (`*.SW`, `*.DE`, `*.L`, `*.F`, `*.PA`) schliessen bereits um **17:30 Uhr MEZ**. Für all diese Positionen misst die App die Bewegung von `ES=F` und `NQ=F` direkt ab **17:30 Uhr des letzten Handelstags** – damit ist die späte US-Bewegung (`17:30–22:00 Uhr`) automatisch im Aufhol-Gap enthalten!\n\nReine US-Aktien (`USD`, ohne Europa-Börsenkürzel) werden weiterhin ab US-Schluss `22:00 Uhr` gerechnet."
                                                     },
                                                     {
-                                                        term: "Wie entsteht der Franken-Betrag?",
-                                                        text: "Die gewichtete Eröffnungstendenz wird für jede einzelne Aktienposition in CHF umgerechnet und summiert. Daraus ergibt sich die realistische Gesamtauswirkung auf dein Portfolio."
+                                                        term: "2. Index- & sektorgerechte Gewichtung (Beta)",
+                                                        text: "• **Nasdaq-100 ETFs** (z. B. `EQQQ.DE`, egal ob EUR/USD/CHF): `0.95` auf `NQ=F`\n• **S&P 500 ETFs:** `0.95` auf `ES=F` (High-Dividend `0.78`)\n• **All-World / MSCI World ETFs:** `0.85` auf `ES=F` (High-Dividend `0.65`)\n• **US-Aktien & EUR-Zweitlistings** (z. B. `ABEA.DE`): `0.95` (Tech) / `0.50–0.75` (Standard)\n• **CH / UK / EU-Einzeltitel:** defensiv `0.30–0.55` je nach Sektor"
                                                     },
                                                     {
-                                                        term: "Wofür dient diese Schätzung?",
-                                                        text: "Sie gibt dir vor Börseneröffnung eine realistische Hausnummer, wie viel dein Depot bei Handelsstart voraussichtlich im Plus oder Minus stehen wird – noch bevor die ersten Kurse an den Heimatbörsen festgestellt werden."
+                                                        term: "3. Was bedeutet «inkl. Gap»?",
+                                                        text: "Zeigt den reinen US-Abend-Anteil (`17:30–22:00 Uhr`), den europäische ETFs & Aktien zur Eröffnung ab `08:00/09:00 Uhr` zusätzlich zu den heutigen US-Futures nachholen."
                                                     }
                                                 ]}
                                             />
@@ -645,9 +783,18 @@ export function WeekendRadarBanner({ className, showPortfolioEstimate = true }: 
                                     )}>
                                         {portfolioEstimate.pct >= 0 ? '+' : ''}{formatNum(portfolioEstimate.pct, 2)}%
                                     </span>
-                                    <span className="text-xs text-muted-foreground">
-                                        Indikation
-                                    </span>
+                                    {portfolioEstimate.hasEuCloseGap && Math.abs(portfolioEstimate.gapPct) >= 0.10 ? (
+                                        <span
+                                            className="text-xs font-medium text-muted-foreground tabular-nums truncate"
+                                            title={`US-Nachholeffekt ab 17:30 Uhr: ${portfolioEstimate.gapCHF >= 0 ? '+' : ''}${formatNum(portfolioEstimate.gapCHF, 0)} CHF (${portfolioEstimate.gapPct >= 0 ? '+' : ''}${formatNum(portfolioEstimate.gapPct, 2)}%) · S&P 500 nach 17:30: ${portfolioEstimate.esAfterEuGapPct >= 0 ? '+' : ''}${formatNum(portfolioEstimate.esAfterEuGapPct, 2)}% · Nasdaq nach 17:30: ${portfolioEstimate.nqAfterEuGapPct >= 0 ? '+' : ''}${formatNum(portfolioEstimate.nqAfterEuGapPct, 2)}%`}
+                                        >
+                                            inkl. Gap {portfolioEstimate.gapPct >= 0 ? '+' : ''}{formatNum(portfolioEstimate.gapPct, 2)}%
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">
+                                            Indikation
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}
