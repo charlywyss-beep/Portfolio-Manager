@@ -42,38 +42,197 @@ const COMPARE_BENCHMARKS: CompareTarget[] = [
     { symbol: 'BTC-USD', name: 'Bitcoin', currency: 'USD', badge: '24/7', kind: 'index' },
 ];
 
+export const renderCompareQuickFormula = (scrollToItem: (id: string) => void) => (
+    <div className="p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/30">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+            <p className="font-bold text-sm text-sky-700 dark:text-sky-300">
+                Kurzanleitung · Schweiz (Mo–Fr)
+            </p>
+            <span className="text-xs text-sky-600/80 dark:text-sky-300/80 hidden sm:inline">
+                Klick springt zu Details
+            </span>
+        </div>
+        <ol className="space-y-1.5 text-sm leading-snug text-muted-foreground">
+            <li>
+                <button
+                    type="button"
+                    onClick={() => scrollToItem('compare-step-1')}
+                    className="w-full text-left flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-sky-500/15 transition-colors cursor-pointer group"
+                    title="Zur ausführlichen Erklärung von Schritt 1 springen"
+                >
+                    <span className="size-5 rounded-full bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold inline-flex items-center justify-center shrink-0 mt-0.5 transition-colors">1</span>
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="font-bold text-foreground group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">Tages-% ganz oben = Aufhol-Gap für Europa (08:00/09:00 Uhr)</div>
+                        <div>
+                            <strong className="text-foreground/90">Di–Fr:</strong> US-Handel nach Europa-Schluss{' '}
+                            <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground whitespace-nowrap">17:30–22:00 Uhr</code>
+                        </div>
+                        <div>
+                            <strong className="text-foreground/90">Montag:</strong> kompletter Europa-/US-Freitag + Wochenend-News
+                        </div>
+                    </div>
+                    <span className="text-xs font-semibold text-sky-600/70 dark:text-sky-300/70 group-hover:text-sky-500 shrink-0 mt-0.5">↓</span>
+                </button>
+            </li>
+            <li>
+                <button
+                    type="button"
+                    onClick={() => scrollToItem('compare-step-2')}
+                    className="w-full text-left flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-sky-500/15 transition-colors cursor-pointer group"
+                    title="Zur ausführlichen Erklärung von Schritt 2 springen"
+                >
+                    <span className="size-5 rounded-full bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold inline-flex items-center justify-center shrink-0 mt-0.5 transition-colors">2</span>
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="font-bold text-foreground group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">
+                            0%-Kurve ab <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground whitespace-nowrap">01:00 Uhr</code> = neue Tendenz heute Nacht
+                        </div>
+                        <div>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Steigt über 0%:</span> echter Rückenwind
+                            <span className="mx-1.5 text-muted-foreground/60">·</span>
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold">Flach / fällt zurück:</span> nur Nachholeffekt, keine Rallye
+                        </div>
+                    </div>
+                    <span className="text-xs font-semibold text-sky-600/70 dark:text-sky-300/70 group-hover:text-sky-500 shrink-0 mt-0.5">↓</span>
+                </button>
+            </li>
+            <li>
+                <button
+                    type="button"
+                    onClick={() => scrollToItem('compare-step-3')}
+                    className="w-full text-left flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-sky-500/15 transition-colors cursor-pointer group"
+                    title="Zur ausführlichen Erklärung von Schritt 3 springen"
+                >
+                    <span className="size-5 rounded-full bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold inline-flex items-center justify-center shrink-0 mt-0.5 transition-colors">3</span>
+                    <div className="min-w-0 flex-1">
+                        <div className="font-bold text-foreground group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">Welt-ETF gegen Japan, US-Future &amp; Währung prüfen</div>
+                        <div>
+                            <span className="whitespace-nowrap"><code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">2559.T</code> (Welt)</span> mit{' '}
+                            <span className="whitespace-nowrap"><code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">Nikkei 225</code></span> &amp;{' '}
+                            <span className="whitespace-nowrap"><code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">ES=F</code></span> abgleichen ·{' '}
+                            <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground whitespace-nowrap">USD/CHF</code> prüfen
+                        </div>
+                    </div>
+                    <span className="text-xs font-semibold text-sky-600/70 dark:text-sky-300/70 group-hover:text-sky-500 shrink-0 mt-0.5">↓</span>
+                </button>
+            </li>
+            <li>
+                <button
+                    type="button"
+                    onClick={() => scrollToItem('compare-step-4')}
+                    className="w-full text-left flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-sky-500/15 transition-colors cursor-pointer group"
+                    title="Zur ausführlichen Erklärung von Schritt 4 springen"
+                >
+                    <span className="size-5 rounded-full bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold inline-flex items-center justify-center shrink-0 mt-0.5 transition-colors">4</span>
+                    <div className="min-w-0 flex-1">
+                        <div className="font-bold text-foreground group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">Eröffnungs-Spreads an der SIX meiden</div>
+                        <div>
+                            Erst ab <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground whitespace-nowrap">09:15 Uhr</code> mit <strong>Limit-Order</strong> handeln{' '}
+                            <span className="whitespace-nowrap">(US-Aktien ab <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">15:30 Uhr</code>)</span>
+                        </div>
+                    </div>
+                    <span className="text-xs font-semibold text-sky-600/70 dark:text-sky-300/70 group-hover:text-sky-500 shrink-0 mt-0.5">↓</span>
+                </button>
+            </li>
+            <li>
+                <button
+                    type="button"
+                    onClick={() => scrollToItem('compare-step-5')}
+                    className="w-full text-left flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-sky-500/15 transition-colors cursor-pointer group"
+                    title="Zur ausführlichen Erklärung von Schritt 5 springen"
+                >
+                    <span className="size-5 rounded-full bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold inline-flex items-center justify-center shrink-0 mt-0.5 transition-colors">5</span>
+                    <div className="min-w-0 flex-1">
+                        <div className="font-bold text-foreground group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">Abstand &amp; Mauszeiger ablesen (neutral, kein Verlust!)</div>
+                        <div>
+                            <span className="whitespace-nowrap"><strong className="text-foreground">Abstand +:</strong> Hauptkurve liegt vorn</span>
+                            <span className="mx-1.5 text-muted-foreground/60">·</span>
+                            <span className="whitespace-nowrap"><strong className="text-foreground">Abstand −:</strong> Vergleichslinie liegt vorn (<code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">ES=F</code> prüfen)</span>
+                        </div>
+                    </div>
+                    <span className="text-xs font-semibold text-sky-600/70 dark:text-sky-300/70 group-hover:text-sky-500 shrink-0 mt-0.5">↓</span>
+                </button>
+            </li>
+            <li>
+                <button
+                    type="button"
+                    onClick={() => scrollToItem('compare-step-6')}
+                    className="w-full text-left flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-sky-500/15 transition-colors cursor-pointer group"
+                    title="Zur ausführlichen Erklärung von Schritt 6 springen"
+                >
+                    <span className="size-5 rounded-full bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold inline-flex items-center justify-center shrink-0 mt-0.5 transition-colors">6</span>
+                    <div className="min-w-0 flex-1">
+                        <div className="font-bold text-foreground group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">Schweizer Morgen-Zeitplan (Mo–Fr)</div>
+                        <div>
+                            <span className="whitespace-nowrap">Tokio <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">01:00–07:30</code> (beste Zeit <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">06:45–07:30</code>)</span>
+                            <span className="mx-1.5 text-muted-foreground/60">·</span>
+                            <span className="whitespace-nowrap">SIX <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">09:00</code></span>
+                            <span className="mx-1.5 text-muted-foreground/60">·</span>
+                            <span className="whitespace-nowrap">USA <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">15:30</code></span>
+                        </div>
+                    </div>
+                    <span className="text-xs font-semibold text-sky-600/70 dark:text-sky-300/70 group-hover:text-sky-500 shrink-0 mt-0.5">↓</span>
+                </button>
+            </li>
+            <li>
+                <button
+                    type="button"
+                    onClick={() => scrollToItem('compare-step-7')}
+                    className="w-full text-left flex items-start gap-2.5 p-1.5 -mx-1.5 rounded-lg hover:bg-sky-500/15 transition-colors cursor-pointer group"
+                    title="Zur ausführlichen Erklärung von Schritt 7 springen"
+                >
+                    <span className="size-5 rounded-full bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-bold inline-flex items-center justify-center shrink-0 mt-0.5 transition-colors">7</span>
+                    <div className="min-w-0 flex-1">
+                        <div className="font-bold text-foreground group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">24h-Praxisregel &amp; passende Ticker</div>
+                        <div>
+                            <span className="whitespace-nowrap">Morgens <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">2559.T</code></span>
+                            <span className="mx-1.5 text-muted-foreground/60">·</span>
+                            <span className="whitespace-nowrap"><code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">10:00–15:30</code> <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">ES=F</code>/<code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">NQ=F</code></span>
+                            <span className="mx-1.5 text-muted-foreground/60">·</span>
+                            <span className="whitespace-nowrap">Ab <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">15:30</code> <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground">VT</code></span>
+                        </div>
+                    </div>
+                    <span className="text-xs font-semibold text-sky-600/70 dark:text-sky-300/70 group-hover:text-sky-500 shrink-0 mt-0.5">↓</span>
+                </button>
+            </li>
+        </ol>
+    </div>
+);
+
 export const COMPARE_SWISS_GUIDE_ITEMS = [
     {
+        id: "compare-step-1",
         term: "Schritt 1 · Tages-% (Gap) vs. 0%-Kurve (frischer Trend) – gilt Mo bis Fr!",
         text: "Im Vergleichsmodus werden beide Kurven links beim heutigen Handelsstart auf **0.00%** normiert (`1D`: Eröffnung **01:00 Uhr MEZ** in Tokio; `1W–5J`: erster sichtbarer Handelstag).\n\n**Wichtig an JEDEM Morgen (Montag bis Freitag) bei `2559.T` – zwei getrennte Signale:**\n• **1. Rote/grüne Tages-% ganz oben (z. B. `+0.98%`):** Vergleicht immer mit dem **letzten Tokio-Schlusskurs um 07:30 Uhr MEZ** und enthält daher das **Eröffnungs-Gap**:\n  – **Dienstag bis Freitag:** Enthält den gesamten gestrigen Europa- & US-Handel – vor allem die **späte US-Bewegung nach Europa-Schluss (`17:30–22:00 Uhr`)**, die dein Depot um 08:00/09:00 Uhr noch nachholt.\n  – **Montagmorgen:** Vergleicht mit **Freitag 07:30 Uhr** und enthält zuerst den kompletten **Europa-/US-Freitag** plus Wochenend-News.\n\n• **2. Vergleichs-Kurve ab der gestrichelten `0%`-Linie (`01:00 Uhr`):** Zeigt **ausschliesslich die neue, frische Dynamik in Asien heute Nacht** – komplett ohne Eröffnungs-Gap.\n\n**Rechenbeispiel:** Zeigt die Kopfzeile **`+0.98%`** Tagesplus, aber die grüne `2559.T`-Kurve ab `01:05 Uhr` **`+0.25%`**, dann sind **`~ +0.73%` Nachholeffekt (Gap)** vom US-Abend und **`+0.25%` echte neue Stärke** im laufenden Asien-Handel."
     },
     {
-        term: "Schritt 2 · Welche Linie bedeutet was? (Rot/Grün vs. Hellblau)",
-        text: "• **Hauptlinie (Rot/Grün · z. B. All-World Tokio 2559.T):** Echter Welt-ETF (MSCI ACWI, über 2'300 Aktien: ~64% USA, ~15% Europa, ~5% Japan) – praktisch deckungsgleich mit deinem **Vanguard FTSE All-World**.\n\n• **Vergleichslinie (Hellblau · z. B. Nikkei 225 ^N225):** Reiner japanischer Leitindex (100% Japan). Reagiert deutlich stärker auf lokale Japan-News, die Bank of Japan oder den Yen.\n\n• **Tipp:** Über **Vergleichen** kannst du statt Nikkei jederzeit auch **S&P 500 Future (ES=F)** oder **Nasdaq 100 Future (NQ=F)** einblenden – Montag bis Freitag (nach dem Wochenende ab Sonntag 24:00 Uhr) laufen diese minutengenau parallel zu Tokio (`01:00–07:30 Uhr`)."
+        id: "compare-step-2",
+        term: "Schritt 2 · 0%-Kurve richtig lesen – die 4 Szenarien am Morgen (Mo–Fr)",
+        text: "• **Szenario A · Tages-% grün UND Kurve ab `01:00` steigt klar über `0%` (nahe Tageshoch):** Nachholeffekt **plus** frisches Kaufinteresse in Asien. Beste Basis für eine freundliche Europa-Eröffnung um 09:00 Uhr mit Rückenwind.\n\n• **Szenario B · Tages-% deutlich grün (z. B. `+0.8%`), aber Kurve ab `01:00` flach um `0%` oder gibt Früh-Peak wieder ab:** **Reiner Nachholeffekt (Gap)** vom gestrigen US-Abend – keine neue Rallye in Asien. Europa startet meist grün (holt USA nach), pendelt danach aber oft seitwärts.\n\n• **Szenario C · Tages-% rot UND Kurve ab `01:00` fällt weiter unter `0%`:** Echter, anhaltender Verkaufsdruck. Ab 09:15 Uhr gezielt prüfen, ob deine **Kauflimits** erreicht werden.\n  – Dreht die Kurve ab `05:00–07:30 Uhr` wieder Richtung `0%` hoch, werden Dips bereits aufgekauft (beruhigendes Boden-Signal).\n\n• **Szenario D · Nikkei stark bewegt (z. B. `-2%` oder Spike `+0.9%` → Rückfall), `2559.T` deutlich stabiler:** Klassischer Japan-/Yen-Effekt! Der Welt-ETF bleibt stabiler als Japan – dein Schweizer/globaler ETF eröffnet meist gelassener als der Nikkei vermuten lässt."
     },
     {
-        term: "Schritt 3 · Dein Schweizer Morgen-Zeitplan (Mo–Fr · MEZ / MESZ)",
+        id: "compare-step-3",
+        term: "Schritt 3 · Welt-ETF vs. Japan, US-Future & Währung (CHF / JPY)",
+        text: "• **Hauptlinie (Rot/Grün · z. B. All-World Tokio `2559.T`):** Echter Welt-ETF (MSCI ACWI, über 2'300 Aktien: ~64% USA, ~15% Europa, ~5% Japan) – praktisch deckungsgleich mit deinem **Vanguard FTSE All-World**.\n\n• **Vergleichslinie (Hellblau · z. B. Nikkei 225 `^N225`):** Reiner japanischer Leitindex (100% Japan). Reagiert deutlich stärker auf lokale Japan-News, die Bank of Japan oder den Yen.\n\n• **US-Futures (`ES=F` / `NQ=F`):** Über **Vergleichen** kannst du statt Nikkei jederzeit **S&P 500 Future (`ES=F`)** oder **Nasdaq 100 Future (`NQ=F`)** einblenden – Montag bis Freitag (nach dem Wochenende ab Sonntag 24:00 Uhr) laufen diese minutengenau parallel zu Tokio (`01:00–07:30 Uhr`).\n\n• **Währungs-Check (`CHF` & `JPY`):** `2559.T` und `^N225` handeln in **JPY**, dein Depot rechnest du in **CHF**:\n  – **Starker Yen (`USD/JPY` fällt):** Drückt optisch die JPY-Kurse in Tokio – in **CHF** gerechnet fällt dein Welt-ETF (`VWRA.L` / `VWRL.SW`) dann oft spürbar **weniger stark** als die Yen-Linie anzeigt.\n  – **Starker Franken (`USD/CHF` fällt):** Bremst USD-Positionen für Schweizer Anleger leicht ab – ein kurzer Blick auf `USD/CHF` in der **Marktübersicht** zeigt sofort, ob Währungen drücken oder stützen."
+    },
+    {
+        id: "compare-step-4",
+        term: "Schritt 4 · Eröffnungs-Spreads meiden & konkrete Handlungsregel (SIX / US-Feiertage)",
+        text: "• **07:00–07:30 Uhr (Morgen-Check):** Kurzer Blick auf `2559.T vs. Nikkei 225` (und bei Bedarf `vs. ES=F`) → trenne dabei immer **Tages-% (Aufhol-Gap)** und **0%-Kurve (frische Dynamik)**.\n\n• **09:00–09:15 Uhr (SIX-Eröffnung):** In den ersten 5–15 Minuten sind die Geld-/Brief-Spannen (**Spreads**) an der SIX oft unnötig breit. **Niemals «Bestens» direkt um 09:00 Uhr handeln** – setze immer eine **Limit-Order** oder warte bis **09:15 Uhr**.\n\n• **US-Aktien in Europa (EUR/CHF):** Grössere Orders bei US-Titeln idealerweise erst ab **15:30 Uhr** platzieren, wenn NYSE & Nasdaq live handeln und die Spreads am engsten sind.\n\n• **Hinweis US-Feiertage (z. B. Thanksgiving):** Wenn NYSE/Nasdaq geschlossen sind, holt Europa morgens zwar das Eröffnungs-Gap nach, läuft danach aber oft bei dünnem Volumen seitwärts – bei US-Titeln in EUR sind die Spreads dann breiter."
+    },
+    {
+        id: "compare-step-5",
+        term: "Schritt 5 · Abstand & Mauszeiger richtig ablesen",
+        text: "Fahre mit der Maus über jeden beliebigen Zeitpunkt (z. B. `04:50` oder `07:30 Uhr`) – unten links im Chart erscheinen **beide Prozentwerte ab Start**, **beide Originalkurse** und der **Abstand** (bewusst **neutral** eingefärbt, weil ein Minus hier **keinen Verlust** bedeutet, sondern nur die Differenz `Hauptkurve − Vergleichslinie`):\n\n• **Abstand + (z. B. `+1.94%`):** Deine Hauptkurve (`2559.T`) liegt um `1.94%` vor der Vergleichslinie (`Nikkei 225`).\n• **Abstand − (z. B. `-0.73%`):** Die Vergleichslinie (`Nikkei 225`) liegt um `0.73%` weiter vorn – auch wenn beide Kurven im Plus sind! Bei grösserem Minus-Abstand kurz **E-Mini S&P 500 Future (`ES=F`)** gegenchecken."
+    },
+    {
+        id: "compare-step-6",
+        term: "Schritt 6 · Dein Schweizer Morgen-Zeitplan (Mo–Fr · MEZ / MESZ)",
         text: "• **00:00 Uhr (Mo–Fr · So→Mo nach Wochenende):** US-Futures (`ES=F`, `NQ=F`) starten nach der kurzen US-Wartungspause (`23:00–00:00 Uhr`) bzw. am Sonntagabend neu – erste globale Reaktion auf Nacht- oder Wochenend-News.\n• **01:00–03:30 Uhr:** Tokio Vormittags-Session (`2559.T` & `^N225` handeln live).\n• **03:30–04:30 Uhr:** Börsen-Mittagspause in Tokio (kurzes Seitwärtslaufen ist völlig normal).\n• **04:30–07:30 Uhr:** Tokio Nachmittags-Session (Nikkei bis 07:45 Uhr). **Beste Ablesezeit für dich in der Schweiz: ca. 06:45–07:30 Uhr.**\n• **08:00 Uhr (ab 08:15 Uhr in der App):** Tradegate & Frankfurt (`*.F`) starten – erste EUR-Indikationen.\n• **09:00 Uhr (ab 09:15 Uhr in der App):** **SIX Swiss Exchange (`*.SW`)**, Xetra (`*.DE`) & London (`*.L`) eröffnen regulär.\n• **10:00 Uhr:** Offizielle US-Vorbörse (`Pre-Market`) in Echtzeit.\n• **14:30 Uhr:** Wichtige US-Wirtschaftsdaten (Inflation/CPI, Arbeitsmarkt, BIP) – oft der stärkste Impuls vor Wall-Street-Start!\n• **15:30 Uhr:** Wall Street (New York) eröffnet – ab hier geben US-Kassakurse den Takt vor."
     },
     {
-        term: "Schritt 4 · Die 4 konkreten Szenarien am Morgen (Mo–Fr Checkliste)",
-        text: "• **Szenario A · Tages-% grün UND Kurve ab `01:00` steigt klar über `0%` (nahe Tageshoch):** Nachholeffekt **plus** frisches Kaufinteresse in Asien. Beste Basis für eine freundliche Europa-Eröffnung um 09:00 Uhr mit Rückenwind.\n\n• **Szenario B · Tages-% deutlich grün (z. B. `+0.8%`), aber Kurve ab `01:00` flach um `0%` oder gibt Früh-Peak wieder ab:** **Reiner Nachholeffekt (Gap)** vom gestrigen US-Abend – keine neue Rallye in Asien. Europa startet meist grün (holt USA nach), pendelt danach aber oft ruhiger seitwärts.\n\n• **Szenario C · Tages-% rot UND Kurve ab `01:00` fällt weiter unter `0%`:** Echter, anhaltender Verkaufsdruck. Keine Panik – ab 09:15 Uhr ruhig prüfen, ob sinnvolle **Kauflimits** erreicht werden. *(Dreht die Kurve ab `05:00–07:30 Uhr` wieder Richtung `0%` hoch, werden Dips aufgekauft → beruhigendes Boden-Signal!)*\n\n• **Szenario D · Nikkei stark bewegt (z. B. `-2%` oder Spike `+0.9%` → Rückfall), `2559.T` viel ruhiger:** Klassischer Japan-/Yen-Effekt! Der Welt-ETF bleibt stabiler als Japan – dein Schweizer/globaler ETF eröffnet meist gelassener als der Nikkei vermuten lässt."
-    },
-    {
-        term: "Schritt 5 · Schweizer Franken (CHF) & Yen-Effekt richtig einschätzen",
-        text: "Sowohl `2559.T` als auch `^N225` handeln in **Japanischen Yen (JPY)** – dein Depot rechnest du aber in **CHF**:\n\n• **Starker Yen (USD/JPY fällt):** Drückt optisch die JPY-Kurse in Tokio – in **CHF** gerechnet fällt dein Welt-ETF (`VWRA.L` / `VWRL.SW`) dann oft spürbar **weniger stark** als die Yen-Linie anzeigt.\n• **Starker Franken (USD/CHF fällt):** Bremst USD-Positionen für Schweizer Anleger leicht ab.\n• **Praxis-Check:** Ein 5-Sekunden-Blick auf **USD/CHF** in der **Marktübersicht** zeigt dir sofort, ob Währungen zusätzlich drücken oder stützen."
-    },
-    {
-        term: "Schritt 6 · Abstand (Δ) & Mauszeiger richtig ablesen",
-        text: "Fahre mit der Maus über jeden beliebigen Zeitpunkt (z. B. `04:50` oder `07:30 Uhr`) – unten links im Chart erscheinen **beide Prozentwerte ab Start**, **beide Originalkurse** und der exakte **Abstand Δ**:\n\n• **Positiver Abstand (z. B. Δ +1.94%):** Deine Hauptkurve (`2559.T`) hält sich um `1.94%` besser als die Vergleichslinie (`Nikkei 225`).\n• **Negativer Abstand (z. B. Δ -0.80%):** Der Weltmarkt bzw. die US-Futures schwächeln stärker als Japan – dann unbedingt auch **E-Mini S&P 500 Future (`ES=F`)** gegenchecken."
-    },
-    {
-        term: "Schritt 7 · Konkrete Handlungsregel für Schweizer Anleger vor 09:00 Uhr",
-        text: "• **07:00–07:30 Uhr:** Kurzer Check `2559.T vs. Nikkei 225` (und bei Bedarf `vs. E-Mini S&P 500 Future`) → trenne dabei immer **Tages-% (Aufhol-Gap)** und **0%-Kurve (frische Dynamik)**.\n• **09:00–09:15 Uhr (SIX-Eröffnung):** In den ersten 5–10 Minuten sind die Geld-/Brief-Spannen (Spreads) an der SIX oft unnötig breit. **Niemals «Bestens» direkt um 09:00 Uhr handeln** – setze immer eine **Limit-Order** oder warte bis **09:15 Uhr** (bei US-Aktien idealerweise ab **15:30 Uhr**).\n• **Hinweis US-Feiertage (z. B. Thanksgiving):** Wenn NYSE/Nasdaq geschlossen sind, holt Europa morgens zwar das Eröffnungs-Gap nach, läuft danach aber oft bei dünnem Volumen seitwärts – bei US-Titeln in EUR sind die Spreads dann breiter."
-    },
-    {
-        term: "Schritt 8 · 24h-Praxisregel & ausgeschriebene Ticker-Symbole",
-        text: "• **Morgens 01:00–07:30 Uhr (Asien / Frühtendenz):**\n  **MAXIS World Equity MSCI ACWI ETF Tokio (`2559.T`)** ↔ **Nikkei 225 (`^N225`)** / **E-Mini S&P 500 Future (`ES=F`)** / **E-Mini Nasdaq-100 Future (`NQ=F`)**.\n\n• **Tagsüber 10:00–15:30 Uhr (Europa live + US-Vorbörse · Button «10:00–15:30»):**\n  Wenn du in diesem Fenster zu deinem **Vanguard FTSE All-World UCITS ETF (`VWRA.L`)** den echten, flüssigen Taktgeber ohne Treppenstufen sehen willst, wähle statt **Vanguard Total World Stock ETF USA (`VT`)** lieber **E-Mini S&P 500 Future (`ES=F`)** oder **E-Mini Nasdaq-100 Future (`NQ=F`)** – die handeln im Sekundentakt.\n\n• **Abends 15:30–22:00 Uhr + US-Nachbörse bis 02:00 Uhr (Button «Ab 15:30»):**\n  Jetzt ist **Vanguard Total World Stock ETF USA (`VT`)** perfekt – extrem liquide und zeigt dir nach Europa-Schluss (`17:30 Uhr`) exakt, wie dein **Vanguard FTSE All-World (`VWRA.L`)** in den USA weiterläuft!"
+        id: "compare-step-7",
+        term: "Schritt 7 · 24h-Praxisregel & ausgeschriebene Ticker-Symbole",
+        text: "• **Morgens 01:00–07:30 Uhr (Asien / Frühtendenz):**\n  **MAXIS World Equity MSCI ACWI ETF Tokio (`2559.T`)** ↔ **Nikkei 225 (`^N225`)** / **E-Mini S&P 500 Future (`ES=F`)** / **E-Mini Nasdaq-100 Future (`NQ=F`)**.\n\n• **Tagsüber 10:00–15:30 Uhr (Europa live + US-Vorbörse · Button «10:00–15:30»):**\n  Wenn du in diesem Fenster zu deinem **Vanguard FTSE All-World UCITS ETF (`VWRA.L`)** den flüssigen Echtzeit-Verlauf ohne Treppenstufen sehen willst, wähle statt **Vanguard Total World Stock ETF USA (`VT`)** lieber **E-Mini S&P 500 Future (`ES=F`)** oder **E-Mini Nasdaq-100 Future (`NQ=F`)** – die handeln im Sekundentakt.\n\n• **Abends 15:30–22:00 Uhr + US-Nachbörse bis 02:00 Uhr (Button «Ab 15:30»):**\n  Jetzt ist **Vanguard Total World Stock ETF USA (`VT`)** perfekt – extrem liquide und zeigt dir nach Europa-Schluss (`17:30 Uhr`) exakt, wie dein **Vanguard FTSE All-World (`VWRA.L`)** in den USA weiterläuft!"
     }
 ];
 
@@ -2482,19 +2641,10 @@ export function PriceHistoryChart({
                                     )}
                                     <InfoHelp
                                         title="Prozent-Vergleich · Schritt-für-Schritt-Anleitung für Schweizer Anleger"
+                                        header={renderCompareQuickFormula}
                                         items={COMPARE_SWISS_GUIDE_ITEMS}
                                         buttonClassName="h-7 w-7 inline-flex items-center justify-center rounded-lg border border-sky-300 dark:border-sky-500/40 bg-sky-50 dark:bg-sky-900/15 text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-all shadow-2xs cursor-pointer shrink-0"
                                         trigger={<HelpCircle className="size-3.5 shrink-0" />}
-                                        footer={
-                                            <div className="p-3 rounded-lg bg-sky-500/10 border border-sky-500/25 text-xs">
-                                                <p className="font-bold text-sky-700 dark:text-sky-300 mb-0.5">
-                                                    10-Sekunden-Kurzformel am Morgen (Schweiz):
-                                                </p>
-                                                <p className="text-muted-foreground">
-                                                    <strong>1.</strong> Tages-% (Eröffnungs-Gap seit gestern) von der 0%-Kurve (neuer Trend ab 01:00 Uhr) trennen → <strong>2.</strong> 2559.T (Welt) mit Nikkei 225 (Japan) &amp; ES=F (US-Future) vergleichen → <strong>3.</strong> Abstand Δ &amp; USD/CHF einordnen → <strong>4.</strong> An der SIX ab 09:15 Uhr ruhig und nur mit Limit handeln.
-                                                </p>
-                                            </div>
-                                        }
                                     />
                                 </div>
                                 <button
@@ -2751,16 +2901,11 @@ export function PriceHistoryChart({
                         </div>
                         {isCompareActive && compareOverlay.summary && (
                             <span
-                                className={cn(
-                                    "h-7 inline-flex items-center justify-center gap-1 px-2 py-0 rounded-md border font-bold tabular-nums leading-none whitespace-nowrap",
-                                    compareOverlay.summary.spreadPct >= 0
-                                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                                        : "bg-rose-500/15 border-rose-500/30 text-rose-600 dark:text-rose-400"
-                                )}
-                                title={`Abstand: ${compareOverlay.summary.spreadPct >= 0 ? '+' : ''}${compareOverlay.summary.spreadPct.toFixed(2)}%`}
+                                className="h-7 inline-flex items-center justify-center gap-1 px-2 py-0 rounded-md border border-slate-400/35 bg-slate-500/15 text-foreground dark:text-slate-100 font-bold tabular-nums leading-none whitespace-nowrap"
+                                title={`Abstand (${stockSymbol || stockName || 'Hauptkurve'} − ${compareTarget.name}): ${compareOverlay.summary.spreadPct >= 0 ? '+' : ''}${compareOverlay.summary.spreadPct.toFixed(2)}% · ${stockSymbol || stockName || 'Hauptkurve'} liegt ${Math.abs(compareOverlay.summary.spreadPct).toFixed(2)}% ${compareOverlay.summary.spreadPct >= 0 ? 'vor' : 'hinter'} ${compareTarget.name}`}
                             >
-                                <span className="hidden 2xl:inline">Abstand</span>
-                                <span className="2xl:hidden">Δ</span>
+                                <span className="hidden sm:inline text-muted-foreground font-semibold">Abstand</span>
+                                <span className="sm:hidden text-muted-foreground font-semibold">Diff</span>
                                 <span>{compareOverlay.summary.spreadPct >= 0 ? '+' : ''}{compareOverlay.summary.spreadPct.toFixed(2)}%</span>
                             </span>
                         )}
@@ -2846,6 +2991,7 @@ export function PriceHistoryChart({
                         )}
                         <InfoHelp
                             title="Prozent-Vergleich · Schritt-für-Schritt-Anleitung für Schweizer Anleger"
+                            header={renderCompareQuickFormula}
                             items={COMPARE_SWISS_GUIDE_ITEMS}
                             buttonClassName="h-7 inline-flex items-center justify-center gap-1 px-2 py-0 rounded-md border border-sky-500/40 bg-sky-500/15 hover:bg-sky-500/25 text-xs font-bold leading-none text-sky-600 dark:text-sky-300 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                             trigger={
@@ -2853,16 +2999,6 @@ export function PriceHistoryChart({
                                     <HelpCircle className="size-3.5 shrink-0" />
                                     <span className="hidden sm:inline">Anleitung</span>
                                 </>
-                            }
-                            footer={
-                                <div className="p-3 rounded-lg bg-sky-500/10 border border-sky-500/25 text-xs">
-                                    <p className="font-bold text-sky-700 dark:text-sky-300 mb-0.5">
-                                        10-Sekunden-Kurzformel am Morgen (Schweiz):
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        <strong>1.</strong> Tages-% (Eröffnungs-Gap seit gestern) von der 0%-Kurve (neuer Trend ab 01:00 Uhr) trennen → <strong>2.</strong> 2559.T (Welt) mit Nikkei 225 (Japan) &amp; ES=F (US-Future) vergleichen → <strong>3.</strong> Abstand Δ &amp; USD/CHF einordnen → <strong>4.</strong> An der SIX ab 09:15 Uhr ruhig und nur mit Limit handeln.
-                                    </p>
-                                </div>
                             }
                         />
                         <button
@@ -2969,11 +3105,8 @@ export function PriceHistoryChart({
                                                     {(() => {
                                                         const spread = hoveredData.plotValue - hoveredData.comparePlotValue;
                                                         return (
-                                                            <span className={cn(
-                                                                "font-bold text-sm tabular-nums whitespace-nowrap",
-                                                                spread >= 0 ? "text-emerald-500" : "text-rose-500"
-                                                            )}>
-                                                                Δ {spread >= 0 ? '+' : ''}{spread.toFixed(2)}%
+                                                            <span className="font-bold text-sm tabular-nums whitespace-nowrap text-foreground dark:text-slate-100">
+                                                                {spread >= 0 ? '+' : ''}{spread.toFixed(2)}%
                                                             </span>
                                                         );
                                                     })()}
