@@ -44,20 +44,20 @@ const COMPARE_BENCHMARKS: CompareTarget[] = [
 
 export const COMPARE_SWISS_GUIDE_ITEMS = [
     {
-        term: "Schritt 1 · Warum starten beide Linien links bei 0%?",
-        text: "Im Vergleichsmodus werden beide Kurven links beim Startpunkt auf **0.00%** normiert (`1D`: Eröffnung **01:00 Uhr MEZ** in Tokio; `1W–5J`: erster sichtbarer Handelstag).\n\n**Wichtig am Montagmorgen bei 2559.T:** Beachte nicht die rote/grüne **Tages-%** ganz oben (sie vergleicht mit Freitag 07:30 Uhr und enthält montags zuerst den kompletten US-Freitag). Entscheidend ist allein, ob die Kurven **nach 01:00 Uhr über oder unter der gestrichelten 0%-Linie** weitersteigen oder fallen."
+        term: "Schritt 1 · Tages-% (Gap) vs. 0%-Kurve (frischer Trend) – gilt Mo bis Fr!",
+        text: "Im Vergleichsmodus werden beide Kurven links beim heutigen Handelsstart auf **0.00%** normiert (`1D`: Eröffnung **01:00 Uhr MEZ** in Tokio; `1W–5J`: erster sichtbarer Handelstag).\n\n**Wichtig an JEDEM Morgen (Montag bis Freitag) bei `2559.T` – zwei getrennte Signale:**\n• **1. Rote/grüne Tages-% ganz oben (z. B. `+0.98%`):** Vergleicht immer mit dem **letzten Tokio-Schlusskurs um 07:30 Uhr MEZ** und enthält daher das **Eröffnungs-Gap**:\n  – **Dienstag bis Freitag:** Enthält den gesamten gestrigen Europa- & US-Handel – vor allem die **späte US-Bewegung nach Europa-Schluss (`17:30–22:00 Uhr`)**, die dein Depot um 08:00/09:00 Uhr noch nachholt.\n  – **Montagmorgen:** Vergleicht mit **Freitag 07:30 Uhr** und enthält zuerst den kompletten **Europa-/US-Freitag** plus Wochenend-News.\n\n• **2. Vergleichs-Kurve ab der gestrichelten `0%`-Linie (`01:00 Uhr`):** Zeigt **ausschliesslich die neue, frische Dynamik in Asien heute Nacht** – komplett ohne Eröffnungs-Gap.\n\n**Rechenbeispiel:** Zeigt die Kopfzeile **`+0.98%`** Tagesplus, aber die grüne `2559.T`-Kurve ab `01:05 Uhr` **`+0.25%`**, dann sind **`~ +0.73%` Nachholeffekt (Gap)** vom US-Abend und **`+0.25%` echte neue Stärke** im laufenden Asien-Handel."
     },
     {
         term: "Schritt 2 · Welche Linie bedeutet was? (Rot/Grün vs. Hellblau)",
-        text: "• **Hauptlinie (Rot/Grün · z. B. All-World Tokio 2559.T):** Echter Welt-ETF (MSCI ACWI, über 2'300 Aktien: ~64% USA, ~15% Europa, ~5% Japan) – praktisch deckungsgleich mit deinem **Vanguard FTSE All-World**.\n\n• **Vergleichslinie (Hellblau · z. B. Nikkei 225 ^N225):** Reiner japanischer Leitindex (100% Japan). Reagiert deutlich stärker auf lokale Japan-News, die Bank of Japan oder den Yen.\n\n• **Tipp:** Über **Vergleichen** kannst du statt Nikkei jederzeit auch **S&P 500 Future (ES=F)** oder **Nasdaq 100 Future (NQ=F)** einblenden – ab Sonntag 24:00 Uhr laufen diese minutengenau parallel zu Tokio (`01:00–07:30 Uhr`)."
+        text: "• **Hauptlinie (Rot/Grün · z. B. All-World Tokio 2559.T):** Echter Welt-ETF (MSCI ACWI, über 2'300 Aktien: ~64% USA, ~15% Europa, ~5% Japan) – praktisch deckungsgleich mit deinem **Vanguard FTSE All-World**.\n\n• **Vergleichslinie (Hellblau · z. B. Nikkei 225 ^N225):** Reiner japanischer Leitindex (100% Japan). Reagiert deutlich stärker auf lokale Japan-News, die Bank of Japan oder den Yen.\n\n• **Tipp:** Über **Vergleichen** kannst du statt Nikkei jederzeit auch **S&P 500 Future (ES=F)** oder **Nasdaq 100 Future (NQ=F)** einblenden – Montag bis Freitag (nach dem Wochenende ab Sonntag 24:00 Uhr) laufen diese minutengenau parallel zu Tokio (`01:00–07:30 Uhr`)."
     },
     {
-        term: "Schritt 3 · Dein Schweizer Morgen-Zeitplan (MEZ / MESZ)",
-        text: "• **00:00 Uhr (So→Mo):** US-Futures (`ES=F`, `NQ=F`) öffnen – erste globale Reaktion auf Wochenend-News.\n• **01:00–03:30 Uhr:** Tokio Vormittags-Session (`2559.T` & `^N225` handeln live).\n• **03:30–04:30 Uhr:** Börsen-Mittagspause in Tokio (kurzes Seitwärtslaufen ist völlig normal).\n• **04:30–07:30 Uhr:** Tokio Nachmittags-Session (Nikkei bis 07:45 Uhr). **Beste Ablesezeit für dich in der Schweiz: ca. 06:45–07:30 Uhr.**\n• **08:00 Uhr (ab 08:15 Uhr in der App):** Tradegate & Frankfurt (`*.F`) starten – erste EUR-Indikationen.\n• **09:00 Uhr (ab 09:15 Uhr in der App):** **SIX Swiss Exchange (`*.SW`)**, Xetra (`*.DE`) & London (`*.L`) eröffnen regulär.\n• **10:00 Uhr:** Offizielle US-Vorbörse (`Pre-Market`) in Echtzeit.\n• **14:30 Uhr:** Wichtige US-Wirtschaftsdaten (Inflation/CPI, Arbeitsmarkt, BIP) – oft der stärkste Impuls vor Wall-Street-Start!\n• **15:30 Uhr:** Wall Street (New York) eröffnet – ab hier geben US-Kassakurse den Takt vor."
+        term: "Schritt 3 · Dein Schweizer Morgen-Zeitplan (Mo–Fr · MEZ / MESZ)",
+        text: "• **00:00 Uhr (Mo–Fr · So→Mo nach Wochenende):** US-Futures (`ES=F`, `NQ=F`) starten nach der kurzen US-Wartungspause (`23:00–00:00 Uhr`) bzw. am Sonntagabend neu – erste globale Reaktion auf Nacht- oder Wochenend-News.\n• **01:00–03:30 Uhr:** Tokio Vormittags-Session (`2559.T` & `^N225` handeln live).\n• **03:30–04:30 Uhr:** Börsen-Mittagspause in Tokio (kurzes Seitwärtslaufen ist völlig normal).\n• **04:30–07:30 Uhr:** Tokio Nachmittags-Session (Nikkei bis 07:45 Uhr). **Beste Ablesezeit für dich in der Schweiz: ca. 06:45–07:30 Uhr.**\n• **08:00 Uhr (ab 08:15 Uhr in der App):** Tradegate & Frankfurt (`*.F`) starten – erste EUR-Indikationen.\n• **09:00 Uhr (ab 09:15 Uhr in der App):** **SIX Swiss Exchange (`*.SW`)**, Xetra (`*.DE`) & London (`*.L`) eröffnen regulär.\n• **10:00 Uhr:** Offizielle US-Vorbörse (`Pre-Market`) in Echtzeit.\n• **14:30 Uhr:** Wichtige US-Wirtschaftsdaten (Inflation/CPI, Arbeitsmarkt, BIP) – oft der stärkste Impuls vor Wall-Street-Start!\n• **15:30 Uhr:** Wall Street (New York) eröffnet – ab hier geben US-Kassakurse den Takt vor."
     },
     {
-        term: "Schritt 4 · Die 4 konkreten Szenarien am Morgen (Checkliste)",
-        text: "• **Szenario A · Beide Linien über 0% (steigend):** Echter weltweiter Rückenwind aus Asien & Futures. Deine All-World-ETFs und Aktien dürften um 09:00 Uhr an der SIX freundlich eröffnen.\n\n• **Szenario B · Beide Linien klar unter 0% (fallend):** Echter globaler Verkaufsdruck. Keine Panik – prüfe in Ruhe, ob ab 09:00 Uhr an der SIX sinnvolle **Kauflimits** erreicht werden.\n\n• **Szenario C · Nikkei stark im Minus (z. B. -3%), 2559.T viel ruhiger (z. B. -1% oder nahe 0%):** Klassischer Japan-/Yen-Effekt! Der Weltmarkt bleibt stabiler als Japan – dein Schweizer/globaler ETF eröffnet meist deutlich gelassener als der Nikkei vermuten lässt.\n\n• **Szenario D · Ab 05:00–07:30 Uhr drehen beide Linien wieder Richtung 0% hoch:** Intraday-Erholung (Dip wird aufgekauft) – oft ein beruhigendes Signal für eine stabile Europa-Eröffnung um 09:00 Uhr."
+        term: "Schritt 4 · Die 4 konkreten Szenarien am Morgen (Mo–Fr Checkliste)",
+        text: "• **Szenario A · Tages-% grün UND Kurve ab `01:00` steigt klar über `0%` (nahe Tageshoch):** Nachholeffekt **plus** frisches Kaufinteresse in Asien. Beste Basis für eine freundliche Europa-Eröffnung um 09:00 Uhr mit Rückenwind.\n\n• **Szenario B · Tages-% deutlich grün (z. B. `+0.8%`), aber Kurve ab `01:00` flach um `0%` oder gibt Früh-Peak wieder ab:** **Reiner Nachholeffekt (Gap)** vom gestrigen US-Abend – keine neue Rallye in Asien. Europa startet meist grün (holt USA nach), pendelt danach aber oft ruhiger seitwärts.\n\n• **Szenario C · Tages-% rot UND Kurve ab `01:00` fällt weiter unter `0%`:** Echter, anhaltender Verkaufsdruck. Keine Panik – ab 09:15 Uhr ruhig prüfen, ob sinnvolle **Kauflimits** erreicht werden. *(Dreht die Kurve ab `05:00–07:30 Uhr` wieder Richtung `0%` hoch, werden Dips aufgekauft → beruhigendes Boden-Signal!)*\n\n• **Szenario D · Nikkei stark bewegt (z. B. `-2%` oder Spike `+0.9%` → Rückfall), `2559.T` viel ruhiger:** Klassischer Japan-/Yen-Effekt! Der Welt-ETF bleibt stabiler als Japan – dein Schweizer/globaler ETF eröffnet meist gelassener als der Nikkei vermuten lässt."
     },
     {
         term: "Schritt 5 · Schweizer Franken (CHF) & Yen-Effekt richtig einschätzen",
@@ -69,7 +69,7 @@ export const COMPARE_SWISS_GUIDE_ITEMS = [
     },
     {
         term: "Schritt 7 · Konkrete Handlungsregel für Schweizer Anleger vor 09:00 Uhr",
-        text: "• **07:00–07:30 Uhr:** Kurzer Check `2559.T vs. Nikkei 225` (und bei Bedarf `vs. E-Mini S&P 500 Future`) → du weisst vor Börsenstart genau, ob Ruhe, Rückenwind oder Gegenwind ansteht.\n• **09:00–09:15 Uhr (SIX-Eröffnung):** In den ersten 5–10 Minuten sind die Geld-/Brief-Spannen (Spreads) an der SIX oft unnötig breit. **Niemals «Bestens» direkt um 09:00 Uhr handeln** – setze immer eine **Limit-Order** oder warte bis **09:15 Uhr** (bei US-Aktien idealerweise ab **15:30 Uhr**)."
+        text: "• **07:00–07:30 Uhr:** Kurzer Check `2559.T vs. Nikkei 225` (und bei Bedarf `vs. E-Mini S&P 500 Future`) → trenne dabei immer **Tages-% (Aufhol-Gap)** und **0%-Kurve (frische Dynamik)**.\n• **09:00–09:15 Uhr (SIX-Eröffnung):** In den ersten 5–10 Minuten sind die Geld-/Brief-Spannen (Spreads) an der SIX oft unnötig breit. **Niemals «Bestens» direkt um 09:00 Uhr handeln** – setze immer eine **Limit-Order** oder warte bis **09:15 Uhr** (bei US-Aktien idealerweise ab **15:30 Uhr**).\n• **Hinweis US-Feiertage (z. B. Thanksgiving):** Wenn NYSE/Nasdaq geschlossen sind, holt Europa morgens zwar das Eröffnungs-Gap nach, läuft danach aber oft bei dünnem Volumen seitwärts – bei US-Titeln in EUR sind die Spreads dann breiter."
     },
     {
         term: "Schritt 8 · 24h-Praxisregel & ausgeschriebene Ticker-Symbole",
@@ -1353,17 +1353,18 @@ export function PriceHistoryChart({
             }
         }
 
-        // Build clean % Y-axis ticks covering both curves and 0%
-        const span = Math.max(0.4, maxPct - minPct);
-        const pad = span * 0.1;
+        // Build clean, tight % Y-axis ticks covering both curves and 0% so trends are immediately visible
+        const span = Math.max(0.25, maxPct - minPct);
+        const pad = span * 0.06;
         const rawMin = minPct - pad;
         const rawMax = maxPct + pad;
-        const rawStep = (rawMax - rawMin) / 4;
+        const rawStep = (rawMax - rawMin) / 5;
         const power = Math.pow(10, Math.floor(Math.log10(rawStep)));
         const frac = rawStep / power;
         let step: number;
-        if (frac < 1.4) step = 1 * power;
-        else if (frac < 2.8) step = 2 * power;
+        if (frac < 1.35) step = 1 * power;
+        else if (frac < 2.4) step = 2 * power;
+        else if (frac < 3.4) step = 2.5 * power;
         else if (frac < 6.5) step = 5 * power;
         else step = 10 * power;
 
@@ -1374,7 +1375,7 @@ export function PriceHistoryChart({
             const rounded = Math.abs(t) < 1e-6 ? 0 : Number(t.toFixed(4));
             ticks.push(rounded);
         }
-        if (ticks.length > 7) {
+        if (ticks.length > 8) {
             step = step * 2;
             niceMin = Math.floor(rawMin / step) * step;
             niceMax = Math.ceil(rawMax / step) * step;
@@ -2490,7 +2491,7 @@ export function PriceHistoryChart({
                                                     10-Sekunden-Kurzformel am Morgen (Schweiz):
                                                 </p>
                                                 <p className="text-muted-foreground">
-                                                    <strong>1.</strong> 0%-Linie prüfen (Tages-% ignorieren) → <strong>2.</strong> 2559.T (Welt) mit Nikkei 225 (Japan) &amp; ES=F (US-Future) vergleichen → <strong>3.</strong> Abstand Δ &amp; USD/CHF einordnen → <strong>4.</strong> An der SIX ab 09:15 Uhr ruhig und nur mit Limit handeln.
+                                                    <strong>1.</strong> Tages-% (Eröffnungs-Gap seit gestern) von der 0%-Kurve (neuer Trend ab 01:00 Uhr) trennen → <strong>2.</strong> 2559.T (Welt) mit Nikkei 225 (Japan) &amp; ES=F (US-Future) vergleichen → <strong>3.</strong> Abstand Δ &amp; USD/CHF einordnen → <strong>4.</strong> An der SIX ab 09:15 Uhr ruhig und nur mit Limit handeln.
                                                 </p>
                                             </div>
                                         }
@@ -2767,14 +2768,14 @@ export function PriceHistoryChart({
                     <div className="flex flex-wrap items-center justify-between sm:justify-end gap-1.5 w-full sm:w-auto sm:shrink-0 sm:ml-auto min-w-0 max-w-full">
                         {selectedRange === '1D' && isCompareActive && compareOverlay.summary && (
                             <div
-                                className="h-7 inline-flex items-center p-0.5 rounded-md border border-border/80 bg-background/70 min-w-0 max-w-full overflow-x-auto no-scrollbar"
+                                className="h-7 inline-flex items-center p-0.5 rounded-md border border-border/80 bg-background/70 min-w-0 max-w-full overflow-x-auto overflow-y-hidden scroller-none"
                                 title="Zeitachsen-Synchronisierung im 1D-Vergleich umschalten"
                             >
                                 <button
                                     type="button"
                                     onClick={() => setCompareTimeMode('sync')}
                                     className={cn(
-                                        "h-6 inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                        "h-full inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
                                         compareOverlay.summary.activeTimeMode === 'sync'
                                             ? "bg-sky-600 text-white shadow-sm"
                                             : "text-muted-foreground hover:text-foreground"
@@ -2788,7 +2789,7 @@ export function PriceHistoryChart({
                                     disabled={!compareOverlay.summary.hasPre10_1530Overlap}
                                     onClick={() => compareOverlay.summary?.hasPre10_1530Overlap && setCompareTimeMode('pre10_1530')}
                                     className={cn(
-                                        "h-6 inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
+                                        "h-full inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
                                         !compareOverlay.summary.hasPre10_1530Overlap
                                             ? "opacity-40 cursor-not-allowed text-muted-foreground"
                                             : compareOverlay.summary.activeTimeMode === 'pre10_1530'
@@ -2808,7 +2809,7 @@ export function PriceHistoryChart({
                                     disabled={!compareOverlay.summary.hasUs1530Overlap}
                                     onClick={() => compareOverlay.summary?.hasUs1530Overlap && setCompareTimeMode('us1530')}
                                     className={cn(
-                                        "h-6 inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
+                                        "h-full inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors whitespace-nowrap",
                                         !compareOverlay.summary.hasUs1530Overlap
                                             ? "opacity-40 cursor-not-allowed text-muted-foreground"
                                             : compareOverlay.summary.activeTimeMode === 'us1530'
@@ -2827,7 +2828,7 @@ export function PriceHistoryChart({
                                     type="button"
                                     onClick={() => setCompareTimeMode('session')}
                                     className={cn(
-                                        "h-6 inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
+                                        "h-full inline-flex items-center justify-center px-1 sm:px-1.5 2xl:px-2 py-0 rounded text-xs font-bold leading-none transition-colors cursor-pointer whitespace-nowrap",
                                         compareOverlay.summary.activeTimeMode === 'session'
                                             ? "bg-sky-600 text-white shadow-sm"
                                             : "text-muted-foreground hover:text-foreground"
@@ -2859,7 +2860,7 @@ export function PriceHistoryChart({
                                         10-Sekunden-Kurzformel am Morgen (Schweiz):
                                     </p>
                                     <p className="text-muted-foreground">
-                                        <strong>1.</strong> 0%-Linie prüfen (Tages-% ignorieren) → <strong>2.</strong> 2559.T (Welt) mit Nikkei 225 (Japan) &amp; ES=F (US-Future) vergleichen → <strong>3.</strong> Abstand Δ &amp; USD/CHF einordnen → <strong>4.</strong> An der SIX ab 09:15 Uhr ruhig und nur mit Limit handeln.
+                                        <strong>1.</strong> Tages-% (Eröffnungs-Gap seit gestern) von der 0%-Kurve (neuer Trend ab 01:00 Uhr) trennen → <strong>2.</strong> 2559.T (Welt) mit Nikkei 225 (Japan) &amp; ES=F (US-Future) vergleichen → <strong>3.</strong> Abstand Δ &amp; USD/CHF einordnen → <strong>4.</strong> An der SIX ab 09:15 Uhr ruhig und nur mit Limit handeln.
                                     </p>
                                 </div>
                             }
@@ -3329,7 +3330,10 @@ export function PriceHistoryChart({
                                 tick={{ fontSize: 12, fill: '#e2e8f0' }}
                                 tickFormatter={(val) => {
                                     if (isCompareActive) {
-                                        const decimals = activeYAxisInfo.step >= 1 ? 0 : activeYAxisInfo.step >= 0.1 ? 1 : 2;
+                                        const hasTwoDecimals = Math.abs((activeYAxisInfo.step * 10) - Math.round(activeYAxisInfo.step * 10)) > 1e-4;
+                                        const decimals = activeYAxisInfo.step >= 1
+                                            ? (Math.abs(activeYAxisInfo.step - Math.round(activeYAxisInfo.step)) > 1e-4 ? 1 : 0)
+                                            : hasTwoDecimals ? 2 : 1;
                                         const sign = val > 0 ? '+' : '';
                                         const formatted = new Intl.NumberFormat('de-CH', {
                                             minimumFractionDigits: decimals,
