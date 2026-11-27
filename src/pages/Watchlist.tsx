@@ -1594,7 +1594,7 @@ function WatchlistTable({
                                 </td>
                                 <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 1 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="inline-flex items-center justify-center xl:justify-end gap-1.5">
                                             {isUnderTarget && (
                                                 <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Limit erreicht!" />
                                             )}
@@ -1613,6 +1613,14 @@ function WatchlistTable({
                                                                     : (activeParams?.valuationMode === 'manual' || activeParams?.isCustom)
                                                                         ? 'manual'
                                                                         : 'conservative');
+                                                const fvProfileMode =
+                                                    activeParams?.valuationMode === 'quality'
+                                                        ? 'quality'
+                                                        : activeParams?.valuationMode === 'risk'
+                                                            ? 'risk'
+                                                            : (activeParams?.valuationMode === 'manual' || activeParams?.isCustom)
+                                                                ? 'manual'
+                                                                : 'conservative';
                                                 const limitBadge = resolvedTargetMode === 'manual'
                                                     ? { label: 'M', title: 'Kauflimit Manuell', cls: 'bg-pink-500/15 text-pink-700 dark:text-pink-300 border-pink-500/35' }
                                                     : resolvedTargetMode === 'risk'
@@ -1620,12 +1628,18 @@ function WatchlistTable({
                                                         : resolvedTargetMode === 'quality'
                                                             ? { label: 'B', title: 'Kauflimit Qualität B', cls: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/35' }
                                                             : resolvedTargetMode === 'fairValue'
-                                                                ? { label: 'FW', title: 'Kauflimit Fairer Wert', cls: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/35' }
+                                                                ? (fvProfileMode === 'quality'
+                                                                    ? { label: 'FW', title: 'Kauflimit Fairer Wert B', cls: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/35' }
+                                                                    : fvProfileMode === 'risk'
+                                                                        ? { label: 'FW', title: 'Kauflimit Fairer Wert C', cls: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/35' }
+                                                                        : fvProfileMode === 'manual'
+                                                                            ? { label: 'FW', title: 'Kauflimit Fairer Wert Manuell', cls: 'bg-pink-500/15 text-pink-700 dark:text-pink-300 border-pink-500/35' }
+                                                                            : { label: 'FW', title: 'Kauflimit Fairer Wert A', cls: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/35' })
                                                                 : { label: 'A', title: 'Kauflimit Sicherheit A', cls: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/35' };
                                                 return (
                                                     <span
                                                         className={cn(
-                                                            "inline-flex items-center justify-center min-w-[22px] h-5 px-1 text-xs font-bold leading-none rounded border shrink-0",
+                                                            "inline-flex items-center justify-center w-[26px] h-5 px-1 text-xs font-bold leading-none rounded border shrink-0",
                                                             limitBadge.cls
                                                         )}
                                                         title={limitBadge.title}
@@ -1635,7 +1649,8 @@ function WatchlistTable({
                                                 );
                                             })()}
                                             <span className={cn(
-                                                "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
+                                                "font-bold tabular-nums text-[15px] xl:text-sm whitespace-nowrap leading-tight",
+                                                effectiveTargetPrice && "xl:min-w-[98px] xl:text-right",
                                                 isUnderTarget ? "text-green-600 dark:text-green-400" : "text-foreground"
                                             )}>
                                                 {effectiveTargetPrice ? formatCurrency(effectiveTargetPrice, stock.currency, false) : '-'}

@@ -1609,7 +1609,7 @@ export function WatchlistPerformanceModal({
                                                             <div className="inline-flex items-center justify-end gap-2">
                                                                 <span
                                                                     className={cn(
-                                                                        "inline-flex items-center justify-center w-[22px] h-4 text-[10px] font-bold leading-none rounded border shrink-0",
+                                                                        "inline-flex items-center justify-center w-[26px] h-5 text-xs font-bold leading-none rounded border shrink-0",
                                                                         modeStyle.badge
                                                                     )}
                                                                     title={modeStyle.title}
@@ -1647,14 +1647,20 @@ export function WatchlistPerformanceModal({
                                                             : targetPriceMode === 'quality'
                                                                 ? { label: 'B', title: 'Kauflimit Qualität B', cls: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/35' }
                                                                 : targetPriceMode === 'fairValue'
-                                                                    ? { label: 'FW', title: 'Kauflimit Fairer Wert', cls: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/35' }
+                                                                    ? (fairValueMode === 'quality'
+                                                                        ? { label: 'FW', title: 'Kauflimit Fairer Wert B', cls: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/35' }
+                                                                        : fairValueMode === 'risk'
+                                                                            ? { label: 'FW', title: 'Kauflimit Fairer Wert C', cls: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/35' }
+                                                                            : fairValueMode === 'manual'
+                                                                                ? { label: 'FW', title: 'Kauflimit Fairer Wert Manuell', cls: 'bg-pink-500/15 text-pink-700 dark:text-pink-300 border-pink-500/35' }
+                                                                                : { label: 'FW', title: 'Kauflimit Fairer Wert A', cls: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/35' })
                                                                     : { label: 'A', title: 'Kauflimit Sicherheit A', cls: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/35' };
                                                     return (
                                                         <div className="flex flex-col items-end">
                                                             <div className="inline-flex items-center justify-end gap-2">
                                                                 <span
                                                                     className={cn(
-                                                                        "inline-flex items-center justify-center w-[22px] h-4 text-[10px] font-bold leading-none rounded border shrink-0",
+                                                                        "inline-flex items-center justify-center w-[26px] h-5 text-xs font-bold leading-none rounded border shrink-0",
                                                                         limitBadge.cls
                                                                     )}
                                                                     title={limitBadge.title}

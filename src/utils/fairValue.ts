@@ -18,6 +18,8 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'BRK-B': { eps: 25.0, growth: 7.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Look-Through EPS 2026' },
     'BRK.B': { eps: 25.0, growth: 7.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Look-Through EPS 2026' },
     'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, pe10: 30.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
+    'SPCX': { eps: 1.77, growth: 25.0, pe: 25.0, pe10: 20.0, div: 0, mos: 20, label: 'Konsens EPS Forward 2027' },
+    'ANT': { eps: 1.15, growth: 25.0, pe: 25.0, pe10: 20.0, div: 0, mos: 20, label: 'Konsens EPS Forward 2027' },
     'NVDA': { eps: 4.80, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0, mos: 20, label: 'Konsens EPS (Forward FY26)' },
     'NVD.DE': { eps: 4.45, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0, mos: 20, label: 'Konsens EPS in EUR' },
     'CVX': { eps: 14.00, growth: 4.5, pe: 13.0, pe10: 11.5, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
@@ -503,6 +505,12 @@ export function computeSmartAutoParams(
     if (symUpper === 'TSLA') {
         autoGrowth = isQualityMode ? 26.0 : 22.0;
         growthLabel = isQualityMode ? 'KI / Robotaxi Wachstums-Szenario' : 'Konsens-Prognose';
+    } else if (symUpper === 'SPCX') {
+        autoGrowth = isQualityMode ? 30.0 : 25.0;
+        growthLabel = isQualityMode ? 'Starlink & AI Compute Szenario' : 'Konsens-Prognose · Hyper-Growth';
+    } else if (symUpper === 'ANT') {
+        autoGrowth = isQualityMode ? 30.0 : 25.0;
+        growthLabel = isQualityMode ? 'Enterprise AI / Claude Szenario' : 'Konsens-Prognose · Hyper-Growth';
     } else if (symUpper === 'NVDA' || symUpper === 'NVD.DE') {
         autoGrowth = isQualityMode ? 24.0 : 18.0;
         growthLabel = isQualityMode ? 'KI / Rechenzentren (Markt-Konsens)' : 'Konservative Abkühlung (5J)';
@@ -577,6 +585,8 @@ export function computeSmartAutoParams(
     let maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
     if (symUpper === 'TSLA') {
         maxSensibleExitPe = isQualityMode ? 50.0 : 38.0;
+    } else if (symUpper === 'SPCX' || symUpper === 'ANT') {
+        maxSensibleExitPe = isQualityMode ? 32.0 : 25.0;
     } else if (isWideMoat) {
         // Wide Moat Quality Champions (e.g. Apple, Microsoft, Novo Nordisk, Eli Lilly, Visa, Mastercard)
         maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
@@ -603,6 +613,8 @@ export function computeSmartAutoParams(
                 rawExitPe = 25.0;
             } else if (symUpper === 'TSLA') {
                 rawExitPe = 48.0;
+            } else if (symUpper === 'SPCX' || symUpper === 'ANT') {
+                rawExitPe = 30.0;
             } else if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
                 rawExitPe = 20.0;
             } else if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
@@ -851,52 +863,122 @@ export function computeStockSupportZones(params: {
     const gd200 = params.twoHundredDayAverage && params.twoHundredDayAverage > 0 ? params.twoHundredDayAverage : null;
     const low52 = params.fiftyTwoWeekLow && params.fiftyTwoWeekLow > 0 ? params.fiftyTwoWeekLow : null;
 
-    // --- ZONE 3: Panik- / Crash-Zone (Maximaler Kapitalschutz) ---
-    // Basis: Kauflimit Sicherheit (A) oder Bärenmarkt-Drawdown (-30% bis -35%) / 52W-Tief
-    let anchor3 = safetyBuy > 0 ? safetyBuy : (low52 && low52 < price * 0.85 ? low52 : price * 0.70);
-    // Plausibilitätscheck: Zone 3 sollte nie über 90% des aktuellen Kurses liegen, es sei denn Aktie ist extrem crash-bewertet
-    if (anchor3 > price * 0.90) {
-        anchor3 = Math.min(anchor3, price * 0.82);
-    }
-    const min3 = Math.max(0.01, Math.round(anchor3 * 0.96 * 10) / 10);
-    const max3 = Math.round(anchor3 * 1.02 * 10) / 10;
-    const target3 = parseFloat(anchor3.toFixed(2));
+    const roundBand = (val: number) => {
+        const clamped = Math.max(0.01, val);
+        return price >= 10
+            ? Math.round(clamped * 10) / 10
+            : Math.round(clamped * 100) / 100;
+    };
 
     // --- ZONE 2: Starke Unterstützung (Institutionelle Kaufzone) ---
-    // Basis: GD200 (200-Tage-Linie) oder ca. -20% / Mittelwert zwischen Z3 und aktuellem Kurs
+    // Priorität: GD200 -> 52-Wochen-Tief (ideal für junge IPOs ohne GD200 oder unter GD200) ->
+    // realistisches Qualität-B-Kauflimit (mind. 55% vom Kurs, nie -80%-Absturz) -> -20% Rücksetzer
     let anchor2: number;
-    if (gd200 && gd200 > anchor3 * 1.03 && gd200 < price * 0.96) {
+    let zone2Source: 'gd200' | 'low52' | 'quality' | 'fallback';
+    if (gd200 && gd200 >= price * 0.58 && gd200 <= price * 0.93) {
         anchor2 = gd200;
-    } else if (qualityBuy > 0 && qualityBuy > anchor3 * 1.04 && qualityBuy < price * 0.95) {
+        zone2Source = 'gd200';
+    } else if (low52 && low52 >= price * 0.55 && low52 <= price * 0.89) {
+        anchor2 = low52;
+        zone2Source = 'low52';
+    } else if (qualityBuy > 0 && qualityBuy >= price * 0.55 && qualityBuy <= price * 0.91) {
         anchor2 = qualityBuy;
+        zone2Source = 'quality';
     } else {
-        anchor2 = Math.max(anchor3 * 1.12, price * 0.80);
+        anchor2 = price * 0.80;
+        zone2Source = 'fallback';
     }
-    // Sicherheitsabstand zu Zone 3 garantieren
-    if (anchor2 <= anchor3 * 1.04) {
-        anchor2 = anchor3 * 1.10;
+
+    // --- ZONE 3: Panik- / Crash-Zone (Maximaler Kapitalschutz) ---
+    // Basis: Strikte Sicherheit A (sofern im plausiblen Crash-Korridor ab -60% und klar unter Zone 2),
+    // sonst 52W-Tief (falls nicht schon Zone 2), sonst Bärenmarkt-Drawdown unter Zone 2 (-32% bis -38%).
+    let anchor3: number;
+    let zone3Source: 'safety' | 'low52' | 'crash_ipo' | 'fallback';
+    if (safetyBuy > 0 && safetyBuy >= price * 0.40 && safetyBuy <= anchor2 * 0.92) {
+        anchor3 = safetyBuy;
+        zone3Source = 'safety';
+    } else if (zone2Source !== 'low52' && low52 && low52 >= price * 0.40 && low52 <= anchor2 * 0.92) {
+        anchor3 = low52;
+        zone3Source = 'low52';
+    } else {
+        anchor3 = Math.min(anchor2 * 0.82, price * 0.68);
+        zone3Source = (safetyBuy > 0 && safetyBuy < price * 0.40) ? 'crash_ipo' : 'fallback';
     }
-    const min2 = Math.round(anchor2 * 0.97 * 10) / 10;
-    const max2 = Math.round(anchor2 * 1.02 * 10) / 10;
-    const target2 = parseFloat(anchor2.toFixed(2));
+
+    // Plausibilitätscheck: Zone 3 klar unter Zone 2 und nie über 85% vom Kurs
+    if (anchor3 > price * 0.85) {
+        anchor3 = Math.min(anchor3, price * 0.82);
+    }
+    if (anchor3 > anchor2 * 0.92) {
+        anchor3 = anchor2 * 0.85;
+    }
 
     // --- ZONE 1: Erste Unterstützung (Moderater Rücksetzer / 1. Tranche) ---
-    // Basis: GD50 (50-Tage-Linie) oder gesunder Rücksetzer (-10% bis -14% vom aktuellen Kurs)
+    // Priorität: GD50 -> nahes 52-Wochen-Tief -> Fairer Wert / Kauflimit A im Rücksetzer-Band -> -12% Rücksetzer
     let anchor1: number;
-    if (gd50 && gd50 > anchor2 * 1.03 && gd50 < price * 0.98) {
+    let zone1Source: 'gd50' | 'low52' | 'fair' | 'safetyBuy' | 'fallback';
+    if (gd50 && gd50 > anchor2 * 1.05 && gd50 <= price * 0.98) {
         anchor1 = gd50;
-    } else if (safetyFair > 0 && safetyFair > anchor2 * 1.03 && safetyFair < price * 0.98) {
+        zone1Source = 'gd50';
+    } else if (zone2Source !== 'low52' && low52 && low52 > anchor2 * 1.05 && low52 <= price * 1.02) {
+        anchor1 = low52;
+        zone1Source = 'low52';
+    } else if (safetyFair > 0 && safetyFair > anchor2 * 1.05 && safetyFair <= price * 0.97) {
         anchor1 = safetyFair;
+        zone1Source = 'fair';
+    } else if (safetyBuy > 0 && safetyBuy > anchor2 * 1.05 && safetyBuy <= price * 0.97) {
+        anchor1 = safetyBuy;
+        zone1Source = 'safetyBuy';
     } else {
         anchor1 = Math.max(anchor2 * 1.08, price * 0.88);
+        zone1Source = 'fallback';
     }
+
     // Sicherheitsabstand zu Zone 2 garantieren
     if (anchor1 <= anchor2 * 1.04) {
         anchor1 = (anchor2 + price) / 2;
     }
-    const min1 = Math.round(anchor1 * 0.97 * 10) / 10;
-    const max1 = Math.round(anchor1 * 1.02 * 10) / 10;
+    if (zone1Source !== 'low52' && anchor1 > price * 0.98) {
+        anchor1 = Math.max(anchor2 * 1.04, (anchor2 + price) / 2);
+    }
+
+    const min1 = roundBand(anchor1 * 0.97);
+    const max1 = roundBand(anchor1 * 1.02);
     const target1 = parseFloat(anchor1.toFixed(2));
+
+    const min2 = roundBand(anchor2 * 0.97);
+    const max2 = roundBand(anchor2 * 1.02);
+    const target2 = parseFloat(anchor2.toFixed(2));
+
+    const min3 = roundBand(anchor3 * 0.96);
+    const max3 = roundBand(anchor3 * 1.02);
+    const target3 = parseFloat(anchor3.toFixed(2));
+
+    const zone1Desc = zone1Source === 'gd50'
+        ? 'Gesunder Rücksetzer an der GD50. Ideal für eine erste Position oder Trend-Käufe.'
+        : zone1Source === 'low52'
+            ? 'Erste Chart-Unterstützung rund um das 52-Wochen-Tief. Ideal für eine gestaffelte 1. Tranche.'
+            : zone1Source === 'fair'
+                ? 'Moderater Rücksetzer in Richtung Fairer Wert Sicherheit A. Solider Bereich für die 1. Tranche.'
+                : zone1Source === 'safetyBuy'
+                    ? 'Attraktiver Rücksetzer am Kauflimit Sicherheit A. Ideal für die 1. Tranche.'
+                    : 'Gesunder Rücksetzer (-10 % bis -15 % oder GD50). Ideal für eine erste Position oder Trend-Käufe.';
+
+    const zone2Desc = zone2Source === 'gd200'
+        ? 'Solider Rebound-Bereich an der GD200. Hier greifen Grossanleger und Value-Fonds wieder zu.'
+        : zone2Source === 'low52'
+            ? 'Solider Rebound-Bereich am 52-Wochen-Tief. Wichtige Chart-Unterstützung für die 2. Tranche.'
+            : zone2Source === 'quality'
+                ? 'Solider Rebound-Bereich am Kauflimit Qualität B. Hier greifen Grossanleger und Value-Fonds wieder zu.'
+                : 'Solider Rebound-Bereich (-20 % Korrektur / Mittelwert). Hier greifen Grossanleger und Value-Fonds wieder zu.';
+
+    const zone3Desc = zone3Source === 'safety'
+        ? 'Entspricht dem strikten Kauflimit aus Sicherheit A. Historische Ausverkaufs- und Panikpreise.'
+        : zone3Source === 'low52'
+            ? 'Tiefer Ausverkaufsbereich am 52-Wochen-Tief. Maximaler Kapitalschutz bei stärkeren Marktdellen.'
+            : zone3Source === 'crash_ipo'
+                ? 'Tiefer Ausverkaufs- und Crash-Bereich unter dem 52W-Tief. Strenges Value-Modell A liegt bei Wachstums-Titeln tiefer.'
+                : 'Historischer Bärenmarkt- und Panikbereich (-30 % bis -35 % vom Kurs). Maximaler Kapitalschutz.';
 
     const buildZone = (
         id: 'zone1' | 'zone2' | 'zone3',
@@ -939,31 +1021,31 @@ export function computeStockSupportZones(params: {
         buildZone(
             'zone1',
             '1. Erste Unterstützung',
-            'Moderater Rücksetzer (1. Tranche)',
+            'Moderater Rücksetzer · 1. Tranche',
             min1,
             max1,
             target1,
-            'Gesunder Rücksetzer (-10% bis -15% oder GD50). Ideal für eine erste Position oder Trend-Käufe.',
+            zone1Desc,
             'Als 1. Tranche setzen'
         ),
         buildZone(
             'zone2',
             '2. Starke Unterstützung',
-            'Institutionelle Kaufzone (2. Tranche)',
+            'Institutionelle Kaufzone · 2. Tranche',
             min2,
             max2,
             target2,
-            'Solider Rebound-Bereich (GD200 / Mittelwert). Hier greifen Grossanleger und Value-Fonds wieder zu.',
+            zone2Desc,
             'Als 2. Tranche setzen'
         ),
         buildZone(
             'zone3',
             '3. Panik- / Crash-Zone',
-            'Maximaler Kapitalschutz (Limit)',
+            'Maximaler Kapitalschutz · Limit',
             min3,
             max3,
             target3,
-            'Entspricht dem strikten Kauflimit aus Sicherheit A. Historische Ausverkaufs- und Panikpreise.',
+            zone3Desc,
             'Als Kauflimit setzen'
         )
     ];

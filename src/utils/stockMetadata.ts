@@ -139,6 +139,8 @@ const KNOWN_STOCK_METADATA: Record<string, KnownMetadata> = {
     'META': { country: 'USA', sector: 'Kommunikation' },
     'AMZN': { country: 'USA', sector: 'Zykl. Konsumgüter' },
     'TSLA': { country: 'USA', sector: 'Zykl. Konsumgüter' },
+    'SPCX': { country: 'USA', sector: 'Technologie' },
+    'ANT': { country: 'USA', sector: 'Technologie' },
     'MCD': { country: 'USA', sector: 'Zykl. Konsumgüter' },
     'HD': { country: 'USA', sector: 'Zykl. Konsumgüter' },
     'JNJ': { country: 'USA', sector: 'Gesundheitswesen' },

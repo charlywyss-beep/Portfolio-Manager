@@ -1005,14 +1005,23 @@ export function DividendCalculator() {
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
     const [searchTerm, setSearchTerm] = useState('');
     const [showStockList, setShowStockList] = useState(false);
+    const [savedWatchlistId, setSavedWatchlistId] = useState<string | null>(null);
     const searchRef = useRef<HTMLDivElement>(null);
+    const watchlistPopoverRef = useRef<HTMLDivElement>(null);
 
+    const canSaveToWatchlist = Boolean(
+        (selectedStockId && selectedStockId !== 'new') ||
+        (simName.trim() && simSymbol.trim())
+    );
 
     // Click-Outside Handler (v3.12.123)
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
                 setShowStockList(false);
+            }
+            if (watchlistPopoverRef.current && !watchlistPopoverRef.current.contains(event.target as Node)) {
+                setShowWatchlistPicker(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -1308,9 +1317,9 @@ export function DividendCalculator() {
                     currentPrice: price,
                     previousClose: price,
                     sector: simulatorState.simSector || '',
-                    dividendAmount: dividend > 0 ? dividend / freqFactor : 0,
-                    dividendYield: price > 0 ? (dividend / price) * 100 : 0,
-                    dividendFrequency: frequency
+                    dividendAmount: dividend > 0 && !isAccumulating ? dividend / freqFactor : undefined,
+                    dividendYield: dividend > 0 && !isAccumulating && price > 0 ? (dividend / price) * 100 : undefined,
+                    dividendFrequency: dividend > 0 && !isAccumulating ? frequency : 'none'
                 });
                 addToWatchlist(targetStockId);
                 updateSimulatorState({ selectedStockId: targetStockId });
@@ -1450,6 +1459,8 @@ export function DividendCalculator() {
             updateStock(selectedStockId, { plannedPurchase, ...getFvExtra(fvData) });
             addToWatchlist(selectedStockId, watchlistId);
             setShowWatchlistPicker(false);
+            setSavedWatchlistId(watchlistId || '__default__');
+            setTimeout(() => setSavedWatchlistId(null), 2200);
             setShowSuccess(true);
             setTimeout(() => {
                 setShowSuccess(false);
@@ -1491,14 +1502,16 @@ export function DividendCalculator() {
                 currentPrice: price,
                 previousClose: price,
                 sector: simulatorState.simSector || '',
-                dividendAmount: dividend > 0 ? dividend / freqFactor : 0,
-                dividendYield: price > 0 ? (dividend / price) * 100 : 0,
-                dividendFrequency: frequency,
+                dividendAmount: dividend > 0 && !isAccumulating ? dividend / freqFactor : undefined,
+                dividendYield: dividend > 0 && !isAccumulating && price > 0 ? (dividend / price) * 100 : undefined,
+                dividendFrequency: dividend > 0 && !isAccumulating ? frequency : 'none',
                 ...getFvExtra(fvData),
                 plannedPurchase
             });
             addToWatchlist(newId, watchlistId);
             setShowWatchlistPicker(false);
+            setSavedWatchlistId(watchlistId || '__default__');
+            setTimeout(() => setSavedWatchlistId(null), 2200);
             updateSimulatorState({ selectedStockId: newId });
             setShowSuccess(true);
             setTimeout(() => {
@@ -1552,7 +1565,7 @@ export function DividendCalculator() {
                 updateSimulatorState({
                     price: val,
                     simCurrency: nextCurrency === 'GBp' ? 'GBP' : (nextCurrency || 'CHF'),
-                    ...(autoDiv !== undefined && autoDiv > 0 ? { dividend: autoDiv } : {}),
+                    dividend: autoDiv !== undefined && autoDiv > 0 ? autoDiv : 0,
                     fees: {
                         ...fees,
                         stampDutyPercent: autoStamp
@@ -1647,10 +1660,10 @@ export function DividendCalculator() {
 
                             <div className="flex items-center gap-2 ml-auto w-full sm:w-auto justify-end iphone-landscape-portfolio-actions">
                                 {/* Buy/Sell Switch */}
-                                <div className="flex bg-muted rounded-lg p-1 border border-border/50 iphone-landscape-segmented">
+                                <div className="h-8 inline-flex items-center bg-muted rounded-lg p-0.5 border border-border/50 iphone-landscape-segmented">
                                     <button
                                         onClick={() => updateSimulatorState({ mode: 'buy' })}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${mode === 'buy'
+                                        className={`h-full px-3 py-0 inline-flex items-center justify-center leading-none text-xs font-medium rounded-md transition-all cursor-pointer ${mode === 'buy'
                                             ? 'bg-green-600 text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
                                             }`}
@@ -1659,7 +1672,7 @@ export function DividendCalculator() {
                                     </button>
                                     <button
                                         onClick={() => updateSimulatorState({ mode: 'sell' })}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${mode === 'sell'
+                                        className={`h-full px-3 py-0 inline-flex items-center justify-center leading-none text-xs font-medium rounded-md transition-all cursor-pointer ${mode === 'sell'
                                             ? 'bg-red-600 text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
                                             }`}
@@ -1667,10 +1680,72 @@ export function DividendCalculator() {
                                         Verkaufen
                                     </button>
                                 </div>
+                                {mode === 'buy' && (
+                                    <div className="relative" ref={watchlistPopoverRef}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowWatchlistPicker(prev => !prev)}
+                                            disabled={!canSaveToWatchlist}
+                                            title={canSaveToWatchlist ? "Direkt in eine Watchlist speichern" : "Zuerst Aktie / ETF wählen oder Name & Symbol laden"}
+                                            className={cn(
+                                                "h-8 px-3 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1.5 leading-none transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap",
+                                                savedWatchlistId
+                                                    ? "bg-emerald-600 text-white border-emerald-500"
+                                                    : showWatchlistPicker
+                                                        ? "bg-blue-600 text-white border-blue-500"
+                                                        : "bg-blue-600/15 text-blue-600 dark:text-blue-400 border-blue-500/40 hover:bg-blue-600 hover:text-white hover:border-blue-500"
+                                            )}
+                                        >
+                                            {savedWatchlistId ? <Check size={14} className="shrink-0" /> : <Eye size={14} className="shrink-0" />}
+                                            <span className="hidden sm:inline">{savedWatchlistId ? 'Gespeichert' : 'In Watchlist'}</span>
+                                        </button>
+                                        {showWatchlistPicker && (
+                                            <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-card border border-border rounded-xl shadow-2xl z-50 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                                        <Eye className="size-3.5 text-blue-500" />
+                                                        Watchlist wählen · 1 Klick
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowWatchlistPicker(false)}
+                                                        className="p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                                                        aria-label="Schliessen"
+                                                    >
+                                                        <X className="size-3.5" />
+                                                    </button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {watchlists.map(wl => {
+                                                        const isAlreadyInWl = Boolean(selectedStockId && selectedStockId !== 'new' && wl.stockIds.includes(selectedStockId));
+                                                        const justSaved = savedWatchlistId === wl.id;
+                                                        return (
+                                                            <button
+                                                                key={wl.id}
+                                                                type="button"
+                                                                onClick={() => handleAddToWatchlist(wl.id)}
+                                                                className={cn(
+                                                                    "h-7 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1.5 leading-none transition-all cursor-pointer active:scale-95",
+                                                                    justSaved || isAlreadyInWl
+                                                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
+                                                                        : "bg-muted/50 text-foreground border-border hover:bg-blue-600 hover:text-white hover:border-blue-500"
+                                                                )}
+                                                                title={isAlreadyInWl ? `Bereits in ${wl.name} · Klick aktualisiert Daten` : `In Watchlist ${wl.name} speichern`}
+                                                            >
+                                                                {justSaved || isAlreadyInWl ? <Check className="size-3.5 shrink-0" /> : <Plus className="size-3.5 shrink-0 opacity-75" />}
+                                                                <span>{wl.name}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 <button
                                     onClick={() => handleExportPDF()}
                                     title="Als PDF speichern"
-                                    className="text-xs flex items-center gap-1 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background"
+                                    className="h-8 px-3 py-0 text-xs inline-flex items-center justify-center gap-1 leading-none border border-border rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background cursor-pointer"
                                 >
                                     <FileText size={14} />
                                     <span className="hidden sm:inline">PDF</span>
@@ -1678,12 +1753,12 @@ export function DividendCalculator() {
                                 <button
                                     onClick={() => setShowArchive(true)}
                                     title="Simulations-Archiv öffnen"
-                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background relative shadow-xs active:scale-95"
+                                    className="h-8 px-3 py-0 text-xs inline-flex items-center justify-center gap-1.5 leading-none border border-border rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background relative shadow-xs active:scale-95 cursor-pointer"
                                 >
                                     <FolderArchive size={14} className="text-amber-500" />
                                     <span className="hidden sm:inline">Archiv</span>
                                     {simulations && simulations.length > 0 && (
-                                        <span className="inline-flex items-center justify-center px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400">
+                                        <span className="inline-flex items-center justify-center px-1.5 h-4 text-xs font-bold rounded-full bg-amber-500/20 text-amber-400 leading-none">
                                             {simulations.length}
                                         </span>
                                     )}
@@ -1691,14 +1766,14 @@ export function DividendCalculator() {
                                 <button
                                     onClick={() => setShowOrderBook(true)}
                                     title="Auftragsbuch öffnen"
-                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background relative shadow-xs active:scale-95"
+                                    className="h-8 px-3 py-0 text-xs inline-flex items-center justify-center gap-1.5 leading-none border border-border rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background relative shadow-xs active:scale-95 cursor-pointer"
                                 >
                                     <ClipboardList size={14} className="text-blue-400" />
                                     <span className="hidden sm:inline">Auftragsbuch</span>
                                 </button>
                                 <button
                                     onClick={() => updateSimulatorState({ fees: { ...fees, showAdvanced: !fees.showAdvanced } })}
-                                    className={`text-xs flex items-center gap-1 border px-3 py-2 rounded-lg transition-colors font-medium ${fees.showAdvanced
+                                    className={`h-8 px-3 py-0 text-xs inline-flex items-center justify-center gap-1 leading-none border rounded-lg transition-colors font-medium cursor-pointer ${fees.showAdvanced
                                         ? 'bg-primary/10 border-primary text-primary'
                                         : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground bg-background'
                                         }`}
@@ -1709,7 +1784,7 @@ export function DividendCalculator() {
                                 <button
                                     onClick={() => setShowGuide(true)}
                                     title="Praxis-Anleitung & Steuerregeln"
-                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background shadow-xs active:scale-95"
+                                    className="h-8 px-3 py-0 text-xs inline-flex items-center justify-center gap-1.5 leading-none border border-border rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background shadow-xs active:scale-95 cursor-pointer"
                                 >
                                     <HelpCircle size={14} className="text-blue-500" />
                                     <span className="hidden sm:inline">Anleitung</span>
@@ -2697,38 +2772,6 @@ export function DividendCalculator() {
                                         )}
                                     </button>
                                 </div>
-                                {/* Watchlist Action */}
-                                {mode === 'buy' && (
-                                    <div className="relative">
-                                        <button
-                                            onClick={() => setShowWatchlistPicker(!showWatchlistPicker)}
-                                            className="w-full py-2 rounded-md font-medium text-sm bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 transition-colors shadow-sm"
-                                        >
-                                            <Eye size={16} />
-                                            In Watchlist speichern
-                                        </button>
-                                        {showWatchlistPicker && (
-                                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                                                <div className="p-2 border-b border-border bg-muted/30">
-                                                    <span className="text-xs font-medium text-muted-foreground">Watchlist auswählen:</span>
-                                                </div>
-                                                <div className="max-h-48 overflow-y-auto">
-                                                    {watchlists.map(wl => (
-                                                        <button
-                                                            key={wl.id}
-                                                            onClick={() => handleAddToWatchlist(wl.id)}
-                                                            className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
-                                                        >
-                                                            <Eye className="size-3.5 text-muted-foreground" />
-                                                            <span>{wl.name}</span>
-                                                            {wl.isDefault && <span className="text-[10px] text-muted-foreground">(Standard)</span>}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
                             </div>
 
                             <div className="space-y-2.5">
@@ -3090,12 +3133,72 @@ export function DividendCalculator() {
                                                 <Coins size={14} className="text-amber-500" />
                                                 <span>{isAccumulating ? 'Thesaurierender ETF (Accumulating)' : 'Keine Dividende'}</span>
                                             </div>
-                                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                            <p className="text-xs text-muted-foreground leading-relaxed">
                                                 {isAccumulating
                                                     ? 'Erträge werden direkt im Fonds reinvestiert (Kurswachstum). Es fallen keine periodischen Dividenden-Auszahlungen an.'
                                                     : 'Dieser Titel zahlt keine laufende Dividende. Rendite- und Ausschüttungsfelder entfallen.'
                                                 }
                                             </p>
+                                        </div>
+                                    )}
+
+                                    {/* Direkt-Auswahl: In Watchlist speichern (1 Klick, ohne Scrollen direkt rechts sichtbar) */}
+                                    {mode === 'buy' && (
+                                        <div className="p-3.5 rounded-xl bg-blue-500/5 dark:bg-blue-950/25 border border-blue-500/25 space-y-2.5">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                                                    <Eye className="size-4 text-blue-500 shrink-0" />
+                                                    <span>In Watchlist speichern</span>
+                                                </div>
+                                                {savedWatchlistId ? (
+                                                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1">
+                                                        <Check className="size-3.5 shrink-0" />
+                                                        Gespeichert!
+                                                    </span>
+                                                ) : !canSaveToWatchlist ? (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        Zuerst Titel laden
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        1 Klick genügt
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {watchlists.map(wl => {
+                                                    const isAlreadyInWl = Boolean(selectedStockId && selectedStockId !== 'new' && wl.stockIds.includes(selectedStockId));
+                                                    const justSaved = savedWatchlistId === wl.id;
+                                                    return (
+                                                        <button
+                                                            key={wl.id}
+                                                            type="button"
+                                                            disabled={!canSaveToWatchlist}
+                                                            onClick={() => handleAddToWatchlist(wl.id)}
+                                                            className={cn(
+                                                                "h-7 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1.5 leading-none transition-all cursor-pointer active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed",
+                                                                justSaved || isAlreadyInWl
+                                                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
+                                                                    : "bg-background/80 text-foreground border-border hover:bg-blue-600 hover:text-white hover:border-blue-500"
+                                                            )}
+                                                            title={
+                                                                !canSaveToWatchlist
+                                                                    ? 'Zuerst Aktie / ETF auswählen oder Name & Symbol laden'
+                                                                    : isAlreadyInWl
+                                                                        ? `Bereits in ${wl.name} · Klick aktualisiert Daten`
+                                                                        : `Direkt in Watchlist ${wl.name} speichern`
+                                                            }
+                                                        >
+                                                            {justSaved || isAlreadyInWl ? (
+                                                                <Check className="size-3.5 shrink-0" />
+                                                            ) : (
+                                                                <Plus className="size-3.5 shrink-0 opacity-75" />
+                                                            )}
+                                                            <span>{wl.name}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

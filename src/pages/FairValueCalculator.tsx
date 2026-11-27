@@ -251,12 +251,18 @@ export function FairValueCalculator() {
                 targetPrice: newLimit,
                 targetPriceType: newLimit ? resolvedType : undefined,
                 fairValue: calculation.fairValue,
-                ...(currentStock?.fairValueParams ? {
-                    fairValueParams: {
-                        ...currentStock.fairValueParams,
-                        ...(resolvedType === 'manual' ? { manualTargetPrice: newLimit } : {})
-                    }
-                } : {})
+                fairValueParams: {
+                    ...(currentStock?.fairValueParams || {
+                        eps: parseFloat(String(eps)) || 0,
+                        growthRate: parseFloat(String(growthRate)) || 0,
+                        pe: parseFloat(String(pe)) || 0,
+                        dividendYield: parseFloat(String(dividendYield)) || 0,
+                        discountRate: parseFloat(String(discountRate)) || 8,
+                        mos: parseFloat(String(mos)) || 20,
+                    }),
+                    valuationMode: isSavedForStock ? 'manual' : valuationProfile,
+                    ...(resolvedType === 'manual' ? { manualTargetPrice: newLimit } : {})
+                }
             });
         }
 
@@ -267,6 +273,7 @@ export function FairValueCalculator() {
                 const map = mapRaw ? JSON.parse(mapRaw) : {};
                 map[key] = {
                     ...map[key],
+                    valuationMode: isSavedForStock ? 'manual' : valuationProfile,
                     targetPrice: newLimit,
                     targetPriceType: newLimit ? resolvedType : undefined,
                     fairValue: calculation.fairValue,
@@ -924,8 +931,22 @@ export function FairValueCalculator() {
 
             if (!finalQuote.sector && existingStock?.sector) {
                 finalQuote.sector = existingStock.sector;
-            } else if (finalQuote.sector && existingStock && (!existingStock.sector || existingStock.sector === 'Simuliert')) {
-                updateStock(existingStock.id, { sector: finalQuote.sector });
+            }
+            if (existingStock) {
+                const stockMetaUpdates: any = {};
+                if (finalQuote.sector && (!existingStock.sector || existingStock.sector === 'Simuliert')) {
+                    stockMetaUpdates.sector = finalQuote.sector;
+                }
+                const techKeys = ['fiftyDayAverage', 'twoHundredDayAverage', 'fiftyTwoWeekHigh', 'fiftyTwoWeekLow'] as const;
+                for (const key of techKeys) {
+                    const nv = (finalQuote as any)[key];
+                    if (typeof nv === 'number' && nv > 0 && Math.abs(((existingStock as any)[key] || 0) - nv) > 0.01) {
+                        stockMetaUpdates[key] = nv;
+                    }
+                }
+                if (Object.keys(stockMetaUpdates).length > 0) {
+                    updateStock(existingStock.id, stockMetaUpdates);
+                }
             }
 
             setQuote(finalQuote);
@@ -989,11 +1010,15 @@ export function FairValueCalculator() {
         const valMos = typeof mos === 'string' ? parseFloat(mos) || 0 : mos;
 
         const futureEps = valEps * Math.pow(1 + valGrowth / 100, 5);
-        const isWideMoatStock = WIDE_MOAT_QUALITY.has((selectedSymbol || '').toUpperCase());
-        const isTesla = (selectedSymbol || '').toUpperCase() === 'TSLA';
+        const symUpperCalc = (selectedSymbol || '').toUpperCase();
+        const isWideMoatStock = WIDE_MOAT_QUALITY.has(symUpperCalc);
+        const isTesla = symUpperCalc === 'TSLA';
+        const isHyperGrowthIpo = symUpperCalc === 'SPCX' || symUpperCalc === 'ANT';
         const maxPeCap = isTesla
             ? (valuationProfile === 'quality' ? 50 : 38)
-            : (valuationProfile === 'quality' ? (isWideMoatStock ? 25 : 22) : 20);
+            : isHyperGrowthIpo
+                ? (valuationProfile === 'quality' ? 32 : 25)
+                : (valuationProfile === 'quality' ? (isWideMoatStock ? 25 : 22) : 20);
         const ruleOneLimit = Math.max(isWideMoatStock ? maxPeCap : 18, Math.min(maxPeCap, valGrowth * 2));
         const exitPe = valPe; // Remove hard cap, use user input directly
         const futurePrice = futureEps * exitPe;
@@ -1068,10 +1093,10 @@ export function FairValueCalculator() {
             currentPrice: curPrice,
             dcfSafety,
             dcfQuality,
-            fiftyDayAverage: (quote as any)?.fiftyDayAverage,
-            twoHundredDayAverage: (quote as any)?.twoHundredDayAverage,
-            fiftyTwoWeekHigh: (quote as any)?.fiftyTwoWeekHigh,
-            fiftyTwoWeekLow: (quote as any)?.fiftyTwoWeekLow
+            fiftyDayAverage: (quote as any)?.fiftyDayAverage ?? currentStock?.fiftyDayAverage,
+            twoHundredDayAverage: (quote as any)?.twoHundredDayAverage ?? currentStock?.twoHundredDayAverage,
+            fiftyTwoWeekHigh: (quote as any)?.fiftyTwoWeekHigh ?? currentStock?.fiftyTwoWeekHigh,
+            fiftyTwoWeekLow: (quote as any)?.fiftyTwoWeekLow ?? currentStock?.fiftyTwoWeekLow
         });
     }, [quote, analysis, currentStock, selectedSymbol]);
 
@@ -1116,7 +1141,7 @@ export function FairValueCalculator() {
         const totalLiquidBase = totalValueStock + totalValueBank;
         const cashRatioPct = totalLiquidBase > 0 ? (totalValueBank / totalLiquidBase) * 100 : 0;
 
-        const high52w = (quote as any)?.fiftyTwoWeekHigh;
+        const high52w = (quote as any)?.fiftyTwoWeekHigh ?? activeStock?.fiftyTwoWeekHigh;
         const drawdownFrom52wHigh =
             high52w && high52w > 0 && priceForPos > 0
                 ? ((priceForPos - high52w) / high52w) * 100
@@ -3210,17 +3235,20 @@ export function FairValueCalculator() {
                                                     );
                                                 })()}
                                                 {buyLimitSavedToast ? (() => {
-                                                    const savedType = currentStock?.targetPriceType || valuationProfile;
-                                                    const toastColor = savedType === 'manual'
+                                                    const rawSavedType = currentStock?.targetPriceType || valuationProfile;
+                                                    const savedColorMode = rawSavedType === 'fairValue'
+                                                        ? (isSavedForStock ? 'manual' : valuationProfile)
+                                                        : rawSavedType;
+                                                    const toastColor = savedColorMode === 'manual'
                                                         ? "text-pink-400 bg-pink-500/10 border-pink-500/30"
-                                                        : savedType === 'risk'
+                                                        : savedColorMode === 'risk'
                                                             ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
-                                                            : savedType === 'quality'
+                                                            : savedColorMode === 'quality'
                                                                 ? "text-purple-400 bg-purple-500/10 border-purple-500/30"
                                                                 : "text-blue-400 bg-blue-500/10 border-blue-500/30";
 
                                                     return (
-                                                        <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 animate-pulse", toastColor)}>
+                                                        <span className={cn("text-xs font-bold px-2 py-0.5 rounded border flex items-center gap-1 animate-pulse", toastColor)}>
                                                             <Check className="size-3" />
                                                             <span>In Kursdaten übernommen!</span>
                                                         </span>
@@ -3245,17 +3273,17 @@ export function FairValueCalculator() {
                                                     let badgeColor = 'text-pink-400';
 
                                                     if (effectiveLimitType === 'risk') {
-                                                        badgeLabel = 'Risiko-Abschlag (C)';
+                                                        badgeLabel = 'Risiko-Abschlag C';
                                                         badgeColor = 'text-amber-400';
                                                     } else if (effectiveLimitType === 'quality') {
-                                                        badgeLabel = 'Qualität (B)';
+                                                        badgeLabel = 'Qualität B';
                                                         badgeColor = 'text-purple-400';
                                                     } else if (effectiveLimitType === 'conservative') {
-                                                        badgeLabel = 'Sicherheit (A)';
+                                                        badgeLabel = 'Sicherheit A';
                                                         badgeColor = 'text-blue-400';
                                                     } else if (effectiveLimitType === 'fairValue') {
-                                                        badgeLabel = valuationProfile === 'risk' ? 'Fairer Wert (C)' : valuationProfile === 'quality' ? 'Fairer Wert (B)' : 'Fairer Wert (A)';
-                                                        badgeColor = valuationProfile === 'risk' ? 'text-amber-400' : valuationProfile === 'quality' ? 'text-purple-400' : 'text-blue-400';
+                                                        badgeLabel = isSavedForStock ? 'Fairer Wert Manuell' : valuationProfile === 'risk' ? 'Fairer Wert C' : valuationProfile === 'quality' ? 'Fairer Wert B' : 'Fairer Wert A';
+                                                        badgeColor = isSavedForStock ? 'text-pink-400' : valuationProfile === 'risk' ? 'text-amber-400' : valuationProfile === 'quality' ? 'text-purple-400' : 'text-blue-400';
                                                     }
 
                                                     return (

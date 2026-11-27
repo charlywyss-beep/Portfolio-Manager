@@ -207,13 +207,40 @@ export function StockDetail() {
         });
     };
 
-    // Auto-grow personal notes textarea cleanly with every line of text
+    // Auto-grow personal notes textarea cleanly with every line of text (up to 520px, then smooth internal scroll)
     useEffect(() => {
         if (isNotesCollapsed) return;
         const el = notesTextareaRef.current;
         if (!el) return;
-        el.style.height = 'auto';
-        el.style.height = `${Math.max(180, el.scrollHeight + 4)}px`;
+
+        const syncHeight = () => {
+            const prevFlexGrow = el.style.flexGrow;
+            el.style.flexGrow = '0';
+            el.style.height = '180px';
+            const contentHeight = el.scrollHeight + 6;
+            const maxAutoHeight = 520;
+            el.style.height = `${Math.min(maxAutoHeight, Math.max(180, contentHeight))}px`;
+            el.style.flexGrow = prevFlexGrow;
+        };
+
+        syncHeight();
+        const rafId = requestAnimationFrame(syncHeight);
+
+        let lastWidth = el.clientWidth;
+        const ro = typeof ResizeObserver !== 'undefined'
+            ? new ResizeObserver(() => {
+                if (Math.abs(el.clientWidth - lastWidth) > 2) {
+                    lastWidth = el.clientWidth;
+                    syncHeight();
+                }
+            })
+            : null;
+        ro?.observe(el);
+
+        return () => {
+            cancelAnimationFrame(rafId);
+            ro?.disconnect();
+        };
     }, [notes, isNotesCollapsed, id]);
     const [timeRange, setTimeRange] = useState<TimeRange>('1D');
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
@@ -921,6 +948,16 @@ export function StockDetail() {
                 if (quoteResponse.kcv !== undefined && quoteResponse.kcv !== null && Math.abs((stockFromContext?.kcv || virtualStock?.kcv || 0) - quoteResponse.kcv) > 0.01) {
                     updates.kcv = quoteResponse.kcv;
                     hasUpdates = true;
+                }
+
+                // Chart-Marken (GD50, GD200, 52W-Hoch/Tief) für Unterstützungs- & Kaufzonen synchronisieren
+                const techKeys = ['fiftyDayAverage', 'twoHundredDayAverage', 'fiftyTwoWeekHigh', 'fiftyTwoWeekLow'] as const;
+                for (const key of techKeys) {
+                    const nv = (quoteResponse as any)[key];
+                    if (typeof nv === 'number' && nv > 0 && Math.abs(((currentStock as any)[key] || 0) - nv) > 0.01) {
+                        updates[key] = nv;
+                        hasUpdates = true;
+                    }
                 }
 
                 // Pre-Market / After-Hours Indikation (immer synchronisieren, auch zum Zuruecksetzen)
@@ -1839,6 +1876,23 @@ export function StockDetail() {
                             handleToggleValuationMode();
                         };
 
+                        const targetColorMode = resolvedTargetType === 'fairValue' ? currentMode : resolvedTargetType;
+                        const targetBadgeLabel = resolvedTargetType === 'risk'
+                            ? 'Risiko-Abschlag C'
+                            : resolvedTargetType === 'quality'
+                                ? 'Qualität B'
+                                : resolvedTargetType === 'conservative'
+                                    ? 'Sicherheit A'
+                                    : resolvedTargetType === 'fairValue'
+                                        ? (currentMode === 'risk'
+                                            ? 'Fairer Wert C'
+                                            : currentMode === 'quality'
+                                                ? 'Fairer Wert B'
+                                                : currentMode === 'manual'
+                                                    ? 'Fairer Wert Manuell'
+                                                    : 'Fairer Wert A')
+                                        : 'Manuell';
+
                         return (
                             <>
                                 <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
@@ -1846,40 +1900,28 @@ export function StockDetail() {
                                         <span className="text-muted-foreground">Kauflimit</span>
                                         {(displayTargetPrice || stock.targetPrice) ? (
                                             <span className={cn(
-                                                "inline-flex items-center text-[11px] sm:text-xs landscape:text-[10px] leading-4 font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border shadow-xs",
-                                                resolvedTargetType === 'risk'
+                                                "inline-flex items-center text-xs leading-4 font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border shadow-xs",
+                                                targetColorMode === 'risk'
                                                     ? "text-amber-800 dark:text-amber-300 bg-amber-500/15 border-amber-500/30"
-                                                    : resolvedTargetType === 'quality'
+                                                    : targetColorMode === 'quality'
                                                         ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 border-purple-500/30"
-                                                        : resolvedTargetType === 'conservative'
+                                                        : targetColorMode === 'conservative'
                                                             ? "text-blue-800 dark:text-blue-300 bg-blue-500/15 border-blue-500/30"
-                                                            : resolvedTargetType === 'fairValue'
-                                                                ? "text-blue-800 dark:text-blue-300 bg-blue-500/15 border-blue-500/30"
-                                                                : "text-pink-800 dark:text-pink-300 bg-pink-500/15 border-pink-500/30"
+                                                            : "text-pink-800 dark:text-pink-300 bg-pink-500/15 border-pink-500/30"
                                             )}>
-                                                {resolvedTargetType === 'risk'
-                                                    ? 'Risiko-Abschlag C'
-                                                    : resolvedTargetType === 'quality'
-                                                        ? 'Qualität B'
-                                                        : resolvedTargetType === 'conservative'
-                                                            ? 'Sicherheit A'
-                                                            : resolvedTargetType === 'fairValue'
-                                                                ? 'Fairer Wert'
-                                                                : 'Manuell'}
+                                                {targetBadgeLabel}
                                             </span>
                                         ) : null}
                                     </div>
                                     <span className={cn(
                                         "font-medium tabular-nums",
-                                        resolvedTargetType === 'risk'
+                                        targetColorMode === 'risk'
                                             ? "text-amber-700 dark:text-amber-400 font-semibold"
-                                            : resolvedTargetType === 'quality'
+                                            : targetColorMode === 'quality'
                                                 ? "text-purple-700 dark:text-purple-400 font-semibold"
-                                                : resolvedTargetType === 'conservative'
+                                                : targetColorMode === 'conservative'
                                                     ? "text-blue-700 dark:text-blue-400 font-semibold"
-                                                    : resolvedTargetType === 'fairValue'
-                                                        ? "text-blue-700 dark:text-blue-400 font-semibold"
-                                                        : "text-pink-700 dark:text-pink-400 font-semibold"
+                                                    : "text-pink-700 dark:text-pink-400 font-semibold"
                                     )}>
                                         {displayTargetPrice ? formatCurrency(displayTargetPrice, stock.currency, false) : (stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-')}
                                     </span>
@@ -2254,7 +2296,7 @@ export function StockDetail() {
                             <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Div. Frequenz</span>
                                 <span className="font-medium capitalize text-foreground">
-                                    {stock.dividendFrequency ? (
+                                    {stock.dividendFrequency && stock.dividendFrequency !== 'none' ? (
                                         stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
                                             stock.dividendFrequency === 'monthly' ? 'Monatlich' :
                                                 stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'
@@ -2374,7 +2416,7 @@ export function StockDetail() {
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                                className="min-h-[180px] flex-1 w-full p-3 md:p-4 text-xs sm:text-sm leading-relaxed rounded-lg border border-border bg-background/50 resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                className="min-h-[180px] grow shrink-0 basis-auto w-full p-3 md:p-4 text-xs sm:text-sm leading-relaxed rounded-lg border border-border bg-background/50 resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
                             <p className="text-xs text-muted-foreground mt-2">
                                 * Notizen werden nur lokal gespeichert.

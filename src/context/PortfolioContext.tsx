@@ -684,6 +684,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     forwardPE: update.forwardPE !== undefined ? update.forwardPE : s.forwardPE,
                     eps: update.eps !== undefined ? update.eps : s.eps,
                     dividendYield: update.dividendYield !== undefined ? (update.dividendYield !== null ? parseFloat(update.dividendYield.toFixed(2)) : undefined) : s.dividendYield,
+                    fiftyDayAverage: update.fiftyDayAverage ? update.fiftyDayAverage : s.fiftyDayAverage,
+                    twoHundredDayAverage: update.twoHundredDayAverage ? update.twoHundredDayAverage : s.twoHundredDayAverage,
+                    fiftyTwoWeekHigh: update.fiftyTwoWeekHigh ? update.fiftyTwoWeekHigh : s.fiftyTwoWeekHigh,
+                    fiftyTwoWeekLow: update.fiftyTwoWeekLow ? update.fiftyTwoWeekLow : s.fiftyTwoWeekLow,
                     sector: finalSector,
                     country: finalCountry !== 'Unbekannt' ? finalCountry : s.country
                 };

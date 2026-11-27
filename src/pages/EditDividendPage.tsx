@@ -211,18 +211,28 @@ export function EditDividendPage() {
                 }
             }
             setFairValue(resolvedFv);
-            setAmount(stock.dividendAmount?.toString() || '');
+
+            const hasAnyDividendData =
+                Number(stock.dividendAmount || 0) > 0 ||
+                Number(stock.dividendYield || 0) > 0 ||
+                Boolean(stock.dividendExDate) ||
+                Boolean(stock.dividendPayDate) ||
+                Boolean(stock.dividendDates?.some(d => d.exDate || d.payDate));
+
+            const am = Number(stock.dividendAmount || 0) > 0 ? stock.dividendAmount : undefined;
+            const freq = !hasAnyDividendData ? 'none' : (stock.dividendFrequency || 'quarterly');
+            setAmount(am !== undefined ? am.toString() : '');
 
             // Recalculate yield on mount to ensure it matches current price/amount
             const currentP = stock.currentPrice;
-            const am = stock.dividendAmount;
-            const freq = stock.dividendFrequency || 'quarterly';
-            if (currentP && am) {
+            if (freq === 'none') {
+                setYieldPercent('');
+            } else if (currentP && am) {
                 const factor = getFrequencyFactor(freq);
                 const calcYield = ((am * factor) / currentP) * 100;
                 setYieldPercent(calcYield.toFixed(2));
             } else {
-                setYieldPercent(stock.dividendYield ? stock.dividendYield.toFixed(2) : '');
+                setYieldPercent(stock.dividendYield && stock.dividendYield > 0 ? stock.dividendYield.toFixed(2) : '');
             }
 
             setCurrency(stock.dividendCurrency || stock.currency);
@@ -278,15 +288,19 @@ export function EditDividendPage() {
                     : sym.endsWith('.L') ? 'GBP'
                     : 'USD');
             setCurrency(inferredCur);
-            const orderFreq = matchingOrderFallback.dividendFrequency || 'quarterly';
+            const orderHasDiv = Boolean(matchingOrderFallback.grossYield && matchingOrderFallback.grossYield > 0);
+            const orderFreq = orderHasDiv ? (matchingOrderFallback.dividendFrequency || 'quarterly') : 'none';
             setFrequency(orderFreq as any);
-            if (matchingOrderFallback.grossYield && matchingOrderFallback.grossYield > 0) {
+            if (orderHasDiv && matchingOrderFallback.grossYield) {
                 setYieldPercent(matchingOrderFallback.grossYield.toFixed(2));
                 if (matchingOrderFallback.limitPrice && matchingOrderFallback.limitPrice > 0) {
                     const factor = getFrequencyFactor(orderFreq);
                     const perPeriod = ((matchingOrderFallback.limitPrice * (matchingOrderFallback.grossYield / 100)) / factor);
                     setAmount(perPeriod.toFixed(2));
                 }
+            } else {
+                setYieldPercent('');
+                setAmount('');
             }
             setIsDirty(false);
             setScheduleFeedback(null);
@@ -398,6 +412,24 @@ export function EditDividendPage() {
             }
 
             if (result.error || result.slots.length === 0) {
+                const parsedAmt = parseFloat((amount || '').replace(',', '.'));
+                const hasExistingDates = Boolean(exDate || payDate || quarterlyDates.some(d => d.exDate || d.payDate));
+                if ((!(parsedAmt > 0)) && !hasExistingDates) {
+                    setFrequency('none');
+                    setAmount('');
+                    setYieldPercent('');
+                    setExDate('');
+                    setPayDate('');
+                    setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
+                    setIsDirty(true);
+                    setScheduleFeedback({
+                        type: 'warning',
+                        provider: result.provider,
+                        message: 'Keine Dividende gefunden — auf «Keine Dividende» gesetzt.',
+                        detail: result.divvyDiaryHint || 'Falls der Titel doch ausschüttet, über DivvyDiary prüfen oder Rhythmus oben manuell wählen.'
+                    });
+                    return;
+                }
                 setScheduleFeedback({
                     type: 'warning',
                     provider: result.provider,
@@ -689,8 +721,16 @@ export function EditDividendPage() {
             updateStock(targetId, updates);
         }
 
-        // Dividends Logic - If 'none' frequency, clear all dividend data
-        if (frequency === 'none') {
+        // Dividends Logic - If 'none' frequency OR no positive dividend/dates entered, clear all dividend data cleanly
+        const parsedAmountVal = parseFloat((amount || '').replace(',', '.'));
+        const parsedYieldVal = parseFloat((yieldPercent || '').replace(',', '.'));
+        const hasAnyManualDates = Boolean(exDate || payDate || quarterlyDates.some(d => d.exDate || d.payDate));
+        const isEffectivelyNoDividend = frequency === 'none' || ((!(parsedAmountVal > 0)) && (!(parsedYieldVal > 0)) && !hasAnyManualDates);
+
+        if (isEffectivelyNoDividend) {
+            if (frequency !== 'none') setFrequency('none');
+            setAmount('');
+            setYieldPercent('');
             updateStockDividend(targetId, {
                 dividendYield: undefined,
                 dividendAmount: undefined,
@@ -1650,7 +1690,38 @@ export function EditDividendPage() {
 
                             {/* Dividend Section - Always visible */}
                             <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
-                                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Dividende</h3>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Dividende</h3>
+                                    {frequency === 'none' && (
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={handleAutoFetchSchedule}
+                                                disabled={isFetchingSchedule || (!symbol.trim() && !isin.trim())}
+                                                className="h-7 inline-flex items-center justify-center gap-1.5 px-2.5 py-0 rounded-md text-xs font-medium leading-none border bg-blue-600 text-white border-blue-500 hover:bg-blue-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                                title="Automatisch bei DivvyDiary / Yahoo Finance prüfen, ob eine Dividende existiert"
+                                            >
+                                                <RefreshCw className={cn("size-3.5 shrink-0", isFetchingSchedule && "animate-spin")} />
+                                                <span>{isFetchingSchedule ? 'Prüfe...' : 'Dividende prüfen'}</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const cleanIsin = (isin || stock?.isin || '').trim();
+                                                    const url = cleanIsin
+                                                        ? `https://divvydiary.com/de/${encodeURIComponent(cleanIsin)}`
+                                                        : `https://divvydiary.com/de/search?q=${encodeURIComponent(stock?.name || symbol)}`;
+                                                    window.open(url, '_blank');
+                                                }}
+                                                className="h-7 inline-flex items-center justify-center gap-1.5 px-2.5 py-0 rounded-md text-xs font-medium leading-none border bg-secondary text-secondary-foreground border-border hover:bg-secondary/80 transition-colors cursor-pointer whitespace-nowrap"
+                                                title="Bei DivvyDiary nachsehen"
+                                            >
+                                                <ExternalLink className="size-3.5 shrink-0" />
+                                                <span>DivvyDiary</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* Frequency selector at top */}
                                 <div className="space-y-2">
@@ -1667,6 +1738,15 @@ export function EditDividendPage() {
                                         <option value="monthly">Monatlich (12x/Jahr)</option>
                                     </select>
                                 </div>
+
+                                {frequency === 'none' && scheduleFeedback && (
+                                    <div className="p-3 rounded-lg border border-amber-500/35 bg-amber-500/10 text-xs space-y-0.5">
+                                        <p className="font-semibold text-amber-700 dark:text-amber-300">{scheduleFeedback.message}</p>
+                                        {scheduleFeedback.detail && (
+                                            <p className="text-muted-foreground">{scheduleFeedback.detail}</p>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Only show dividend details if frequency is not 'none' */}
                                 {frequency !== 'none' && (

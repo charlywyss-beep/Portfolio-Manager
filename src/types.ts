@@ -98,6 +98,10 @@ export interface Stock {
     kcv?: number; // Kurs-Cashflow-Verhältnis (Price-to-Cash-Flow)
     eps?: number; // Earnings Per Share (Trailing 12M)
     forwardEps?: number; // Expected Forward EPS
+    fiftyDayAverage?: number; // 50-Tage-Durchschnitt (GD50)
+    twoHundredDayAverage?: number; // 200-Tage-Durchschnitt (GD200)
+    fiftyTwoWeekHigh?: number; // 52-Wochen-Hoch
+    fiftyTwoWeekLow?: number; // 52-Wochen-Tief
     quickLinks?: QuickLink[]; // NEW: Custom URLs for charts, financial sites, etc.
     fairValueQuickLinks?: QuickLink[]; // Specific custom URLs for Fair Value research/calculation
     marketState?: 'REGULAR' | 'CLOSED' | 'PRE' | 'POST' | 'PREPRE' | 'POSTPOST'; // Yahoo Finance Market State

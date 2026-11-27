@@ -811,7 +811,7 @@ export function PriceHistoryChart({
                 return {
                     stroke: fvTheme.stroke,
                     fill: fvTheme.fill,
-                    labelPrefix: 'Kauflimit Fairer Wert'
+                    labelPrefix: `Kauflimit ${fvTheme.labelPrefix}`
                 };
             default:
                 return {

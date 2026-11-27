@@ -308,6 +308,10 @@ export default async function handler(req, res) {
             sector: extractedSector,
             industry: extractedIndustry,
             kcv: kcvValue,
+            fiftyDayAverage: getRawVal(quoteBasic?.fiftyDayAverage) || getRawVal(quoteSummary?.summaryDetail?.fiftyDayAverage) || null,
+            twoHundredDayAverage: getRawVal(quoteBasic?.twoHundredDayAverage) || getRawVal(quoteSummary?.summaryDetail?.twoHundredDayAverage) || null,
+            fiftyTwoWeekHigh: getRawVal(quoteBasic?.fiftyTwoWeekHigh) || getRawVal(quoteSummary?.summaryDetail?.fiftyTwoWeekHigh) || null,
+            fiftyTwoWeekLow: getRawVal(quoteBasic?.fiftyTwoWeekLow) || getRawVal(quoteSummary?.summaryDetail?.fiftyTwoWeekLow) || null,
             // ETF Allocation Data (NEW)
             sectorWeights: (() => {
                 const sw = quoteSummary?.topHoldings?.sectorWeightings || quoteSummary?.topHoldings?.equityHoldings?.sectorWeightings;
