@@ -111,15 +111,30 @@ export default defineConfig({
                   : tsLocal;
 
               if (!result && !quoteBasic) {
-                   // BULLETPROOF FALLBACK for totally crumb-blocked IPs
+                   // BULLETPROOF FALLBACK for totally crumb-blocked IPs (1Y daily closes also yield exact GD50 & GD200!)
                    try {
-                       const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
+                       const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`;
                        const chartRes = await fetch(chartUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }});
                        if (!chartRes.ok) return { symbol: sym, error: 'Completely blocked' };
                        const chartData: any = await chartRes.json();
-                       const chartMeta = chartData.chart?.result?.[0]?.meta;
+                       const chartResult0 = chartData.chart?.result?.[0];
+                       const chartMeta = chartResult0?.meta;
                        
                        if (!chartMeta) return { symbol: sym, error: 'No chart data' };
+
+                       const rawDailyCloses: any[] = chartResult0?.indicators?.quote?.[0]?.close || [];
+                       const rawDailyOpens: any[] = chartResult0?.indicators?.quote?.[0]?.open || [];
+                       const validCloses = rawDailyCloses.filter((v): v is number => typeof v === 'number' && isFinite(v) && v > 0);
+                       const avgTail = (arr: number[], n: number) => {
+                           const slice = arr.slice(-n);
+                           return slice.length > 0 ? slice.reduce((acc, v) => acc + v, 0) / slice.length : null;
+                       };
+                       const calcSma50 = validCloses.length >= 20 ? avgTail(validCloses, 50) : null;
+                       const calcSma200 = validCloses.length >= 100 ? avgTail(validCloses, 200) : null;
+                       const prevCloseSafe = chartMeta.previousClose
+                           ?? (validCloses.length >= 2 ? validCloses[validCloses.length - 2] : chartMeta.regularMarketPrice);
+                       const lastValidOpen = [...rawDailyOpens].reverse().find((v): v is number => typeof v === 'number' && isFinite(v) && v > 0);
+                       const openSafe = chartMeta.regularMarketOpen ?? lastValidOpen ?? prevCloseSafe;
                        
                         // Pre-Market / After-Hours aus 5m-Chart (includePrePost) ableiten - kein Crumb noetig
                         const ext: { state: string | null; prePrice: number | null; prePct: number | null; postPrice: number | null; postPct: number | null; preTime: number | null; postTime: number | null } =
@@ -188,10 +203,12 @@ export default defineConfig({
                            forwardEps: tsLocal.normalizedEps || null,
                            dividendYield: null,
                            kcv: kcvValue,
-                           fiftyTwoWeekHigh: chartMeta.fiftyTwoWeekHigh ?? null,
-                           fiftyTwoWeekLow: chartMeta.fiftyTwoWeekLow ?? null,
-                           regularMarketOpen: chartMeta.chartPreviousClose,
-                           regularMarketPreviousClose: chartMeta.chartPreviousClose,
+                           fiftyDayAverage: calcSma50,
+                           twoHundredDayAverage: calcSma200,
+                           fiftyTwoWeekHigh: chartMeta.fiftyTwoWeekHigh ?? (validCloses.length > 0 ? Math.max(...validCloses) : null),
+                           fiftyTwoWeekLow: chartMeta.fiftyTwoWeekLow ?? (validCloses.length > 0 ? Math.min(...validCloses) : null),
+                           regularMarketOpen: openSafe,
+                           regularMarketPreviousClose: prevCloseSafe,
                            country: null,
                            sectorWeights: null,
                            countryWeights: null

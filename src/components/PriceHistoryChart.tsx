@@ -2014,9 +2014,9 @@ export function PriceHistoryChart({
                             e.stopPropagation();
                             setShowFibonacci(prev => {
                                 const next = !prev;
-                                if (next && measurePoints.length < 2 && selectedRange === '1D') {
+                                if (next && measurePoints.length < 2 && selectedRange !== '1Y' && selectedRange !== '3Y' && selectedRange !== '5Y') {
                                     if (!isFullscreen) handleToggleFullscreen();
-                                    handleRangeChange('3M');
+                                    handleRangeChange('1Y');
                                 }
                                 return next;
                             });
@@ -2679,7 +2679,9 @@ export function PriceHistoryChart({
                                                 if (next) {
                                                     handleClearCompare();
                                                     if (!isFullscreen) handleToggleFullscreen();
-                                                    handleRangeChange('3M');
+                                                    if (selectedRange !== '1Y' && selectedRange !== '3Y' && selectedRange !== '5Y') {
+                                                        handleRangeChange('1Y');
+                                                    }
                                                 }
                                                 return next;
                                             });

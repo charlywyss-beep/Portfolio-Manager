@@ -76,6 +76,8 @@ export interface Stock {
         valuationMode?: 'conservative' | 'quality' | 'risk' | 'manual';
         manualFairValue?: number;
         manualTargetPrice?: number;
+        manualSellLimit?: number;
+        sellLimitType?: 'conservative' | 'quality' | 'risk' | 'manual';
         customBackup?: {
             eps?: number;
             growthRate?: number;
@@ -90,6 +92,7 @@ export interface Stock {
         };
     };
     sellLimit?: number; // Desired sell price -> Sell Limit
+    sellLimitType?: 'conservative' | 'quality' | 'risk' | 'manual'; // Origin of target sell limit
     notes?: string; // Personal notes about the stock
     plannedPurchase?: PlannedPurchase; // Complete planned purchase simulation data
     distributionPolicy?: 'distributing' | 'accumulating'; // Thesaurierend vs Ausschüttend

@@ -85,7 +85,7 @@ function getPositionEstimatedBeta(pos: any, nqPct: number, esPct: number) {
     const country = (pos.stock?.country || '').toLowerCase();
     const name = (pos.stock?.name || '').toLowerCase();
     const type = (pos.stock?.type || '').toLowerCase();
-    const isEtf = type === 'etf' || name.includes('etf') || name.includes('ucits') || name.includes('ftse') || name.includes('msci') || name.includes('vanguard') || name.includes('ishares') || name.includes('invesco');
+    const isEtf = type === 'etf' || /\betf\b/.test(name) || name.includes('ucits') || name.includes('ftse') || name.includes('msci') || name.includes('vanguard') || name.includes('ishares') || name.includes('invesco');
     const yieldPct = Number(pos.stock?.dividendYield || 0);
     const isHighDiv = yieldPct >= 3.0 || name.includes('dividend') || name.includes('income') || name.includes('aristocrat') || name.includes('high div');
 

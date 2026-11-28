@@ -704,8 +704,37 @@ export function EditDividendPage() {
                 updates.targetPriceType = undefined;
             }
         }
-        if (sellLimit !== undefined && (!stock || (sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined) !== stock.sellLimit)) {
-            updates.sellLimit = sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined;
+        if (sellLimit !== undefined) {
+            const trimmedSl = sellLimit.trim();
+            const parsedSl = trimmedSl !== '' ? parseFloat(trimmedSl.replace(',', '.')) : undefined;
+            const validSl = parsedSl !== undefined && !isNaN(parsedSl) && parsedSl > 0 ? parseFloat(parsedSl.toFixed(2)) : undefined;
+            const sellChanged = (!stock && validSl !== undefined)
+                || (stock && ((validSl === undefined) !== (stock.sellLimit === undefined) || (validSl !== undefined && stock.sellLimit !== undefined && Math.abs(validSl - stock.sellLimit) > 0.01)));
+            if (sellChanged) {
+                updates.sellLimit = validSl;
+                updates.sellLimitType = validSl ? 'manual' : undefined;
+                if (validSl) {
+                    const symKey = (symbol || stock?.symbol || '').toUpperCase();
+                    updates.fairValueParams = {
+                        ...(updates.fairValueParams || stock?.fairValueParams || {}),
+                        manualSellLimit: validSl,
+                        sellLimitType: 'manual'
+                    };
+                    if (symKey) {
+                        try {
+                            const mapRaw = localStorage.getItem('fair_value_params_map');
+                            const map = mapRaw ? JSON.parse(mapRaw) : {};
+                            map[symKey] = {
+                                ...map[symKey],
+                                sellLimit: validSl,
+                                sellLimitType: 'manual',
+                                manualSellLimit: validSl
+                            };
+                            localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                        } catch {}
+                    }
+                }
+            }
         }
         if (fairValue !== undefined && (!stock || (fairValue ? parseFloat(fairValue.replace(',', '.')) : undefined) !== stock.fairValue)) {
             updates.fairValue = fairValue ? parseFloat(fairValue.replace(',', '.')) : undefined;
@@ -1622,19 +1651,53 @@ export function EditDividendPage() {
 
                                                 {/* Verkaufslimit */}
                                                 <div className="flex flex-col h-full gap-2">
-                                                    <div className="flex justify-between items-center min-h-[28px]">
-                                                        <label className="text-sm font-medium">Verkaufslimit</label>
-                                                    </div>
-                                                    <input
-                                                        type="text"
-                                                        inputMode="decimal"
-                                                        autoComplete="off"
-                                                        placeholder="Preis zum Verkauf..."
-                                                        value={sellLimit}
-                                                        onChange={(e) => setSellLimit(e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        className="w-full h-11 px-3 py-2 border border-border/80 rounded-lg bg-background text-foreground text-lg font-mono font-medium mt-auto focus:border-primary focus:outline-none transition-colors"
-                                                    />
+                                                    {(() => {
+                                                        const parsedSell = parseFloat((sellLimit || '').replace(',', '.'));
+                                                        const hasValidSell = !isNaN(parsedSell) && parsedSell > 0;
+                                                        const matchesSavedSell = Boolean(
+                                                            hasValidSell &&
+                                                            currentStockObj?.sellLimit &&
+                                                            Math.abs(parsedSell - currentStockObj.sellLimit) <= 0.01
+                                                        );
+                                                        const activeSlType = matchesSavedSell
+                                                            ? (currentStockObj?.sellLimitType || currentStockObj?.fairValueParams?.sellLimitType || 'manual')
+                                                            : 'manual';
+                                                        const slBadge =
+                                                            activeSlType === 'conservative'
+                                                                ? { label: 'Sicherheit A', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/35', input: 'border-blue-500/60 focus:border-blue-400 text-blue-400 bg-blue-500/5' }
+                                                                : activeSlType === 'quality'
+                                                                    ? { label: 'Qualität B', cls: 'bg-purple-500/15 text-purple-400 border-purple-500/35', input: 'border-purple-500/60 focus:border-purple-400 text-purple-400 bg-purple-500/5' }
+                                                                    : activeSlType === 'risk'
+                                                                        ? { label: 'Risiko C', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/35', input: 'border-amber-500/60 focus:border-amber-400 text-amber-400 bg-amber-500/5' }
+                                                                        : { label: 'Manuell', cls: 'bg-pink-500/15 text-pink-400 border-pink-500/35', input: 'border-pink-500/60 focus:border-pink-400 text-pink-400 bg-pink-500/5' };
+                                                        return (
+                                                            <>
+                                                                <div className="flex justify-between items-center min-h-[28px] gap-2">
+                                                                    <label className="text-sm font-medium">Verkaufslimit</label>
+                                                                    {hasValidSell && (
+                                                                        <span className={cn("h-7 px-2.5 py-0 text-xs font-semibold rounded-lg border inline-flex items-center justify-center leading-none whitespace-nowrap", slBadge.cls)}>
+                                                                            {slBadge.label}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <input
+                                                                    type="text"
+                                                                    inputMode="decimal"
+                                                                    autoComplete="off"
+                                                                    placeholder="Preis zum Verkauf..."
+                                                                    value={sellLimit}
+                                                                    onChange={(e) => setSellLimit(e.target.value)}
+                                                                    onFocus={(e) => e.target.select()}
+                                                                    className={cn(
+                                                                        "w-full h-11 px-3 py-2 border rounded-lg text-lg font-mono font-medium mt-auto focus:outline-none transition-colors",
+                                                                        hasValidSell
+                                                                            ? slBadge.input
+                                                                            : "border-border/80 bg-background text-foreground focus:border-primary"
+                                                                    )}
+                                                                />
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
 
                                                 {/* Fairer Wert */}

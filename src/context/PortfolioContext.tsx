@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import type { Position, Stock } from '../types';
 import { MOCK_POSITIONS, MOCK_STOCKS } from '../data/mockData';
-import { fetchStockQuotes, fetchStockPricePrecise } from '../services/yahoo-finance';
+import { fetchStockQuotes, fetchStockPricePrecise, fetchStockHistory } from '../services/yahoo-finance';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { estimateMarketState } from '../utils/market';
 import { processMonthlyContributions } from '../utils/vorsorge';
@@ -58,6 +58,8 @@ interface PortfolioContextType {
     simulatorState: {
         shares: number;
         price: number;
+        buyPrice?: number;
+        sellPrice?: number;
         dividend: number;
         selectedStockId: string;
         simName: string;
@@ -97,6 +99,8 @@ interface PortfolioContextType {
 const defaultSimulatorState: PortfolioContextType['simulatorState'] = {
     shares: 150,
     price: 90.50,
+    buyPrice: 90.50,
+    sellPrice: 90.50,
     dividend: 3.05,
     selectedStockId: '',
     simName: '',
@@ -657,7 +661,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     const isPoisonedByExtended = (s.postMarketPrice && Math.abs(s.currentPrice - s.postMarketPrice) < 0.01 && Math.abs(update.price - s.postMarketPrice) > 0.01)
                         || (s.preMarketPrice && Math.abs(s.currentPrice - s.preMarketPrice) < 0.01 && Math.abs(update.price - s.preMarketPrice) > 0.01);
                     if (!isPoisonedByExtended && newDate.getTime() < existingDate.getTime()) {
-                        return s;
+                        const hasNewTech =
+                            (update.fiftyDayAverage && !s.fiftyDayAverage) ||
+                            (update.twoHundredDayAverage && !s.twoHundredDayAverage) ||
+                            (update.fiftyTwoWeekHigh && !s.fiftyTwoWeekHigh) ||
+                            (update.fiftyTwoWeekLow && !s.fiftyTwoWeekLow);
+                        if (!hasNewTech) return s;
+                        return {
+                            ...s,
+                            fiftyDayAverage: update.fiftyDayAverage || s.fiftyDayAverage,
+                            twoHundredDayAverage: update.twoHundredDayAverage || s.twoHundredDayAverage,
+                            fiftyTwoWeekHigh: update.fiftyTwoWeekHigh || s.fiftyTwoWeekHigh,
+                            fiftyTwoWeekLow: update.fiftyTwoWeekLow || s.fiftyTwoWeekLow
+                        };
                     }
                 }
 
@@ -745,6 +761,62 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             if (updates && Object.keys(updates).length > 0) {
                 detectPriceChange(updates);
                 updateStockPricesBatch(updates);
+            }
+
+            // 1b. Backfill GD50 / GD200 / 52W-High-Low via 1Y chart history for any stocks still missing GD200
+            // (crucial on static GitHub Pages hosting or when Yahoo quoteBasic omits moving averages)
+            const missingSmaSymbols = stocks
+                .filter(s => {
+                    if (!s.symbol) return false;
+                    const u = updates?.[s.symbol] || updates?.[s.symbol.toUpperCase()];
+                    const hasGd200 = Boolean((u && u.twoHundredDayAverage && u.twoHundredDayAverage > 0) || (s.twoHundredDayAverage && s.twoHundredDayAverage > 0));
+                    return !hasGd200;
+                })
+                .map(s => s.symbol);
+
+            if (missingSmaSymbols.length > 0 && (force || missingSmaSymbols.length >= Math.ceil(symbols.length * 0.5))) {
+                const uniqueMissing = Array.from(new Set(missingSmaSymbols));
+                const techUpdates: Record<string, any> = {};
+                const techChunkSize = 6;
+                for (let i = 0; i < uniqueMissing.length; i += techChunkSize) {
+                    const chunk = uniqueMissing.slice(i, i + techChunkSize);
+                    const chunkRes = await Promise.all(chunk.map(async (sym) => {
+                        try {
+                            const hist = await fetchStockHistory(sym, '1Y');
+                            const vals = (hist.data || []).map(p => p.value).filter(v => typeof v === 'number' && isFinite(v) && v > 0);
+                            if (vals.length < 20) return null;
+                            const avgTail = (arr: number[], n: number) => {
+                                const sl = arr.slice(-n);
+                                return sl.length > 0 ? sl.reduce((a, b) => a + b, 0) / sl.length : null;
+                            };
+                            const sma50 = avgTail(vals, 50);
+                            const sma200 = vals.length >= 100 ? avgTail(vals, 200) : null;
+                            const high52 = Math.max(...vals);
+                            const low52 = Math.min(...vals);
+                            const latestPrice = hist.regularMarketPrice || vals[vals.length - 1];
+                            return {
+                                sym,
+                                data: {
+                                    price: latestPrice,
+                                    fiftyDayAverage: sma50,
+                                    twoHundredDayAverage: sma200,
+                                    fiftyTwoWeekHigh: high52,
+                                    fiftyTwoWeekLow: low52
+                                }
+                            };
+                        } catch {
+                            return null;
+                        }
+                    }));
+                    chunkRes.forEach(item => {
+                        if (item?.data) {
+                            techUpdates[item.sym] = item.data;
+                        }
+                    });
+                }
+                if (Object.keys(techUpdates).length > 0) {
+                    updateStockPricesBatch(techUpdates);
+                }
             }
 
             // 2. If manual/forced refresh, also perform Deep Chart Sync (with 1W weekend/holiday fallback)

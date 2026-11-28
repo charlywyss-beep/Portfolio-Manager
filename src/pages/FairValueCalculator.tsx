@@ -1,8 +1,10 @@
 import { StockName } from '../components/StockName';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, Target, Lock } from 'lucide-react';
+import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, Target, Lock, Radar } from 'lucide-react';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
+import { TradeRadarModal } from '../components/TradeRadarModal';
+import { buildTradeRadar } from '../utils/tradeRadar';
 import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -59,9 +61,10 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 );
 
 export function FairValueCalculator() {
-    const { positions, stocks, watchlists, fixedDeposits, updateStock, addStock, addFairValueQuickLink, removeFairValueQuickLink } = usePortfolio();
+    const { positions, stocks, watchlists, fixedDeposits, orderBook, updateStock, addStock, addFairValueQuickLink, removeFairValueQuickLink, refreshAllPrices, isGlobalRefreshing } = usePortfolio();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const [isTradeRadarOpen, setIsTradeRadarOpen] = useState(false);
 
     const handleBack = () => {
         const from = searchParams.get('from');
@@ -185,10 +188,46 @@ export function FairValueCalculator() {
         return stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase()) || null;
     }, [stocks, selectedSymbol]);
 
-    // Kauflimit state for direct transfer to Kursdaten
+    // Kauflimit & Verkaufslimit state for direct transfer to Kursdaten, Watchlist & Radar
     const [buyLimitInput, setBuyLimitInput] = useState('');
     const [buyLimitSavedToast, setBuyLimitSavedToast] = useState(false);
+    const [sellLimitInput, setSellLimitInput] = useState('');
+    const [sellLimitSavedToast, setSellLimitSavedToast] = useState(false);
+    const [sellPremiumPct, setSellPremiumPct] = useState<number>(30);
     const [isRatingHovered, setIsRatingHovered] = useState(false);
+
+    // Default sell overvaluation premium synced to valuation profile & ETF/Stock type
+    useEffect(() => {
+        const isCurrentEtf = isEtfAsset(currentStock, quote, selectedSymbol);
+        if (isCurrentEtf) {
+            setSellPremiumPct(valuationProfile === 'quality' ? 25 : 20);
+        } else {
+            setSellPremiumPct(valuationProfile === 'quality' ? 30 : 25);
+        }
+    }, [valuationProfile, selectedSymbol, currentStock?.type]);
+
+    useEffect(() => {
+        if (currentStock?.sellLimit && currentStock.sellLimit > 0) {
+            setSellLimitInput(currentStock.sellLimit.toString());
+        } else {
+            const symKey = selectedSymbol ? selectedSymbol.toUpperCase() : '';
+            let savedSellLimit: number | undefined;
+            try {
+                const mapRaw = localStorage.getItem('fair_value_params_map');
+                if (mapRaw && symKey) {
+                    const map = JSON.parse(mapRaw);
+                    if (map[symKey]?.sellLimit) {
+                        savedSellLimit = Number(map[symKey].sellLimit);
+                    }
+                }
+            } catch {}
+            if (savedSellLimit && savedSellLimit > 0) {
+                setSellLimitInput(savedSellLimit.toString());
+            } else {
+                setSellLimitInput('');
+            }
+        }
+    }, [currentStock?.id, currentStock?.sellLimit, selectedSymbol]);
 
     useEffect(() => {
         if (currentStock?.targetPrice) {
@@ -288,6 +327,71 @@ export function FairValueCalculator() {
         setTimeout(() => setBuyLimitSavedToast(false), 2500);
     };
 
+    const handleSaveSellLimit = (valToSave?: string, explicitSource?: 'conservative' | 'quality' | 'risk' | 'manual') => {
+        const raw = valToSave !== undefined ? valToSave : sellLimitInput;
+        const parsed = parseFloat(raw.replace(/['\s]/g, '').replace(',', '.'));
+        const newSellLimit = !isNaN(parsed) && parsed > 0 ? parseFloat(parsed.toFixed(2)) : undefined;
+
+        let resolvedSellType: 'conservative' | 'quality' | 'risk' | 'manual' = 'manual';
+        if (newSellLimit) {
+            if (explicitSource) {
+                resolvedSellType = explicitSource;
+            } else if (calculation.sellPrice > 0 && Math.abs(newSellLimit - calculation.sellPrice) <= 0.05) {
+                resolvedSellType = valuationProfile;
+            } else if (currentStock?.sellLimit && Math.abs(newSellLimit - currentStock.sellLimit) <= 0.05 && (currentStock.sellLimitType || currentStock.fairValueParams?.sellLimitType)) {
+                resolvedSellType = (currentStock.sellLimitType || currentStock.fairValueParams?.sellLimitType) as any;
+            } else {
+                resolvedSellType = 'manual';
+            }
+        }
+
+        let stockId = currentStock?.id;
+        if (!stockId && selectedSymbol && newSellLimit) {
+            stockId = addStock({
+                symbol: selectedSymbol,
+                name: quote?.name || selectedSymbol,
+                currentPrice: quote?.price || 0,
+                previousClose: quote?.previousClose || 0,
+                currency: quote?.currency || 'USD',
+                sector: quote?.sector || 'Allgemein',
+                sellLimit: newSellLimit,
+                sellLimitType: resolvedSellType,
+                fairValue: calculation.fairValue
+            });
+        } else if (stockId) {
+            updateStock(stockId, {
+                sellLimit: newSellLimit,
+                sellLimitType: newSellLimit ? resolvedSellType : undefined,
+                fairValue: calculation.fairValue,
+                fairValueParams: {
+                    ...(currentStock?.fairValueParams || {}),
+                    sellLimitType: newSellLimit ? resolvedSellType : undefined,
+                    ...(newSellLimit && resolvedSellType === 'manual' ? { manualSellLimit: newSellLimit } : {})
+                }
+            });
+        }
+
+        if (selectedSymbol) {
+            try {
+                const key = selectedSymbol.toUpperCase();
+                const mapRaw = localStorage.getItem('fair_value_params_map');
+                const map = mapRaw ? JSON.parse(mapRaw) : {};
+                map[key] = {
+                    ...map[key],
+                    sellLimit: newSellLimit,
+                    sellLimitType: newSellLimit ? resolvedSellType : undefined,
+                    ...(newSellLimit && resolvedSellType === 'manual' ? { manualSellLimit: newSellLimit } : {}),
+                    fairValue: calculation.fairValue
+                };
+                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+            } catch {}
+        }
+
+        setSellLimitInput(newSellLimit ? newSellLimit.toString() : '');
+        setSellLimitSavedToast(true);
+        setTimeout(() => setSellLimitSavedToast(false), 2500);
+    };
+
     // Helper: Read/Write per-symbol parameters in localStorage
     const getSavedSymbolParams = (sym: string) => {
         try {
@@ -380,6 +484,7 @@ export function FairValueCalculator() {
 
             const { clearCustomBackup, ...restParams } = params;
             map[key] = {
+                ...prevEntry,
                 ...restParams,
                 ...(nextCustomBackup ? { customBackup: nextCustomBackup } : {}),
                 updatedAt: now
@@ -1040,6 +1145,7 @@ export function FairValueCalculator() {
         const discountedFuturePrice = futurePrice / Math.pow(1 + valDisc / 100, 5);
         const fairValue = discountedFuturePrice + totalDiscountedDividends;
         const buyPrice = fairValue * (1 - valMos / 100);
+        const sellPrice = fairValue > 0 ? fairValue * (1 + sellPremiumPct / 100) : 0;
 
         // Equivalent Terminal Growth rate for 2-phase DCF tools (e.g. DeltaValue)
         let equivalentTerminalGrowth: number | null = null;
@@ -1072,11 +1178,12 @@ export function FairValueCalculator() {
             futurePrice,
             fairValue,
             buyPrice,
+            sellPrice,
             totalDiscountedDividends,
             isCorrectionNeeded: valPe > ruleOneLimit,
             equivalentTerminalGrowth
         };
-    }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price, valuationProfile, selectedSymbol]);
+    }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price, valuationProfile, selectedSymbol, sellPremiumPct]);
 
     // 🎯 Unterstützungs- & Kaufzonen (Berechnet für jede Aktie & ETF: Zone 1, Zone 2, Zone 3)
     const supportZones = useMemo(() => {
@@ -1378,6 +1485,7 @@ export function FairValueCalculator() {
                     updateStock(existingStock.id, {
                         fairValue: calculation.fairValue,
                         fairValueParams: {
+                            ...(existingStock.fairValueParams || {}),
                             eps: numEps,
                             growthRate: numGrowth,
                             pe: numPe,
@@ -1407,10 +1515,11 @@ export function FairValueCalculator() {
     const isYieldGap = (((typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate) + (typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield)) < ((typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate) - 0.5))
         && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
 
-    const handleGoToBuySell = () => {
+    const handleGoToBuySell = (tradeMode: 'buy' | 'sell' = 'buy') => {
         if (!selectedSymbol) return;
         let targetStockId = currentStock?.id;
         const activeLimit = parseFloat(buyLimitInput.replace(',', '.')) || currentStock?.targetPrice || (calculation.buyPrice > 0 ? calculation.buyPrice : undefined);
+        const activeSellLimit = parseFloat(sellLimitInput.replace(',', '.')) || currentStock?.sellLimit || (calculation.sellPrice > 0 ? calculation.sellPrice : undefined);
 
         if (!targetStockId) {
             targetStockId = addStock({
@@ -1422,12 +1531,22 @@ export function FairValueCalculator() {
                 sector: quote?.sector || 'Allgemein',
                 type: isEtfAsset(currentStock, quote, selectedSymbol) ? 'etf' : 'stock',
                 isin: quote?.isin || '',
-                targetPrice: activeLimit
+                targetPrice: activeLimit,
+                sellLimit: activeSellLimit
             });
-        } else if (activeLimit && currentStock && currentStock.targetPrice !== activeLimit) {
-            updateStock(targetStockId, { targetPrice: activeLimit });
+        } else {
+            const updates: any = {};
+            if (tradeMode === 'buy' && activeLimit && currentStock && currentStock.targetPrice !== activeLimit) {
+                updates.targetPrice = activeLimit;
+            }
+            if (tradeMode === 'sell' && activeSellLimit && currentStock && currentStock.sellLimit !== activeSellLimit) {
+                updates.sellLimit = activeSellLimit;
+            }
+            if (Object.keys(updates).length > 0) {
+                updateStock(targetStockId, updates);
+            }
         }
-        navigate(`/calculator?stock=${encodeURIComponent(String(targetStockId || selectedSymbol))}&from=fair-value`);
+        navigate(`/calculator?stock=${encodeURIComponent(String(targetStockId || selectedSymbol))}&mode=${tradeMode}&from=fair-value`);
     };
 
     return (
@@ -1964,7 +2083,7 @@ export function FairValueCalculator() {
                                             <>
                                                 {isCurEtf && etfDist && (
                                                     <span className={cn(
-                                                        "text-[10px] font-bold px-1.5 py-0.5 rounded border leading-none",
+                                                        "text-xs font-bold px-1.5 py-0.5 rounded border leading-none",
                                                         etfDist === 'accumulating'
                                                             ? "bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/35"
                                                             : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/35"
@@ -1983,27 +2102,37 @@ export function FairValueCalculator() {
                                     })()}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-1.5 shrink-0">
                                 <button
                                     type="button"
-                                    onClick={handleGoToBuySell}
-                                    className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 lg:py-1 lg:px-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all cursor-pointer shadow-sm active:scale-95"
+                                    onClick={() => setIsTradeRadarOpen(true)}
+                                    className="h-7 px-2.5 py-0 inline-flex items-center justify-center gap-1.5 leading-none text-xs font-semibold rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border border-emerald-500/35 transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
+                                    title="Im Kauf-Radar öffnen (springt direkt zur Watchlist & Aktie)"
+                                >
+                                    <Radar className="size-3.5 shrink-0" />
+                                    <span>Kauf-Radar</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleGoToBuySell('buy')}
+                                    className="h-7 px-2.5 py-0 inline-flex items-center justify-center gap-1.5 leading-none text-xs font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-700 dark:text-blue-300 border border-blue-400/35 transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
                                     title="Aktie direkt in Kauf / Verkauf öffnen"
                                 >
-                                    <Calculator className="size-3.5" />
+                                    <Calculator className="size-3.5 shrink-0" />
                                     <span>Kauf / Verkauf</span>
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         setSelectedSymbol(null);
                                         setQuote(null);
                                         setAnalysis(null);
                                         localStorage.removeItem('fair_value_state');
                                     }}
-                                    className="p-1 sm:p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0"
+                                    className="h-7 w-7 p-0 inline-flex items-center justify-center leading-none text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0 cursor-pointer"
                                     title="Aktie entfernen"
                                 >
-                                    <X className="size-4 sm:size-5" />
+                                    <X className="size-4" />
                                 </button>
                             </div>
                         </div>
@@ -3148,273 +3277,515 @@ export function FairValueCalculator() {
                                         const modeLabel = isSavedForStock
                                             ? 'Manuell'
                                             : valuationProfile === 'quality'
-                                                ? 'Qualität (B)'
+                                                ? 'Qualität B'
                                                 : valuationProfile === 'risk'
-                                                    ? 'Risiko-Abschlag (C)'
-                                                    : 'Sicherheit (A)';
+                                                    ? 'Risiko-Abschlag C'
+                                                    : 'Sicherheit A';
+
+                                        const dispCurr = quote.currency === 'GBp' ? 'GBP' : quote.currency;
+                                        const parsedSellInput = parseFloat(sellLimitInput.replace(',', '.'));
+                                        const isSellDirty = !isNaN(parsedSellInput) && parsedSellInput > 0
+                                            ? !(currentStock?.sellLimit && Math.abs(parsedSellInput - currentStock.sellLimit) < 0.01)
+                                            : Boolean(currentStock?.sellLimit && sellLimitInput.trim() === '');
+                                        const sellGapFromCurrent = currentPrice > 0 && calculation.sellPrice > 0
+                                            ? ((calculation.sellPrice - currentPrice) / currentPrice) * 100
+                                            : null;
 
                                         return (
-                                            <div className={cn(
-                                                "fair-value-kaufpreis-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border-2 transition-all shadow-sm shrink-0",
-                                                kaufpreisBorderBg
-                                            )}>
-                                                <div className="flex justify-between items-center gap-2 mb-0.5">
-                                                    <span className={cn("font-bold text-base sm:text-lg shrink-0 whitespace-nowrap", kaufpreisTextColor)}>
-                                                        Kauflimit
-                                                    </span>
-                                                    <div className="flex items-center gap-1.5 sm:gap-2">
-                                                        <span className={cn(
-                                                            "font-mono font-black text-base sm:text-lg whitespace-nowrap tabular-nums",
-                                                            kaufpreisTextColor
-                                                        )}>
-                                                            {formatCurrency(calculation.buyPrice, quote.currency, false)}
-                                                        </span>
-                                                        {calculation.buyPrice > 0 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const val = calculation.buyPrice.toFixed(2);
-                                                                    setBuyLimitInput(val);
-                                                                    handleSaveBuyLimit(val, valuationProfile);
-                                                                }}
-                                                                className={cn(
-                                                                    "px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap",
-                                                                    kaufpreisQuickBtnColor
-                                                                )}
-                                                                title="Berechnetes Kauflimit (inkl. Sicherheitsmarge) direkt als aktives Kauflimit übernehmen"
-                                                            >
-                                                                <Target className="size-3 shrink-0" />
-                                                                <span>Als Kauflimit</span>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="text-[11px]">
-                                                    <span className={cn("font-medium", kaufpreisSubtextColor)}>Maximales Limit inkl. {mos}% Sicherheitsmarge ({modeLabel})</span>
-                                                </div>
-
-                                        {/* Kauflimit Integration (Direkt in Kursdaten & Watchlist übernehmen) */}
-                                        <div className="mt-2 lg:mt-1 pt-2 lg:pt-1 border-t border-border/50 space-y-1.5 lg:space-y-1">
-                                            <div className="flex items-center justify-between text-xs">
-                                                {(() => {
-                                                    const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
-                                                        ? currentStock.targetPrice
-                                                        : calculation.buyPrice;
-                                                    const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) <= 0.05;
-                                                    const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) <= 0.05;
-
-                                                    const savedType = currentStock?.targetPriceType;
-                                                    let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
-                                                    if (savedType) {
-                                                        effectiveLimitType = savedType;
-                                                    } else if (isMatchingBuyPrice) {
-                                                        effectiveLimitType = valuationProfile;
-                                                    } else if (isMatchingFairValue) {
-                                                        effectiveLimitType = 'fairValue';
-                                                    } else {
-                                                        effectiveLimitType = 'manual';
-                                                    }
-
-                                                    if (effectiveLimitType === 'fairValue') {
-                                                        effectiveLimitType = valuationProfile === 'risk' ? 'risk' : valuationProfile === 'quality' ? 'quality' : 'conservative';
-                                                    }
-                                                    const isCustom = effectiveLimitType === 'manual';
-                                                    const iconAndLabelColor = isCustom
-                                                        ? "text-pink-400"
-                                                        : effectiveLimitType === 'risk'
-                                                            ? "text-amber-400"
-                                                            : effectiveLimitType === 'quality'
-                                                                ? "text-purple-400"
-                                                                : "text-blue-400";
-
-                                                    return (
-                                                        <span className={cn("font-semibold flex items-center gap-1.5", iconAndLabelColor)}>
-                                                            <Target className="size-3.5" />
-                                                            <span>Aktives Kauflimit:</span>
-                                                        </span>
-                                                    );
-                                                })()}
-                                                {buyLimitSavedToast ? (() => {
-                                                    const rawSavedType = currentStock?.targetPriceType || valuationProfile;
-                                                    const savedColorMode = rawSavedType === 'fairValue'
-                                                        ? (isSavedForStock ? 'manual' : valuationProfile)
-                                                        : rawSavedType;
-                                                    const toastColor = savedColorMode === 'manual'
-                                                        ? "text-pink-400 bg-pink-500/10 border-pink-500/30"
-                                                        : savedColorMode === 'risk'
-                                                            ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
-                                                            : savedColorMode === 'quality'
-                                                                ? "text-purple-400 bg-purple-500/10 border-purple-500/30"
-                                                                : "text-blue-400 bg-blue-500/10 border-blue-500/30";
-
-                                                    return (
-                                                        <span className={cn("text-xs font-bold px-2 py-0.5 rounded border flex items-center gap-1 animate-pulse", toastColor)}>
-                                                            <Check className="size-3" />
-                                                            <span>In Kursdaten übernommen!</span>
-                                                        </span>
-                                                    );
-                                                })() : currentStock?.targetPrice ? (() => {
-                                                    const savedType = currentStock?.targetPriceType;
-                                                    const isMatchingBuyPrice = Math.abs(currentStock.targetPrice - calculation.buyPrice) <= 0.05;
-                                                    const isMatchingFairValue = Math.abs(currentStock.targetPrice - calculation.fairValue) <= 0.05;
-
-                                                    let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
-                                                    if (savedType) {
-                                                        effectiveLimitType = savedType;
-                                                    } else if (isMatchingBuyPrice) {
-                                                        effectiveLimitType = valuationProfile;
-                                                    } else if (isMatchingFairValue) {
-                                                        effectiveLimitType = 'fairValue';
-                                                    } else {
-                                                        effectiveLimitType = 'manual';
-                                                    }
-
-                                                    let badgeLabel = 'Manuell';
-                                                    let badgeColor = 'text-pink-400';
-
-                                                    if (effectiveLimitType === 'risk') {
-                                                        badgeLabel = 'Risiko-Abschlag C';
-                                                        badgeColor = 'text-amber-400';
-                                                    } else if (effectiveLimitType === 'quality') {
-                                                        badgeLabel = 'Qualität B';
-                                                        badgeColor = 'text-purple-400';
-                                                    } else if (effectiveLimitType === 'conservative') {
-                                                        badgeLabel = 'Sicherheit A';
-                                                        badgeColor = 'text-blue-400';
-                                                    } else if (effectiveLimitType === 'fairValue') {
-                                                        badgeLabel = isSavedForStock ? 'Fairer Wert Manuell' : valuationProfile === 'risk' ? 'Fairer Wert C' : valuationProfile === 'quality' ? 'Fairer Wert B' : 'Fairer Wert A';
-                                                        badgeColor = isSavedForStock ? 'text-pink-400' : valuationProfile === 'risk' ? 'text-amber-400' : valuationProfile === 'quality' ? 'text-purple-400' : 'text-blue-400';
-                                                    }
-
-                                                    return (
-                                                        <span className={cn(
-                                                            "text-[11px] font-medium flex items-center gap-1",
-                                                            badgeColor
-                                                        )}>
-                                                            <Check className="size-3" />
-                                                            <span>
-                                                                Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} {badgeLabel}
-                                                            </span>
-                                                        </span>
-                                                    );
-                                                })() : null}
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                {(() => {
-                                                    const numInput = parseFloat(buyLimitInput.replace(',', '.')) || (currentStock?.targetPrice || 0);
-                                                    const isMatchingActiveStock = Boolean(currentStock?.targetPrice && Math.abs(numInput - currentStock.targetPrice) < 0.01);
-                                                    const isMatchingBuyPrice = Math.abs(numInput - calculation.buyPrice) < 0.01;
-                                                    const isMatchingFairValue = Math.abs(numInput - calculation.fairValue) < 0.01;
-
-                                                    let inputColorType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
-                                                    if (isMatchingActiveStock && currentStock?.targetPriceType) {
-                                                        inputColorType = currentStock.targetPriceType;
-                                                    } else if (isMatchingBuyPrice) {
-                                                        inputColorType = valuationProfile;
-                                                    } else if (isMatchingFairValue) {
-                                                        inputColorType = 'fairValue';
-                                                    } else {
-                                                        inputColorType = 'manual';
-                                                    }
-
-                                                    if (inputColorType === 'fairValue') {
-                                                        inputColorType = valuationProfile === 'risk' ? 'risk' : valuationProfile === 'quality' ? 'quality' : 'conservative';
-                                                    }
-                                                    const parsedInput = parseFloat(buyLimitInput.replace(',', '.'));
-                                                    const isLimitDirty = !isNaN(parsedInput) && parsedInput > 0 && !(currentStock?.targetPrice && Math.abs(parsedInput - currentStock.targetPrice) < 0.01);
-
-                                                    const inputTextColor = inputColorType === 'manual'
-                                                        ? "text-pink-400 font-bold"
-                                                        : inputColorType === 'risk'
-                                                            ? "text-amber-400 font-bold"
-                                                            : inputColorType === 'quality'
-                                                                ? "text-purple-400 font-bold"
-                                                                : "text-blue-400 font-bold";
-
-                                                    const inputBorderColor = inputColorType === 'manual'
-                                                        ? "border-pink-500/50 focus:ring-pink-400"
-                                                        : inputColorType === 'risk'
-                                                            ? "border-amber-500/50 focus:ring-amber-400"
-                                                            : inputColorType === 'quality'
-                                                                ? "border-purple-500/50 focus:ring-purple-400"
-                                                                : "border-blue-500/50 focus:ring-blue-400";
-
-                                                    const inputCurrencyColor = inputColorType === 'manual'
-                                                        ? "text-pink-400/90 font-bold"
-                                                        : inputColorType === 'risk'
-                                                            ? "text-amber-400/90 font-bold"
-                                                            : inputColorType === 'quality'
-                                                                ? "text-purple-400/90 font-bold"
-                                                                : "text-blue-400/90 font-bold";
-
-                                                    const effectiveSaveBtnColor = inputColorType === 'manual'
-                                                        ? "bg-pink-600 hover:bg-pink-500"
-                                                        : inputColorType === 'risk'
-                                                            ? "bg-amber-600 hover:bg-amber-500"
-                                                            : inputColorType === 'quality'
-                                                                ? "bg-purple-600 hover:bg-purple-500"
-                                                                : "bg-blue-600 hover:bg-blue-500";
-
-                                                    return (
-                                                        <>
-                                                            <div className="relative flex-1">
-                                                                <input
-                                                                    type="text"
-                                                                    inputMode="decimal"
-                                                                    value={buyLimitInput}
-                                                                    onChange={(e) => setBuyLimitInput(e.target.value)}
-                                                                    onKeyDown={(e) => {
-                                                                        if (e.key === 'Enter') {
-                                                                            handleSaveBuyLimit(buyLimitInput);
-                                                                        }
-                                                                    }}
-                                                                    placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
-                                                                    className={cn("w-full px-2 py-1 lg:py-0.5 rounded-lg border bg-background text-xs sm:text-sm lg:text-xs font-mono pr-12 focus:ring-1 h-7 sm:h-8 lg:h-6.5 transition-colors", inputBorderColor, inputTextColor)}
-                                                                />
-                                                                <span className={cn("absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none transition-colors", inputCurrencyColor)}>
-                                                                    {quote.currency === 'GBp' ? 'GBP' : quote.currency}
+                                            <div className="space-y-2 shrink-0">
+                                                {/* Kauflimit & Verkaufslimit nebeneinander — kompakt auf einer Seite */}
+                                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+                                                    {/* 1. Kauflimit Box */}
+                                                    <div className={cn(
+                                                        "fair-value-kaufpreis-box p-2.5 rounded-xl border-2 transition-all shadow-sm flex flex-col justify-between gap-2",
+                                                        kaufpreisBorderBg
+                                                    )}>
+                                                        <div className="space-y-0.5">
+                                                            <div className="flex justify-between items-center gap-1.5 flex-wrap">
+                                                                <span className={cn("font-bold text-sm sm:text-base shrink-0 whitespace-nowrap", kaufpreisTextColor)}>
+                                                                    Kauflimit
                                                                 </span>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className={cn(
+                                                                        "font-mono font-black text-sm sm:text-base whitespace-nowrap tabular-nums",
+                                                                        kaufpreisTextColor
+                                                                    )}>
+                                                                        {formatCurrency(calculation.buyPrice, quote.currency, false)}
+                                                                    </span>
+                                                                    {calculation.buyPrice > 0 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const val = calculation.buyPrice.toFixed(2);
+                                                                                setBuyLimitInput(val);
+                                                                                handleSaveBuyLimit(val, valuationProfile);
+                                                                            }}
+                                                                            className={cn(
+                                                                                "h-7 px-2 py-0 text-xs font-semibold rounded-md border transition-all inline-flex items-center justify-center gap-1 leading-none shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap",
+                                                                                kaufpreisQuickBtnColor
+                                                                            )}
+                                                                            title="Berechnetes Kauflimit direkt übernehmen"
+                                                                        >
+                                                                            <Target className="size-3 shrink-0" />
+                                                                            <span>Übernehmen</span>
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-xs">
+                                                                <span className={cn("font-medium", kaufpreisSubtextColor)}>Inkl. {mos} % Marge · {modeLabel}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Aktives Kauflimit Input */}
+                                                        <div className="pt-2 border-t border-border/50 space-y-1.5">
+                                                            <div className="flex items-center justify-between gap-1 text-xs flex-wrap">
+                                                                {(() => {
+                                                                    const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
+                                                                        ? currentStock.targetPrice
+                                                                        : calculation.buyPrice;
+                                                                    const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) <= 0.05;
+                                                                    const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) <= 0.05;
+
+                                                                    const savedType = currentStock?.targetPriceType;
+                                                                    let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+                                                                    if (savedType) {
+                                                                        effectiveLimitType = savedType;
+                                                                    } else if (isMatchingBuyPrice) {
+                                                                        effectiveLimitType = valuationProfile;
+                                                                    } else if (isMatchingFairValue) {
+                                                                        effectiveLimitType = 'fairValue';
+                                                                    } else {
+                                                                        effectiveLimitType = 'manual';
+                                                                    }
+
+                                                                    if (effectiveLimitType === 'fairValue') {
+                                                                        effectiveLimitType = valuationProfile === 'risk' ? 'risk' : valuationProfile === 'quality' ? 'quality' : 'conservative';
+                                                                    }
+                                                                    const isCustom = effectiveLimitType === 'manual';
+                                                                    const iconAndLabelColor = isCustom
+                                                                        ? "text-pink-400"
+                                                                        : effectiveLimitType === 'risk'
+                                                                            ? "text-amber-400"
+                                                                            : effectiveLimitType === 'quality'
+                                                                                ? "text-purple-400"
+                                                                                : "text-blue-400";
+
+                                                                    return (
+                                                                        <span className={cn("font-semibold flex items-center gap-1", iconAndLabelColor)}>
+                                                                            <Target className="size-3.5 shrink-0" />
+                                                                            <span>Aktives Kauflimit</span>
+                                                                        </span>
+                                                                    );
+                                                                })()}
+                                                                {buyLimitSavedToast ? (() => {
+                                                                    const rawSavedType = currentStock?.targetPriceType || valuationProfile;
+                                                                    const savedColorMode = rawSavedType === 'fairValue'
+                                                                        ? (isSavedForStock ? 'manual' : valuationProfile)
+                                                                        : rawSavedType;
+                                                                    const toastColor = savedColorMode === 'manual'
+                                                                        ? "text-pink-400 bg-pink-500/10 border-pink-500/30"
+                                                                        : savedColorMode === 'risk'
+                                                                            ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
+                                                                            : savedColorMode === 'quality'
+                                                                                ? "text-purple-400 bg-purple-500/10 border-purple-500/30"
+                                                                                : "text-blue-400 bg-blue-500/10 border-blue-500/30";
+
+                                                                    return (
+                                                                        <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1 animate-pulse leading-none", toastColor)}>
+                                                                            <Check className="size-3" />
+                                                                            <span>Gespeichert</span>
+                                                                        </span>
+                                                                    );
+                                                                })() : currentStock?.targetPrice ? (() => {
+                                                                    const savedType = currentStock?.targetPriceType;
+                                                                    const isMatchingBuyPrice = Math.abs(currentStock.targetPrice - calculation.buyPrice) <= 0.05;
+                                                                    const isMatchingFairValue = Math.abs(currentStock.targetPrice - calculation.fairValue) <= 0.05;
+
+                                                                    let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+                                                                    if (savedType) {
+                                                                        effectiveLimitType = savedType;
+                                                                    } else if (isMatchingBuyPrice) {
+                                                                        effectiveLimitType = valuationProfile;
+                                                                    } else if (isMatchingFairValue) {
+                                                                        effectiveLimitType = 'fairValue';
+                                                                    } else {
+                                                                        effectiveLimitType = 'manual';
+                                                                    }
+
+                                                                    let badgeLabel = 'Manuell';
+                                                                    let badgeColor = 'text-pink-400';
+
+                                                                    if (effectiveLimitType === 'risk') {
+                                                                        badgeLabel = 'Risiko C';
+                                                                        badgeColor = 'text-amber-400';
+                                                                    } else if (effectiveLimitType === 'quality') {
+                                                                        badgeLabel = 'Qualität B';
+                                                                        badgeColor = 'text-purple-400';
+                                                                    } else if (effectiveLimitType === 'conservative') {
+                                                                        badgeLabel = 'Sicherheit A';
+                                                                        badgeColor = 'text-blue-400';
+                                                                    } else if (effectiveLimitType === 'fairValue') {
+                                                                        badgeLabel = isSavedForStock ? 'Fairer Wert Manuell' : valuationProfile === 'risk' ? 'Fairer Wert C' : valuationProfile === 'quality' ? 'Fairer Wert B' : 'Fairer Wert A';
+                                                                        badgeColor = isSavedForStock ? 'text-pink-400' : valuationProfile === 'risk' ? 'text-amber-400' : valuationProfile === 'quality' ? 'text-purple-400' : 'text-blue-400';
+                                                                    }
+
+                                                                    return (
+                                                                        <span className={cn("text-xs font-medium inline-flex items-center gap-1 truncate", badgeColor)}>
+                                                                            <Check className="size-3 shrink-0" />
+                                                                            <span className="truncate">{badgeLabel}</span>
+                                                                        </span>
+                                                                    );
+                                                                })() : null}
                                                             </div>
 
-                                                            {isLimitDirty ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
-                                                                className={cn("px-2.5 py-1 lg:py-0.5 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95 h-7 sm:h-8 lg:h-6.5", effectiveSaveBtnColor)}
-                                                                title="In Kursdaten als Kauflimit speichern"
-                                                            >
-                                                                <Check className="size-3.5" />
-                                                                <span>Speichern</span>
-                                                            </button>
-                                                            ) : (
-                                                                <span className={cn("px-2 py-1 text-[11px] font-semibold rounded-lg flex items-center gap-1 shrink-0 select-none h-7 sm:h-8 lg:h-6.5", inputTextColor)} title="Kauflimit ist aktiv und gespeichert">
-                                                                    <Check className="size-3.5" />
-                                                                    <span>Aktiv</span>
+                                                            <div className="flex items-center gap-1.5">
+                                                                {(() => {
+                                                                    const numInput = parseFloat(buyLimitInput.replace(',', '.')) || (currentStock?.targetPrice || 0);
+                                                                    const isMatchingActiveStock = Boolean(currentStock?.targetPrice && Math.abs(numInput - currentStock.targetPrice) < 0.01);
+                                                                    const isMatchingBuyPrice = Math.abs(numInput - calculation.buyPrice) < 0.01;
+                                                                    const isMatchingFairValue = Math.abs(numInput - calculation.fairValue) < 0.01;
+
+                                                                    let inputColorType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+                                                                    if (isMatchingActiveStock && currentStock?.targetPriceType) {
+                                                                        inputColorType = currentStock.targetPriceType;
+                                                                    } else if (isMatchingBuyPrice) {
+                                                                        inputColorType = valuationProfile;
+                                                                    } else if (isMatchingFairValue) {
+                                                                        inputColorType = 'fairValue';
+                                                                    } else {
+                                                                        inputColorType = 'manual';
+                                                                    }
+
+                                                                    if (inputColorType === 'fairValue') {
+                                                                        inputColorType = valuationProfile === 'risk' ? 'risk' : valuationProfile === 'quality' ? 'quality' : 'conservative';
+                                                                    }
+                                                                    const parsedInput = parseFloat(buyLimitInput.replace(',', '.'));
+                                                                    const isLimitDirty = !isNaN(parsedInput) && parsedInput > 0 && !(currentStock?.targetPrice && Math.abs(parsedInput - currentStock.targetPrice) < 0.01);
+
+                                                                    const inputTextColor = inputColorType === 'manual'
+                                                                        ? "text-pink-400 font-bold"
+                                                                        : inputColorType === 'risk'
+                                                                            ? "text-amber-400 font-bold"
+                                                                            : inputColorType === 'quality'
+                                                                                ? "text-purple-400 font-bold"
+                                                                                : "text-blue-400 font-bold";
+
+                                                                    const inputBorderColor = inputColorType === 'manual'
+                                                                        ? "border-pink-500/50 focus:ring-pink-400"
+                                                                        : inputColorType === 'risk'
+                                                                            ? "border-amber-500/50 focus:ring-amber-400"
+                                                                            : inputColorType === 'quality'
+                                                                                ? "border-purple-500/50 focus:ring-purple-400"
+                                                                                : "border-blue-500/50 focus:ring-blue-400";
+
+                                                                    const inputCurrencyColor = inputColorType === 'manual'
+                                                                        ? "text-pink-400/90 font-bold"
+                                                                        : inputColorType === 'risk'
+                                                                            ? "text-amber-400/90 font-bold"
+                                                                            : inputColorType === 'quality'
+                                                                                ? "text-purple-400/90 font-bold"
+                                                                                : "text-blue-400/90 font-bold";
+
+                                                                    const effectiveSaveBtnColor = inputColorType === 'manual'
+                                                                        ? "bg-pink-600 hover:bg-pink-500"
+                                                                        : inputColorType === 'risk'
+                                                                            ? "bg-amber-600 hover:bg-amber-500"
+                                                                            : inputColorType === 'quality'
+                                                                                ? "bg-purple-600 hover:bg-purple-500"
+                                                                                : "bg-blue-600 hover:bg-blue-500";
+
+                                                                    return (
+                                                                        <>
+                                                                            <div className="relative flex-1 min-w-0">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    inputMode="decimal"
+                                                                                    value={buyLimitInput}
+                                                                                    onChange={(e) => setBuyLimitInput(e.target.value)}
+                                                                                    onKeyDown={(e) => {
+                                                                                        if (e.key === 'Enter') {
+                                                                                            handleSaveBuyLimit(buyLimitInput);
+                                                                                        }
+                                                                                    }}
+                                                                                    placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
+                                                                                    className={cn("w-full px-2.5 py-0 rounded-lg border bg-background text-xs sm:text-sm font-mono pr-11 focus:ring-1 h-7 transition-colors", inputBorderColor, inputTextColor)}
+                                                                                />
+                                                                                <span className={cn("absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none transition-colors", inputCurrencyColor)}>
+                                                                                    {dispCurr}
+                                                                                </span>
+                                                                            </div>
+
+                                                                            {isLimitDirty ? (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
+                                                                                    className={cn("h-7 px-2.5 py-0 text-white text-xs font-semibold rounded-lg shadow-sm transition-all inline-flex items-center justify-center gap-1 leading-none shrink-0 active:scale-95 cursor-pointer", effectiveSaveBtnColor)}
+                                                                                    title="In Kursdaten als Kauflimit speichern"
+                                                                                >
+                                                                                    <Check className="size-3.5" />
+                                                                                    <span>Speichern</span>
+                                                                                </button>
+                                                                            ) : (
+                                                                                <span className={cn("h-7 px-2 py-0 text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-1 leading-none shrink-0 select-none", inputTextColor)} title="Kauflimit ist aktiv und gespeichert">
+                                                                                    <Check className="size-3.5" />
+                                                                                    <span>Aktiv</span>
+                                                                                </span>
+                                                                            )}
+                                                                        </>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 2. Verkaufslimit Box (Berechnet & manuell anpassbar — einheitliche Profilfarbe wie Kauflimit) */}
+                                                    {(() => {
+                                                        const sellPresetActiveCls = isManualMode
+                                                            ? "bg-pink-600 text-white border-pink-400"
+                                                            : isRiskMode
+                                                                ? "bg-amber-600 text-white border-amber-400"
+                                                                : isQualityMode
+                                                                    ? "bg-purple-600 text-white border-purple-400"
+                                                                    : "bg-blue-600 text-white border-blue-400";
+                                                        const sellPresetHoverCls = isManualMode
+                                                            ? "hover:border-pink-500/50 hover:text-pink-300"
+                                                            : isRiskMode
+                                                                ? "hover:border-amber-500/50 hover:text-amber-300"
+                                                                : isQualityMode
+                                                                    ? "hover:border-purple-500/50 hover:text-purple-300"
+                                                                    : "hover:border-blue-500/50 hover:text-blue-300";
+                                                        const profileDefaultMeta = isManualMode
+                                                            ? { text: 'text-pink-400', border: 'border-pink-500/50 focus:ring-pink-400', curr: 'text-pink-400/90', saveBtn: 'bg-pink-600 hover:bg-pink-500' }
+                                                            : isRiskMode
+                                                                ? { text: 'text-amber-400', border: 'border-amber-500/50 focus:ring-amber-400', curr: 'text-amber-400/90', saveBtn: 'bg-amber-600 hover:bg-amber-500' }
+                                                                : isQualityMode
+                                                                    ? { text: 'text-purple-400', border: 'border-purple-500/50 focus:ring-purple-400', curr: 'text-purple-400/90', saveBtn: 'bg-purple-600 hover:bg-purple-500' }
+                                                                    : { text: 'text-blue-400', border: 'border-blue-500/50 focus:ring-blue-400', curr: 'text-blue-400/90', saveBtn: 'bg-blue-600 hover:bg-blue-500' };
+
+                                                        return (
+                                                    <div className={cn(
+                                                        "fair-value-verkaufspreis-box p-2.5 rounded-xl border-2 transition-all shadow-sm flex flex-col justify-between gap-2",
+                                                        kaufpreisBorderBg
+                                                    )}>
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between items-center gap-1.5 flex-wrap">
+                                                                <span className={cn("font-bold text-sm sm:text-base shrink-0 whitespace-nowrap", kaufpreisTextColor)}>
+                                                                    Verkaufslimit
                                                                 </span>
-                                                            )}
-                                                        </>
-                                                    );
-                                                })()}
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className={cn("font-mono font-black text-sm sm:text-base whitespace-nowrap tabular-nums", kaufpreisTextColor)}>
+                                                                        {calculation.sellPrice > 0 ? formatCurrency(calculation.sellPrice, quote.currency, false) : '—'}
+                                                                    </span>
+                                                                     {calculation.sellPrice > 0 && (
+                                                                         <button
+                                                                             type="button"
+                                                                             onClick={() => {
+                                                                                 const val = calculation.sellPrice.toFixed(2);
+                                                                                 setSellLimitInput(val);
+                                                                                 handleSaveSellLimit(val, valuationProfile);
+                                                                             }}
+                                                                             className={cn(
+                                                                                 "h-7 px-2 py-0 text-xs font-semibold rounded-md border transition-all inline-flex items-center justify-center gap-1 leading-none shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap",
+                                                                                 kaufpreisQuickBtnColor
+                                                                             )}
+                                                                             title="Berechnetes Verkaufslimit direkt übernehmen"
+                                                                         >
+                                                                             <Target className="size-3 shrink-0" />
+                                                                             <span>Übernehmen</span>
+                                                                         </button>
+                                                                     )}
+                                                                 </div>
+                                                             </div>
+                                                             <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                                                                 <div className="flex items-center gap-1 flex-wrap">
+                                                                     {[20, 25, 30, 45].map((pct) => (
+                                                                         <button
+                                                                             key={pct}
+                                                                             type="button"
+                                                                             onClick={() => setSellPremiumPct(pct)}
+                                                                             className={cn(
+                                                                                 "h-6 px-2 py-0 rounded-md border text-xs font-semibold inline-flex items-center justify-center leading-none transition-colors cursor-pointer",
+                                                                                 sellPremiumPct === pct
+                                                                                     ? sellPresetActiveCls
+                                                                                     : cn("bg-background/80 text-muted-foreground border-border hover:text-foreground", sellPresetHoverCls)
+                                                                             )}
+                                                                             title={`Fairer Wert +${pct} % als Verkaufslimit berechnen`}
+                                                                         >
+                                                                             +{pct}%
+                                                                         </button>
+                                                                     ))}
+                                                                     {calculation.futurePrice > calculation.fairValue * 1.05 && (
+                                                                         <button
+                                                                             type="button"
+                                                                             onClick={() => {
+                                                                                 const val = calculation.futurePrice.toFixed(2);
+                                                                                 setSellLimitInput(val);
+                                                                                 handleSaveSellLimit(val, 'manual');
+                                                                             }}
+                                                                             className={cn(
+                                                                                 "h-6 px-2 py-0 rounded-md border border-border bg-background/80 text-xs font-semibold text-muted-foreground inline-flex items-center justify-center leading-none transition-colors cursor-pointer",
+                                                                                 sellPresetHoverCls
+                                                                             )}
+                                                                             title={`5J-Zielkurs (${formatCurrency(calculation.futurePrice, quote.currency, false)}) direkt als Verkaufslimit setzen`}
+                                                                         >
+                                                                             5J-Ziel
+                                                                         </button>
+                                                                     )}
+                                                                 </div>
+                                                                 {sellGapFromCurrent !== null && (
+                                                                     <span className={cn(
+                                                                         "text-xs font-mono font-semibold tabular-nums whitespace-nowrap",
+                                                                         sellGapFromCurrent <= 0 ? "text-fuchsia-400" : kaufpreisSubtextColor
+                                                                     )}>
+                                                                         {sellGapFromCurrent >= 0 ? `+${sellGapFromCurrent.toFixed(1)}%` : `${sellGapFromCurrent.toFixed(1)}%`}
+                                                                     </span>
+                                                                 )}
+                                                             </div>
+                                                         </div>
+
+                                                         {/* Aktives Verkaufslimit Input (manuell änderbar) */}
+                                                         {(() => {
+                                                             const savedSellType = currentStock?.sellLimitType || currentStock?.fairValueParams?.sellLimitType || 'manual';
+                                                             const sellMeta =
+                                                                 savedSellType === 'conservative'
+                                                                     ? { label: 'Sicherheit A', text: 'text-blue-400', border: 'border-blue-500/50 focus:ring-blue-400', curr: 'text-blue-400/90', toast: 'text-blue-400 bg-blue-500/10 border-blue-500/30', saveBtn: 'bg-blue-600 hover:bg-blue-500' }
+                                                                     : savedSellType === 'quality'
+                                                                         ? { label: 'Qualität B', text: 'text-purple-400', border: 'border-purple-500/50 focus:ring-purple-400', curr: 'text-purple-400/90', toast: 'text-purple-400 bg-purple-500/10 border-purple-500/30', saveBtn: 'bg-purple-600 hover:bg-purple-500' }
+                                                                         : savedSellType === 'risk'
+                                                                             ? { label: 'Risiko C', text: 'text-amber-400', border: 'border-amber-500/50 focus:ring-amber-400', curr: 'text-amber-400/90', toast: 'text-amber-400 bg-amber-500/10 border-amber-500/30', saveBtn: 'bg-amber-600 hover:bg-amber-500' }
+                                                                             : { label: 'Manuell', text: 'text-pink-400', border: 'border-pink-500/50 focus:ring-pink-400', curr: 'text-pink-400/90', toast: 'text-pink-400 bg-pink-500/10 border-pink-500/30', saveBtn: 'bg-pink-600 hover:bg-pink-500' };
+                                                             const activeInputMeta = isSellDirty
+                                                                 ? { text: 'text-pink-400', border: 'border-pink-500/50 focus:ring-pink-400', curr: 'text-pink-400/90', saveBtn: 'bg-pink-600 hover:bg-pink-500' }
+                                                                 : currentStock?.sellLimit && currentStock.sellLimit > 0
+                                                                     ? sellMeta
+                                                                     : profileDefaultMeta;
+
+                                                             return (
+                                                                 <div className="pt-2 border-t border-border/50 space-y-1.5">
+                                                                     <div className="flex items-center justify-between gap-1 text-xs flex-wrap">
+                                                                         <span className={cn("font-semibold flex items-center gap-1", currentStock?.sellLimit ? sellMeta.text : kaufpreisTextColor)}>
+                                                                             <Target className="size-3.5 shrink-0" />
+                                                                             <span>Aktives Verkaufslimit</span>
+                                                                         </span>
+                                                                         {sellLimitSavedToast ? (
+                                                                             <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1 animate-pulse leading-none", sellMeta.toast)}>
+                                                                                 <Check className="size-3" />
+                                                                                 <span>Gespeichert</span>
+                                                                             </span>
+                                                                         ) : currentStock?.sellLimit && currentStock.sellLimit > 0 ? (
+                                                                             <span className={cn("text-xs font-medium inline-flex items-center gap-1 truncate", sellMeta.text)}>
+                                                                                 <Check className="size-3 shrink-0" />
+                                                                                 <span>
+                                                                                     {currentPrice > 0 && currentPrice >= currentStock.sellLimit
+                                                                                         ? `Erreicht · ${sellMeta.label}`
+                                                                                         : sellMeta.label}
+                                                                                 </span>
+                                                                             </span>
+                                                                         ) : (
+                                                                             <span className="text-xs text-muted-foreground">Optional</span>
+                                                                         )}
+                                                                     </div>
+
+                                                                     <div className="flex items-center gap-1.5">
+                                                                         <div className="relative flex-1 min-w-0">
+                                                                             <input
+                                                                                 type="text"
+                                                                                 inputMode="decimal"
+                                                                                 value={sellLimitInput}
+                                                                                 onChange={(e) => setSellLimitInput(e.target.value)}
+                                                                                 onKeyDown={(e) => {
+                                                                                     if (e.key === 'Enter') {
+                                                                                         handleSaveSellLimit(sellLimitInput, 'manual');
+                                                                                     }
+                                                                                 }}
+                                                                                 placeholder={calculation.sellPrice > 0 ? calculation.sellPrice.toFixed(2) : "Optional"}
+                                                                                 className={cn("w-full px-2.5 py-0 rounded-lg border bg-background text-xs sm:text-sm font-mono font-bold pr-11 focus:ring-1 h-7 transition-colors", activeInputMeta.border, activeInputMeta.text)}
+                                                                             />
+                                                                             <span className={cn("absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono font-bold pointer-events-none", activeInputMeta.curr)}>
+                                                                                 {dispCurr}
+                                                                             </span>
+                                                                         </div>
+
+                                                                         {isSellDirty ? (
+                                                                             <button
+                                                                                 type="button"
+                                                                                 onClick={() => handleSaveSellLimit(sellLimitInput, 'manual')}
+                                                                                 className={cn("h-7 px-2.5 py-0 text-white text-xs font-semibold rounded-lg shadow-sm transition-all inline-flex items-center justify-center gap-1 leading-none shrink-0 active:scale-95 cursor-pointer", activeInputMeta.saveBtn)}
+                                                                                 title="Verkaufslimit in Kursdaten, Watchlist & Radar speichern"
+                                                                             >
+                                                                                 <Check className="size-3.5" />
+                                                                                 <span>Speichern</span>
+                                                                             </button>
+                                                                         ) : currentStock?.sellLimit && currentStock.sellLimit > 0 ? (
+                                                                             <button
+                                                                                 type="button"
+                                                                                 onClick={() => handleSaveSellLimit('')}
+                                                                                 className="h-7 w-7 p-0 rounded-lg border border-border bg-background hover:bg-rose-500/15 hover:border-rose-500/40 text-muted-foreground hover:text-rose-400 inline-flex items-center justify-center leading-none shrink-0 transition-colors cursor-pointer"
+                                                                                 title="Verkaufslimit entfernen"
+                                                                                 aria-label="Verkaufslimit entfernen"
+                                                                             >
+                                                                                 <X className="size-3.5" />
+                                                                             </button>
+                                                                         ) : (
+                                                                             <button
+                                                                                 type="button"
+                                                                                 onClick={() => {
+                                                                                     const val = calculation.sellPrice > 0 ? calculation.sellPrice.toFixed(2) : '';
+                                                                                     if (val) {
+                                                                                         setSellLimitInput(val);
+                                                                                         handleSaveSellLimit(val, valuationProfile);
+                                                                                     }
+                                                                                 }}
+                                                                                 disabled={!(calculation.sellPrice > 0)}
+                                                                                 className={cn(
+                                                                                     "h-7 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none shrink-0 transition-colors cursor-pointer disabled:opacity-40",
+                                                                                     kaufpreisQuickBtnColor
+                                                                                 )}
+                                                                                 title="Berechnetes Verkaufslimit aktivieren"
+                                                                             >
+                                                                                 <Check className="size-3.5" />
+                                                                                 <span>Setzen</span>
+                                                                             </button>
+                                                                         )}
+                                                                     </div>
+                                                                 </div>
+                                                             );
+                                                         })()}
+                                                    </div>
+                                                        );
+                                                    })()}
+                                                </div>
+
+                                                {/* Direkt zu Kauf / Verkauf (einheitliche h-8 Button-Zeile) */}
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleGoToBuySell('buy')}
+                                                        className={cn(
+                                                            "h-8 px-3 py-0 text-xs font-semibold rounded-lg border transition-all inline-flex items-center justify-center gap-1.5 leading-none shadow-sm active:scale-95 cursor-pointer",
+                                                            kaufpreisQuickBtnColor
+                                                        )}
+                                                        title="Kauf direkt in Kauf / Verkauf simulieren"
+                                                    >
+                                                        <Calculator className="size-3.5 shrink-0" />
+                                                        <span>Kauf simulieren</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleGoToBuySell('sell')}
+                                                        className={cn(
+                                                            "h-8 px-3 py-0 text-xs font-semibold rounded-lg border transition-all inline-flex items-center justify-center gap-1.5 leading-none shadow-sm active:scale-95 cursor-pointer",
+                                                            kaufpreisQuickBtnColor
+                                                        )}
+                                                        title="Verkauf direkt in Kauf / Verkauf simulieren"
+                                                    >
+                                                        <Calculator className="size-3.5 shrink-0" />
+                                                        <span>Verkauf simulieren</span>
+                                                    </button>
+                                                </div>
                                             </div>
-
-
-                                            {/* Direkt zu Kauf / Verkauf */}
-                                            <button
-                                                type="button"
-                                                onClick={handleGoToBuySell}
-                                                className={cn(
-                                                    "w-full mt-1.5 py-1.5 px-3 text-xs sm:text-sm font-semibold rounded-lg border transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer",
-                                                    kaufpreisQuickBtnColor
-                                                )}
-                                                title="Diesen Titel direkt in Kauf / Verkauf öffnen"
-                                            >
-                                                <Calculator className="size-3.5" />
-                                                <span>In Kauf / Verkauf öffnen</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    );
+                                        );
                                     })()}
 
                                 {/* 🎯 Unterstützungs- & Kaufzonen (Für alle Aktien & ETFs) */}
@@ -3471,7 +3842,9 @@ export function FairValueCalculator() {
                                                         <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-0 border-border/30">
                                                             <div className="text-left sm:text-right">
                                                                 <div className="font-mono font-bold text-xs sm:text-sm text-foreground">
-                                                                    ~{zone.minPrice.toFixed(2)} – {zone.maxPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}
+                                                                    {zone.id === 'zone3'
+                                                                        ? `≤ ${zone.maxPrice.toFixed(2)} ${quote.currency === 'GBp' ? 'GBP' : quote.currency}`
+                                                                        : `${zone.minPrice.toFixed(2)} – ${zone.maxPrice.toFixed(2)} ${quote.currency === 'GBp' ? 'GBP' : quote.currency}`}
                                                                 </div>
                                                                 <div className={cn(
                                                                     "text-xs font-mono font-semibold",
@@ -3798,6 +4171,116 @@ export function FairValueCalculator() {
                     </div>
                 )
             }
+
+            {selectedSymbol && isTradeRadarOpen && (() => {
+                const symLower = selectedSymbol.trim().toLowerCase();
+                const matchedStock =
+                    stocks.find(s => (s.symbol || '').trim().toLowerCase() === symLower) ||
+                    stocks.find(s => String(s.id) === selectedSymbol) ||
+                    null;
+
+                const radarStocks = matchedStock
+                    ? stocks
+                    : quote
+                        ? [
+                            ...stocks,
+                            {
+                                id: selectedSymbol,
+                                name: quote.name || selectedSymbol,
+                                symbol: selectedSymbol,
+                                currentPrice: Number(quote.price) || 0,
+                                previousClose: Number(quote.previousClose) || Number(quote.price) || 0,
+                                currency: (quote.currency || 'USD') as any,
+                                sector: quote.sector || 'Unbekannt',
+                                eps: quote.eps,
+                                forwardEps: quote.forwardEps,
+                                trailingPE: quote.trailingPE,
+                                forwardPE: quote.forwardPE,
+                                dividendYield: quote.dividendYield,
+                                fiftyDayAverage: quote.fiftyDayAverage,
+                                twoHundredDayAverage: quote.twoHundredDayAverage,
+                                fiftyTwoWeekHigh: quote.fiftyTwoWeekHigh,
+                                fiftyTwoWeekLow: quote.fiftyTwoWeekLow
+                            }
+                        ]
+                        : stocks;
+
+                const matchingIds = new Set<string>(matchedStock ? [String(matchedStock.id)] : [selectedSymbol]);
+                for (const s of stocks) {
+                    if ((s.symbol || '').trim().toLowerCase() === symLower) {
+                        matchingIds.add(String(s.id));
+                    }
+                }
+
+                const radarData = buildTradeRadar({
+                    stocks: radarStocks as any,
+                    positions,
+                    watchlists,
+                    orderBook,
+                    fxRates: fxRates as any,
+                    includeStockIds: Array.from(matchingIds)
+                });
+
+                const matchingWatchlists = watchlists.filter(wl =>
+                    (wl.stockIds || []).some(sid => matchingIds.has(String(sid)))
+                );
+                const isInPortfolio = positions.some(
+                    p => p.shares > 0 && matchingIds.has(String(p.stockId))
+                );
+                let lastActiveTab: string | null = null;
+                try {
+                    lastActiveTab = localStorage.getItem('watchlist_active_tab');
+                } catch {
+                    lastActiveTab = null;
+                }
+                const lastActiveMatch = lastActiveTab
+                    ? matchingWatchlists.find(wl => wl.id === lastActiveTab)
+                    : undefined;
+
+                let initialSourceFilter = 'all';
+                let initialSearchTerm = selectedSymbol;
+
+                if (lastActiveMatch) {
+                    initialSourceFilter = `wl:${lastActiveMatch.id}`;
+                    initialSearchTerm = '';
+                } else if (lastActiveTab === 'owned' && isInPortfolio) {
+                    initialSourceFilter = 'portfolio_all';
+                    initialSearchTerm = '';
+                } else if (matchingWatchlists.length > 0) {
+                    initialSourceFilter = `wl:${matchingWatchlists[0].id}`;
+                    initialSearchTerm = '';
+                } else if (isInPortfolio) {
+                    initialSourceFilter = 'portfolio_all';
+                    initialSearchTerm = '';
+                }
+
+                return (
+                    <TradeRadarModal
+                        isOpen={isTradeRadarOpen}
+                        onClose={() => setIsTradeRadarOpen(false)}
+                        radar={radarData}
+                        initialTradeMode="buy"
+                        initialCategory="all_assets"
+                        initialSourceFilter={initialSourceFilter}
+                        initialSearchTerm={initialSearchTerm}
+                        highlightStockId={matchedStock ? String(matchedStock.id) : selectedSymbol}
+                        highlightSymbol={matchedStock?.symbol || selectedSymbol}
+                        watchlists={watchlists}
+                        isRefreshing={isGlobalRefreshing}
+                        onRefreshPrices={() => refreshAllPrices(true)}
+                        onSelectForTrade={(targetStockId, tradeMode, suggestedPrice) => {
+                            setIsTradeRadarOpen(false);
+                            const params = new URLSearchParams();
+                            params.set('stock', String(targetStockId));
+                            params.set('mode', tradeMode);
+                            if (suggestedPrice && suggestedPrice > 0) {
+                                params.set('price', suggestedPrice.toFixed(2));
+                            }
+                            navigate(`/calculator?${params.toString()}`);
+                        }}
+                    />
+                );
+            })()}
         </div >
     );
 }

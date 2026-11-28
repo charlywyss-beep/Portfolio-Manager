@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams, useLocation } from 'react-rout
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info, Maximize2, Telescope, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, TriangleAlert, Pencil, Edit, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info, Maximize2, Telescope, ChevronDown, ChevronUp, Radar } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { InfoHelp } from '../components/InfoHelp';
 import { DelayedDataBadge } from '../components/DelayedDataBadge';
@@ -21,6 +21,8 @@ import { getEuropeanTicker, EUROPEAN_MARKET_INFO_ITEMS, type EuropeanIndicationQ
 import { Logo } from '../components/Logo';
 import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
 import { EditPositionModal } from '../components/EditPositionModal';
+import { TradeRadarModal } from '../components/TradeRadarModal';
+import { buildTradeRadar } from '../utils/tradeRadar';
 
 import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
@@ -102,11 +104,12 @@ export function StockDetail() {
         }
         return null;
     }, [location.state, id]);
-    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists, updatePosition, deletePosition, orderBook } = usePortfolio();
+    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists, updatePosition, deletePosition, orderBook, refreshAllPrices, isGlobalRefreshing } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const { rates } = useExchangeRates();
     const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
     const [isEditPositionModalOpen, setIsEditPositionModalOpen] = useState(false);
+    const [isTradeRadarOpen, setIsTradeRadarOpen] = useState(false);
 
     // Find stock by ID or Symbol (case-insensitive)
     const stockFromContext = stocks.find(s =>
@@ -158,6 +161,34 @@ export function StockDetail() {
         : resolvedVirtualFallback;
 
     const stock = stockFromContext || activeVirtualStock;
+
+    const tradeRadar = useMemo(() => {
+        if (!isTradeRadarOpen) {
+            return {
+                items: [],
+                counts: {
+                    allSignals: 0,
+                    buyLimit: 0,
+                    zone1: 0,
+                    zone2: 0,
+                    zone3: 0,
+                    belowSma200: 0,
+                    sellApproaching: 0,
+                    sellReached: 0,
+                    allAssets: 0
+                }
+            };
+        }
+        const allStocks = stock && !stockFromContext ? [...stocks, stock] : stocks;
+        return buildTradeRadar({
+            stocks: allStocks,
+            positions,
+            watchlists,
+            orderBook,
+            fxRates: rates,
+            includeStockIds: stock ? [String(stock.id)] : undefined
+        });
+    }, [isTradeRadarOpen, stocks, stock, stockFromContext, positions, watchlists, orderBook, rates]);
 
     useEffect(() => {
         if (stockFromContext) {
@@ -565,9 +596,16 @@ export function StockDetail() {
             mos = dcf.mos;
         }
 
-        const resolvedTargetType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = (savedTargetPriceType === 'fairValue' ? 'fairValue' : currentMode) as any;
-        const effectiveBuyPrice = currentMode === 'manual'
-            ? ((stock.targetPrice && stock.targetPrice > 0) ? stock.targetPrice : buyPrice)
+        const resolvedTargetType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' =
+            savedTargetPriceType === 'fairValue' ||
+            savedTargetPriceType === 'manual' ||
+            savedTargetPriceType === 'conservative' ||
+            savedTargetPriceType === 'quality' ||
+            savedTargetPriceType === 'risk'
+                ? savedTargetPriceType
+                : currentMode;
+        const effectiveBuyPrice = (stock.targetPrice && stock.targetPrice > 0)
+            ? stock.targetPrice
             : buyPrice;
 
         const dcfSafetyForZones = smartAutoConservative ? calculateDcfFairValue(smartAutoConservative, effectivePrice) : null;
@@ -635,6 +673,9 @@ export function StockDetail() {
 
             const nextEntry = {
                 ...(existingBackup || activeParams || smartAutoConservative),
+                ...(existingLocal.sellLimit !== undefined ? { sellLimit: existingLocal.sellLimit } : {}),
+                ...((stock?.sellLimitType || stock?.fairValueParams?.sellLimitType || existingLocal.sellLimitType) ? { sellLimitType: stock?.sellLimitType || stock?.fairValueParams?.sellLimitType || existingLocal.sellLimitType } : {}),
+                ...((stock?.fairValueParams?.manualSellLimit || existingLocal.manualSellLimit) ? { manualSellLimit: stock?.fairValueParams?.manualSellLimit || existingLocal.manualSellLimit } : {}),
                 isCustom: true,
                 valuationMode: 'manual',
                 manualFairValue: manualFv,
@@ -676,6 +717,9 @@ export function StockDetail() {
 
             const nextEntry = {
                 ...targetSmartParams,
+                ...(existingLocal.sellLimit !== undefined ? { sellLimit: existingLocal.sellLimit } : {}),
+                ...((stock?.sellLimitType || stock?.fairValueParams?.sellLimitType || existingLocal.sellLimitType) ? { sellLimitType: stock?.sellLimitType || stock?.fairValueParams?.sellLimitType || existingLocal.sellLimitType } : {}),
+                ...((stock?.fairValueParams?.manualSellLimit || existingLocal.manualSellLimit) ? { manualSellLimit: stock?.fairValueParams?.manualSellLimit || existingLocal.manualSellLimit } : {}),
                 isCustom: false,
                 valuationMode: nextMode,
                 ...(manualBackupToSave ? { customBackup: manualBackupToSave } : {}),
@@ -1282,7 +1326,7 @@ export function StockDetail() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-muted-foreground mt-0.5 landscape:mt-0 text-xs md:text-sm landscape:text-[11px]">
+                            <div className="flex items-center gap-2 text-muted-foreground mt-0.5 landscape:mt-0 text-xs md:text-sm">
                                 <span className="font-bold text-foreground">{stock.symbol}</span>
                                 {stock.sector && stock.sector !== 'Simuliert' && (
                                     <>
@@ -1660,7 +1704,7 @@ export function StockDetail() {
                                 e.stopPropagation();
                                 navigate(`/calculator?stock=${encodeURIComponent(String(stock.id))}`);
                             }}
-                            className="h-7 inline-flex items-center justify-center gap-1.5 text-xs landscape:text-[10px] font-semibold leading-none px-2.5 py-0 landscape:px-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-colors shadow-sm cursor-pointer shrink-0"
+                            className="h-7 inline-flex items-center justify-center gap-1.5 text-xs font-semibold leading-none px-2.5 py-0 landscape:px-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-colors shadow-sm cursor-pointer shrink-0"
                             title="Aktie direkt in Kauf / Verkauf öffnen"
                         >
                             <Calculator className="size-3.5 landscape:size-3" />
@@ -1678,7 +1722,7 @@ export function StockDetail() {
 
                         return (
                             <>
-                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                     <span className="text-muted-foreground">Bestand</span>
                                     <div className="text-right flex items-center">
                                         <span className="font-semibold text-foreground tabular-nums">
@@ -1686,7 +1730,7 @@ export function StockDetail() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                     <span className="text-muted-foreground">Kaufpreis Ø</span>
                                     <div className="text-right flex items-center">
                                         <span className="font-medium tabular-nums">
@@ -1694,7 +1738,7 @@ export function StockDetail() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                     <span className="text-muted-foreground">Gewinn/Verlust</span>
                                     <div className="text-right flex items-center gap-2">
                                         <span className={cn(
@@ -1723,7 +1767,7 @@ export function StockDetail() {
                                             }
                                         }, 120);
                                     }}
-                                    className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] gap-2 cursor-pointer hover:bg-muted/40 px-1 -mx-1 rounded transition-colors group"
+                                    className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm gap-2 cursor-pointer hover:bg-muted/40 px-1 -mx-1 rounded transition-colors group"
                                     title="Bank / Broker bearbeiten (Klicken zum Ändern)"
                                 >
                                     <span className="text-muted-foreground flex items-center gap-1.5 shrink-0 group-hover:text-primary transition-colors">
@@ -1743,14 +1787,14 @@ export function StockDetail() {
                     <div className="my-2.5 h-px bg-border" />
 
                     {/* Eröffnung und Vortag vor Aktuellem Kurs */}
-                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                         <span className="text-muted-foreground">Eröffnung / Vortag</span>
                         <span className="font-medium tabular-nums text-right">
                             {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(safePreviousClose || 0, stock.currency, false)}
                         </span>
                     </div>
 
-                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                         <span className="text-muted-foreground">Aktueller Kurs</span>
                         <span className="font-medium tabular-nums text-right">
                             <span>{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
@@ -1773,7 +1817,7 @@ export function StockDetail() {
                         const pct = ext.pct ?? 0;
                         return (
                             <div className={cn(
-                                "flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] transition-colors",
+                                "flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm transition-colors",
                                 showPrePost && (ext.isPre
                                     ? "bg-amber-500/15 -mx-2 px-2 rounded-md border-amber-500/35"
                                     : "bg-indigo-500/10 -mx-2 px-2 rounded-md border-indigo-500/30")
@@ -1803,7 +1847,7 @@ export function StockDetail() {
 
                     {/* Europa-Frühstart Indikation (Tradegate / Xetra in EUR) */}
                     {europeanQuote && (
-                        <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] transition-colors">
+                        <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm transition-colors">
                             <span className="inline-flex items-center gap-1.5">
                                 <span className="text-blue-600 dark:text-blue-400 font-bold">🇪🇺 Europa / Tradegate</span>
                                 {europeanQuote.timeText && <span className="text-blue-600 dark:text-blue-400 font-bold">· {europeanQuote.timeText}</span>}
@@ -1831,24 +1875,38 @@ export function StockDetail() {
                     )}
 
                     {/* Trenner 2: Klar sichtbarer dünner Strich zwischen Börsenkursen und Bewertung / Limiten */}
-                    <div className="mt-3 pt-2.5 border-t border-slate-400/35 dark:border-slate-500/45 flex items-center justify-between gap-2 mb-1.5">
+                    <div className="mt-3 pt-2.5 border-t border-slate-400/35 dark:border-slate-500/45 flex items-center justify-between gap-2 mb-1.5 flex-wrap">
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
                             <Telescope className="size-3.5 shrink-0" />
                             <span>Bewertung &amp; Limiten</span>
                         </span>
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/fair-value?stock=${encodeURIComponent(String(stock.symbol || stock.id))}`);
-                            }}
-                            className="h-7 inline-flex items-center justify-center gap-1.5 text-xs landscape:text-[10px] font-semibold leading-none px-2.5 py-0 landscape:px-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-colors shadow-sm cursor-pointer shrink-0 group/fvbtn"
-                            title="Aktie direkt im Fairer-Wert-Rechner öffnen"
-                        >
-                            <Telescope className="size-3.5 landscape:size-3 shrink-0" />
-                            <span>Fairer Wert</span>
-                            <ArrowRight className="size-3 shrink-0 transition-transform group-hover/fvbtn:translate-x-0.5" />
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsTradeRadarOpen(true);
+                                }}
+                                className="h-7 inline-flex items-center justify-center gap-1.5 text-xs font-semibold leading-none px-2.5 py-0 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border border-emerald-500/35 transition-colors shadow-sm cursor-pointer shrink-0"
+                                title="Kauf-Radar direkt für diese Aktie öffnen"
+                            >
+                                <Radar className="size-3.5 shrink-0" />
+                                <span>Kauf-Radar</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/fair-value?stock=${encodeURIComponent(String(stock.symbol || stock.id))}`);
+                                }}
+                                className="h-7 inline-flex items-center justify-center gap-1.5 text-xs font-semibold leading-none px-2.5 py-0 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-colors shadow-sm cursor-pointer shrink-0 group/fvbtn"
+                                title="Aktie direkt im Fairer-Wert-Rechner öffnen"
+                            >
+                                <Telescope className="size-3.5 shrink-0" />
+                                <span>Fairer Wert</span>
+                                <ArrowRight className="size-3 shrink-0 transition-transform group-hover/fvbtn:translate-x-0.5" />
+                            </button>
+                        </div>
                     </div>
 
                     {(() => {
@@ -1859,6 +1917,7 @@ export function StockDetail() {
                             buyPrice: effectiveBuyLimit,
                             modelBuyPrice: calcBuyPrice,
                             futurePrice: calcFuturePrice,
+                            mos: modelMos,
                             resolvedTargetType,
                             activeParams,
                             supportZones
@@ -1878,7 +1937,7 @@ export function StockDetail() {
 
                         const targetColorMode = resolvedTargetType === 'fairValue' ? currentMode : resolvedTargetType;
                         const targetBadgeLabel = resolvedTargetType === 'risk'
-                            ? 'Risiko-Abschlag C'
+                            ? 'Risiko C'
                             : resolvedTargetType === 'quality'
                                 ? 'Qualität B'
                                 : resolvedTargetType === 'conservative'
@@ -1889,32 +1948,73 @@ export function StockDetail() {
                                             : currentMode === 'quality'
                                                 ? 'Fairer Wert B'
                                                 : currentMode === 'manual'
-                                                    ? 'Fairer Wert Manuell'
+                                                    ? 'Fairer Wert M'
                                                     : 'Fairer Wert A')
                                         : 'Manuell';
 
+                        const renderModeIcon = (m: string) => {
+                            if (m === 'quality') return <Sparkles className="size-3 shrink-0" />;
+                            if (m === 'risk') return <TriangleAlert className="size-3 shrink-0" />;
+                            if (m === 'manual') return <Sliders className="size-3 shrink-0" />;
+                            return <ShieldCheck className="size-3 shrink-0" />;
+                        };
+
+                        const getModePillColors = (m: string, interactive = false) => {
+                            if (m === 'manual') {
+                                return interactive
+                                    ? "text-pink-800 dark:text-pink-300 bg-pink-500/15 hover:bg-pink-500/25 border-pink-500/30 dark:border-pink-500/40"
+                                    : "text-pink-800 dark:text-pink-300 bg-pink-500/15 border-pink-500/30";
+                            }
+                            if (m === 'risk') {
+                                return interactive
+                                    ? "text-amber-800 dark:text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 dark:border-amber-500/40"
+                                    : "text-amber-800 dark:text-amber-300 bg-amber-500/15 border-amber-500/30";
+                            }
+                            if (m === 'quality') {
+                                return interactive
+                                    ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/30 dark:border-purple-500/40"
+                                    : "text-purple-800 dark:text-purple-300 bg-purple-500/15 border-purple-500/30";
+                            }
+                            return interactive
+                                ? "text-blue-800 dark:text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/30 dark:border-blue-500/40"
+                                : "text-blue-800 dark:text-blue-300 bg-blue-500/15 border-blue-500/30";
+                        };
+
+                        const unifiedPillBase = "h-6 min-w-[116px] px-2 py-0 inline-flex items-center justify-start gap-1.5 text-xs leading-none font-semibold rounded border shadow-xs whitespace-nowrap transition-colors";
+                        const currentModeLabel =
+                            currentMode === 'manual'
+                                ? 'Manuell'
+                                : currentMode === 'risk'
+                                    ? 'Risiko C'
+                                    : currentMode === 'quality'
+                                        ? 'Qualität B'
+                                        : 'Sicherheit A';
+                        const modeToggleTooltip =
+                            currentMode === 'conservative'
+                                ? "Bewertungsmodell Sicherheit A · Klick wechselt zu Qualität B"
+                                : currentMode === 'quality'
+                                    ? "Bewertungsmodell Qualität B · Klick wechselt zu Risiko C"
+                                    : currentMode === 'risk'
+                                        ? (hasCustomBackup ? "Bewertungsmodell Risiko C · Klick wechselt zu Manuell" : "Bewertungsmodell Risiko C · Klick wechselt zu Sicherheit A")
+                                        : "Bewertungsmodell Manuell · Klick wechselt zu Sicherheit A";
+
                         return (
                             <>
-                                <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="text-muted-foreground">Kauflimit</span>
+                                <div className={cn(
+                                    "flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm",
+                                    position && position.shares > 0 && "border-b border-border/50"
+                                )}>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="w-28 shrink-0 text-muted-foreground">Kauflimit</span>
                                         {(displayTargetPrice || stock.targetPrice) ? (
-                                            <span className={cn(
-                                                "inline-flex items-center text-xs leading-4 font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border shadow-xs",
-                                                targetColorMode === 'risk'
-                                                    ? "text-amber-800 dark:text-amber-300 bg-amber-500/15 border-amber-500/30"
-                                                    : targetColorMode === 'quality'
-                                                        ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 border-purple-500/30"
-                                                        : targetColorMode === 'conservative'
-                                                            ? "text-blue-800 dark:text-blue-300 bg-blue-500/15 border-blue-500/30"
-                                                            : "text-pink-800 dark:text-pink-300 bg-pink-500/15 border-pink-500/30"
-                                            )}>
-                                                {targetBadgeLabel}
+                                            <span className={cn(unifiedPillBase, getModePillColors(targetColorMode, false))}>
+                                                {renderModeIcon(targetColorMode)}
+                                                <span>{targetBadgeLabel}</span>
                                             </span>
                                         ) : null}
                                     </div>
                                     <span className={cn(
-                                        "font-medium tabular-nums",
+                                        "font-medium tabular-nums shrink-0",
                                         targetColorMode === 'risk'
                                             ? "text-amber-700 dark:text-amber-400 font-semibold"
                                             : targetColorMode === 'quality'
@@ -1926,79 +2026,74 @@ export function StockDetail() {
                                         {displayTargetPrice ? formatCurrency(displayTargetPrice, stock.currency, false) : (stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-')}
                                     </span>
                                 </div>
-                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                    <span className="text-muted-foreground">Verkaufslimit</span>
-                                    <span className="font-medium tabular-nums">
-                                        {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                    <button
-                                        type="button"
-                                        onClick={handleToggleFvMode}
-                                        className={cn(
-                                            "flex items-center gap-1 text-[11px] sm:text-xs landscape:text-[10px] leading-4 font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border transition-colors cursor-pointer",
-                                            currentMode === 'manual'
-                                                ? "text-pink-800 dark:text-pink-300 bg-pink-500/15 hover:bg-pink-500/25 border-pink-500/30 dark:border-pink-500/40"
-                                                : currentMode === 'risk'
-                                                    ? "text-amber-800 dark:text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 dark:border-amber-500/40"
-                                                    : currentMode === 'quality'
-                                                        ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/30 dark:border-purple-500/40"
-                                                        : "text-blue-800 dark:text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/30 dark:border-blue-500/40"
-                                        )}
-                                        title={
-                                            currentMode === 'conservative'
-                                                ? "Sicherheit A: Klick für Wechsel zu Qualität B"
-                                                : currentMode === 'quality'
-                                                    ? "Qualität B: Klick für Wechsel zu Risiko C"
-                                                    : currentMode === 'risk'
-                                                        ? (hasCustomBackup ? "Risiko C: Klick für Wechsel zu Manuell" : "Risiko C: Klick für Wechsel zu Sicherheit A")
-                                                        : "Manuell: Klick für Wechsel zu Sicherheit A"
-                                        }
-                                    >
-                                        {currentMode === 'conservative' && <ShieldCheck className="size-3 shrink-0" />}
-                                        {currentMode === 'quality' && <Sparkles className="size-3 shrink-0" />}
-                                        {currentMode === 'risk' && <TriangleAlert className="size-3 shrink-0" />}
-                                        {currentMode === 'manual' && <Sliders className="size-3 shrink-0" />}
-                                        <span>
-                                            {currentMode === 'manual'
-                                                ? 'Kaufpreis Manuell'
-                                                : currentMode === 'risk'
-                                                    ? 'Kaufpreis Risiko C'
-                                                    : currentMode === 'quality'
-                                                        ? 'Kaufpreis Qualität B'
-                                                        : 'Kaufpreis Sicherheit A'}
-                                        </span>
-                                    </button>
-                                    <span className={cn(
-                                        "font-medium tabular-nums",
-                                        typeof calcBuyPrice === 'number'
-                                            ? currentMode === 'manual'
-                                                ? "text-pink-700 dark:text-pink-400 font-semibold"
-                                                : currentMode === 'risk'
-                                                    ? "text-amber-700 dark:text-amber-400 font-semibold"
-                                                    : currentMode === 'quality'
+                                {position && position.shares > 0 && (
+                                    <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm">
+                                        {(() => {
+                                            const resolvedSellMode = stock.sellLimitType || stock.fairValueParams?.sellLimitType || 'manual';
+                                            const sellBadgeLabel =
+                                                resolvedSellMode === 'conservative'
+                                                    ? 'Sicherheit A'
+                                                    : resolvedSellMode === 'quality'
+                                                        ? 'Qualität B'
+                                                        : resolvedSellMode === 'risk'
+                                                            ? 'Risiko C'
+                                                            : 'Manuell';
+                                            const sellValCls =
+                                                resolvedSellMode === 'conservative'
+                                                    ? "text-blue-700 dark:text-blue-400 font-semibold"
+                                                    : resolvedSellMode === 'quality'
                                                         ? "text-purple-700 dark:text-purple-400 font-semibold"
-                                                        : "text-blue-700 dark:text-blue-400 font-semibold"
-                                            : ""
-                                    )}>
-                                        {typeof calcBuyPrice === 'number' ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
-                                    </span>
-                                </div>
+                                                        : resolvedSellMode === 'risk'
+                                                            ? "text-amber-700 dark:text-amber-400 font-semibold"
+                                                            : "text-pink-700 dark:text-pink-400 font-semibold";
+                                            return (
+                                                <>
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <span className="w-28 shrink-0 text-muted-foreground">Verkaufslimit</span>
+                                                        {stock.sellLimit ? (
+                                                            <span className={cn(unifiedPillBase, getModePillColors(resolvedSellMode, false))}>
+                                                                {renderModeIcon(resolvedSellMode)}
+                                                                <span>{sellBadgeLabel}</span>
+                                                            </span>
+                                                        ) : null}
+                                                    </div>
+                                                    <span className={cn("font-medium tabular-nums shrink-0", stock.sellLimit ? sellValCls : "")}>
+                                                        {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
+                                                    </span>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+
+                                {/* Trennlinie zwischen gesetzten Limiten und DCF-Bewertungsmodell */}
+                                <div className="my-1.5 h-px bg-slate-400/25 dark:bg-slate-500/30" />
+
                                 <div
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigate(`/fair-value?stock=${encodeURIComponent(String(stock.symbol || stock.id))}`);
                                     }}
-                                    className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] cursor-pointer hover:bg-blue-500/10 -mx-1.5 px-1.5 rounded transition-colors group/fvrow"
+                                    className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm cursor-pointer hover:bg-blue-500/10 -mx-1.5 px-1.5 rounded transition-colors group/fvrow"
                                     title="Im Fairer-Wert-Rechner öffnen"
                                 >
-                                    <span className="inline-flex items-center gap-1.5 text-muted-foreground group-hover/fvrow:text-blue-500 transition-colors">
-                                        <span>Fairer Wert</span>
-                                        <ArrowRight className="size-3 opacity-60 group-hover/fvrow:opacity-100 group-hover/fvrow:translate-x-0.5 transition-all" />
-                                    </span>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="w-28 shrink-0 inline-flex items-center gap-1 text-muted-foreground group-hover/fvrow:text-blue-500 transition-colors">
+                                            <span>Fairer Wert</span>
+                                            <ArrowRight className="size-3 opacity-60 group-hover/fvrow:opacity-100 group-hover/fvrow:translate-x-0.5 transition-all" />
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={handleToggleFvMode}
+                                            className={cn(unifiedPillBase, getModePillColors(currentMode, true), "cursor-pointer")}
+                                            title={modeToggleTooltip}
+                                        >
+                                            {renderModeIcon(currentMode)}
+                                            <span>{currentModeLabel}</span>
+                                        </button>
+                                    </div>
                                     <span className={cn(
-                                        "font-medium tabular-nums",
+                                        "font-medium tabular-nums shrink-0",
                                         effectiveFairValue > 0
                                             ? currentMode === 'manual'
                                                 ? "text-pink-700 dark:text-pink-400 font-semibold"
@@ -2012,22 +2107,93 @@ export function StockDetail() {
                                         {effectiveFairValue > 0 ? formatCurrency(effectiveFairValue, stock.currency, false) : '-'}
                                     </span>
                                 </div>
-                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                <div
+                                    className="flex items-center justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm"
+                                    title={modelMos > 0 ? `Berechnetes Kauflimit inkl. ${modelMos} % Sicherheitsmarge` : undefined}
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="w-28 shrink-0 text-muted-foreground">Kauflimit</span>
+                                        <button
+                                            type="button"
+                                            onClick={handleToggleFvMode}
+                                            className={cn(unifiedPillBase, getModePillColors(currentMode, true), "cursor-pointer")}
+                                            title={modeToggleTooltip}
+                                        >
+                                            {renderModeIcon(currentMode)}
+                                            <span>{currentModeLabel}</span>
+                                        </button>
+                                    </div>
+                                    <span className={cn(
+                                        "font-medium tabular-nums shrink-0",
+                                        typeof calcBuyPrice === 'number'
+                                            ? currentMode === 'manual'
+                                                ? "text-pink-700 dark:text-pink-400 font-semibold"
+                                                : currentMode === 'risk'
+                                                    ? "text-amber-700 dark:text-amber-400 font-semibold"
+                                                    : currentMode === 'quality'
+                                                        ? "text-purple-700 dark:text-purple-400 font-semibold"
+                                                        : "text-blue-700 dark:text-blue-400 font-semibold"
+                                            : ""
+                                    )}>
+                                        {typeof calcBuyPrice === 'number' ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                     <span className="text-muted-foreground">Zielkurs 5 J</span>
                                     <span className="font-medium tabular-nums text-foreground">
                                         {calcFuturePrice !== null && calcFuturePrice > 0 ? formatCurrency(calcFuturePrice, stock.currency, false) : '-'}
                                     </span>
                                 </div>
                                 {supportZones && supportZones.length > 0 && (() => {
-                                    const activeZone = supportZones.find(z => Boolean(z.badgeText)) || null;
-                                    const displayZone = activeZone || supportZones[0];
+                                    const activeLiveZone = supportZones.find(z => Boolean(z.badgeText)) || null;
+                                    const z1 = supportZones.find(z => z.id === 'zone1') || supportZones[0];
+                                    const z2 = supportZones.find(z => z.id === 'zone2');
+                                    const z3 = supportZones.find(z => z.id === 'zone3');
+                                    const limitForZone = displayTargetPrice || stock.targetPrice || 0;
+                                    const limitMatchedZone = limitForZone > 0
+                                        ? (z3 && limitForZone <= z3.maxPrice
+                                            ? z3
+                                            : z2 && limitForZone <= z2.maxPrice
+                                                ? z2
+                                                : z1 && limitForZone <= z1.maxPrice
+                                                    ? z1
+                                                    : null)
+                                        : null;
+                                    const displayZone = activeLiveZone || limitMatchedZone || z1;
                                     const curLabel = stock.currency === 'GBp' ? 'GBP' : stock.currency;
-                                    const zoneBadge = activeZone
-                                        ? activeZone.id === 'zone1'
-                                            ? { label: 'Aktuell in Zone 1', cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/35', priceCls: 'text-emerald-400' }
-                                            : activeZone.id === 'zone2'
-                                                ? { label: 'Aktuell in Zone 2', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/35', priceCls: 'text-amber-400' }
-                                                : { label: 'Aktuell in Crash-Zone', cls: 'bg-rose-500/15 text-rose-400 border-rose-500/40', priceCls: 'text-rose-400' }
+                                    const zoneMeta =
+                                        displayZone.id === 'zone3'
+                                            ? {
+                                                rowLabel: 'Kaufzone 3',
+                                                pillLabel: 'Crash',
+                                                cls: 'text-rose-800 dark:text-rose-300 bg-rose-500/15 border-rose-500/35',
+                                                priceCls: 'text-rose-700 dark:text-rose-400 font-semibold'
+                                            }
+                                            : displayZone.id === 'zone2'
+                                                ? {
+                                                    rowLabel: 'Kaufzone 2',
+                                                    pillLabel: 'Nachkauf',
+                                                    cls: 'text-amber-800 dark:text-amber-300 bg-amber-500/15 border-amber-500/35',
+                                                    priceCls: 'text-amber-700 dark:text-amber-400 font-semibold'
+                                                }
+                                                : {
+                                                    rowLabel: 'Kaufzone 1',
+                                                    pillLabel: 'Einstieg',
+                                                    cls: 'text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 border-emerald-500/35',
+                                                    priceCls: 'text-emerald-700 dark:text-emerald-400 font-semibold'
+                                                };
+                                    const isLiveInZone = Boolean(activeLiveZone);
+                                    const curPriceForZone = stock.currentPrice || 0;
+                                    const buyRefPrice = limitForZone > 0 ? limitForZone : displayZone.targetPrice;
+                                    const buyDistanceLabel = curPriceForZone > 0 && buyRefPrice > 0
+                                        ? (curPriceForZone <= buyRefPrice
+                                            ? (() => {
+                                                const underPct = ((curPriceForZone - buyRefPrice) / buyRefPrice) * 100;
+                                                return underPct <= -0.05
+                                                    ? `Kauf Ziel erreicht · ${underPct.toFixed(1)} %`
+                                                    : 'Kauf Ziel erreicht';
+                                            })()
+                                            : `Noch ${(((buyRefPrice - curPriceForZone) / curPriceForZone) * 100).toFixed(1)} % bis Kauf`)
                                         : null;
                                     return (
                                         <div
@@ -2035,28 +2201,31 @@ export function StockDetail() {
                                                 e.stopPropagation();
                                                 navigate(`/fair-value?stock=${encodeURIComponent(String(stock.symbol || stock.id))}`);
                                             }}
-                                            className="flex justify-between items-center gap-2 py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm cursor-pointer hover:bg-accent/40 rounded px-1 -mx-1 transition-colors"
-                                            title="Klick öffnet Unterstützungs- & Kaufzonen im Fairer-Wert-Rechner"
+                                            className="flex justify-between items-center gap-2 py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm cursor-pointer hover:bg-accent/40 rounded px-1.5 -mx-1.5 transition-colors flex-wrap sm:flex-nowrap"
+                                            title={isLiveInZone
+                                                ? `Aktueller Kurs liegt direkt in ${zoneMeta.rowLabel} · ${zoneMeta.pillLabel} · Klick öffnet Fairer-Wert-Rechner`
+                                                : `${zoneMeta.rowLabel} · ${zoneMeta.pillLabel} · Klick öffnet Unterstützungs- & Kaufzonen im Fairer-Wert-Rechner`}
                                         >
-                                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                                                {zoneBadge ? (
-                                                    <span className={cn(
-                                                        "px-1.5 py-0.5 rounded text-xs font-bold border leading-none whitespace-nowrap",
-                                                        zoneBadge.cls
-                                                    )}>
-                                                        {zoneBadge.label}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-muted-foreground shrink-0">
-                                                        Kaufzone 1
+                                            <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                                                <span className="w-28 shrink-0 text-muted-foreground">{zoneMeta.rowLabel}</span>
+                                                <span className={cn(unifiedPillBase, zoneMeta.cls)}>
+                                                    <Radar className="size-3 shrink-0" />
+                                                    <span>{zoneMeta.pillLabel}</span>
+                                                    {isLiveInZone && <span className="size-1.5 rounded-full bg-current ml-auto animate-pulse shrink-0" />}
+                                                </span>
+                                                {buyDistanceLabel && (
+                                                    <span className={cn("text-xs font-mono font-semibold tabular-nums whitespace-nowrap", zoneMeta.priceCls)}>
+                                                        {buyDistanceLabel}
                                                     </span>
                                                 )}
                                             </div>
                                             <span className={cn(
-                                                "font-mono font-medium tabular-nums whitespace-nowrap shrink-0",
-                                                zoneBadge ? zoneBadge.priceCls : "text-foreground"
+                                                "font-mono tabular-nums whitespace-nowrap shrink-0",
+                                                zoneMeta.priceCls
                                             )}>
-                                                ~{displayZone.minPrice.toFixed(2)} – {displayZone.maxPrice.toFixed(2)} {curLabel}
+                                                {displayZone.id === 'zone3'
+                                                    ? `≤ ${displayZone.maxPrice.toFixed(2)} ${curLabel}`
+                                                    : `${displayZone.minPrice.toFixed(2)} – ${displayZone.maxPrice.toFixed(2)} ${curLabel}`}
                                             </span>
                                         </div>
                                     );
@@ -2072,7 +2241,7 @@ export function StockDetail() {
                                         : 0;
 
                                     return (
-                                        <div className="flex justify-between items-center py-1.5 md:py-2 landscape:py-1 border border-emerald-500/30 dark:border-emerald-500/20 text-xs sm:text-sm landscape:text-[11px] bg-emerald-500/15 dark:bg-emerald-500/10 px-2.5 rounded-lg mt-1 shadow-2xs">
+                                        <div className="flex justify-between items-center py-1.5 md:py-2 landscape:py-1 border border-emerald-500/30 dark:border-emerald-500/20 text-xs sm:text-sm bg-emerald-500/15 dark:bg-emerald-500/10 px-2.5 rounded-lg mt-1 shadow-2xs">
                                             <div className="flex flex-col">
                                                 <span className="text-emerald-900 dark:text-emerald-300 font-bold text-[11px] sm:text-xs">Gewinn 5 J Bestand</span>
                                                 <span className="text-[10px] text-emerald-800/80 dark:text-muted-foreground">~{cagr.toFixed(1)}% p.a. ab heute</span>
@@ -2223,23 +2392,23 @@ export function StockDetail() {
                             <Pencil className="size-3 text-muted-foreground group-hover/sec:text-primary transition-colors opacity-60 group-hover/sec:opacity-100" />
                         </div>
                         <div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Name</span>
                                 <span className="font-medium text-foreground text-right truncate max-w-[180px] sm:max-w-[240px]">{stock.name}</span>
                             </div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Symbol</span>
                                 <span className="font-medium font-mono text-foreground">{stock.symbol}</span>
                             </div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">ISIN</span>
                                 <span className="font-medium font-mono text-foreground">{stock.isin || '-'}</span>
                             </div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Typ</span>
                                 <span className="font-medium capitalize text-foreground">{stock.type || 'Aktie'}</span>
                             </div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Währung</span>
                                 <span className="font-medium text-foreground">{stock.currency}</span>
                             </div>
@@ -2261,7 +2430,7 @@ export function StockDetail() {
                             <Pencil className="size-3 text-muted-foreground group-hover/sec:text-primary transition-colors opacity-60 group-hover/sec:opacity-100" />
                         </div>
                         <div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">KGV (P/E)</span>
                                 <span className="font-medium text-foreground tabular-nums">
                                     {stock.trailingPE
@@ -2269,7 +2438,7 @@ export function StockDetail() {
                                         : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
                                 </span>
                             </div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">KCV (P/CF)</span>
                                 <span className="font-medium text-foreground tabular-nums">
                                     {stock.kcv ? stock.kcv.toFixed(2) : '-'}
@@ -2293,7 +2462,7 @@ export function StockDetail() {
                             <Pencil className="size-3 text-muted-foreground group-hover/sec:text-primary transition-colors opacity-60 group-hover/sec:opacity-100" />
                         </div>
                         <div>
-                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Div. Frequenz</span>
                                 <span className="font-medium capitalize text-foreground">
                                     {stock.dividendFrequency && stock.dividendFrequency !== 'none' ? (
@@ -2303,7 +2472,7 @@ export function StockDetail() {
                                     ) : '-'}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Div. Rendite</span>
                                 <span className="font-medium text-right">
                                     {(() => {
@@ -2353,11 +2522,11 @@ export function StockDetail() {
                                     })()}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Nächster Ex-Tag</span>
                                 <span className="font-medium text-foreground dark:text-white tabular-nums">{upcomingDividendDates.exDate}</span>
                             </div>
-                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Nächster Zahltag</span>
                                 <span className="font-medium text-foreground dark:text-white tabular-nums">{upcomingDividendDates.payDate}</span>
                             </div>
@@ -2487,7 +2656,7 @@ export function StockDetail() {
                                                     const displayName = displayNames[name] || sector.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
                                                     return (
-                                                        <div key={sector} className="flex items-center justify-between text-xs sm:text-sm landscape:text-[11px] py-0.5 border-b border-border/40">
+                                                        <div key={sector} className="flex items-center justify-between text-xs sm:text-sm py-0.5 border-b border-border/40">
                                                             <span className="text-muted-foreground">{displayName}</span>
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -2538,7 +2707,7 @@ export function StockDetail() {
                                                     const displayName = normalizeCountry(displayNames[name] || country);
 
                                                     return (
-                                                        <div key={country} className="flex items-center justify-between text-xs sm:text-sm landscape:text-[11px] py-0.5 border-b border-border/40">
+                                                        <div key={country} className="flex items-center justify-between text-xs sm:text-sm py-0.5 border-b border-border/40">
                                                             <span className="text-muted-foreground">{displayName}</span>
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -2583,6 +2752,76 @@ export function StockDetail() {
                     }}
                 />
             )}
+            {stock && (() => {
+                const symLower = (stock.symbol || '').trim().toLowerCase();
+                const matchingIds = new Set<string>([String(stock.id)]);
+                if (symLower) {
+                    for (const s of stocks) {
+                        if ((s.symbol || '').trim().toLowerCase() === symLower) {
+                            matchingIds.add(String(s.id));
+                        }
+                    }
+                }
+                const matchingWatchlists = watchlists.filter(wl =>
+                    (wl.stockIds || []).some(sid => matchingIds.has(String(sid)))
+                );
+                const isInPortfolio = positions.some(
+                    p => p.shares > 0 && matchingIds.has(String(p.stockId))
+                );
+                let lastActiveTab: string | null = null;
+                try {
+                    lastActiveTab = localStorage.getItem('watchlist_active_tab');
+                } catch {
+                    lastActiveTab = null;
+                }
+                const lastActiveMatch = lastActiveTab
+                    ? matchingWatchlists.find(wl => wl.id === lastActiveTab)
+                    : undefined;
+
+                let initialSourceFilter = 'all';
+                let initialSearchTerm = stock.symbol || stock.name;
+
+                if (lastActiveMatch) {
+                    initialSourceFilter = `wl:${lastActiveMatch.id}`;
+                    initialSearchTerm = '';
+                } else if (lastActiveTab === 'owned' && isInPortfolio) {
+                    initialSourceFilter = 'portfolio_all';
+                    initialSearchTerm = '';
+                } else if (matchingWatchlists.length > 0) {
+                    initialSourceFilter = `wl:${matchingWatchlists[0].id}`;
+                    initialSearchTerm = '';
+                } else if (isInPortfolio) {
+                    initialSourceFilter = 'portfolio_all';
+                    initialSearchTerm = '';
+                }
+
+                return (
+                    <TradeRadarModal
+                        isOpen={isTradeRadarOpen}
+                        onClose={() => setIsTradeRadarOpen(false)}
+                        radar={tradeRadar}
+                        initialTradeMode="buy"
+                        initialCategory="all_assets"
+                        initialSourceFilter={initialSourceFilter}
+                        initialSearchTerm={initialSearchTerm}
+                        highlightStockId={String(stock.id)}
+                        highlightSymbol={stock.symbol}
+                        watchlists={watchlists}
+                        isRefreshing={isGlobalRefreshing}
+                        onRefreshPrices={() => refreshAllPrices(true)}
+                        onSelectForTrade={(targetStockId, tradeMode, suggestedPrice) => {
+                            setIsTradeRadarOpen(false);
+                            const params = new URLSearchParams();
+                            params.set('stock', String(targetStockId));
+                            params.set('mode', tradeMode);
+                            if (suggestedPrice && suggestedPrice > 0) {
+                                params.set('price', suggestedPrice.toFixed(2));
+                            }
+                            navigate(`/calculator?${params.toString()}`);
+                        }}
+                    />
+                );
+            })()}
         </div >
     );
 }

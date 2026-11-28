@@ -3,17 +3,19 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { SimulationArchiveModal } from '../components/SimulationArchiveModal';
 import { OrderBookModal } from '../components/OrderBookModal';
+import { TradeRadarModal } from '../components/TradeRadarModal';
 import type { SavedSimulation, OrderBookEntry } from '../types';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, HelpCircle, BookOpen, AlertTriangle, Target, Telescope, FolderArchive, BookmarkPlus, ClipboardList, Calendar } from 'lucide-react';
-import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, HelpCircle, BookOpen, AlertTriangle, Telescope, FolderArchive, BookmarkPlus, ClipboardList, Calendar, Radar } from 'lucide-react';
+import { fetchStockHistory, searchStocks, fetchStockQuote, fetchSmartDividendSchedule } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { cn } from '../utils';
-import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
+import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue } from '../utils/fairValue';
+import { buildTradeRadar, resolveRadarInitialSource, type RadarCategory } from '../utils/tradeRadar';
 import { getWithholdingTaxRate } from '../utils/tax';
 
 const getStampDutyForStock = (stock: { currency?: string; symbol?: string; isin?: string } | null | undefined): number => {
@@ -28,49 +30,114 @@ const getStampDutyForStock = (stock: { currency?: string; symbol?: string; isin?
 };
 
 const getStockLimits = (stock: any, fxRates?: Record<string, number> | null) => {
-    if (!stock) return { limitA: null, limitB: null, manualLimit: null, activeType: null, targetPrice: null };
+    if (!stock) {
+        return {
+            limitA: null,
+            limitB: null,
+            limitC: null,
+            manualLimit: null,
+            savedManualLimit: null,
+            activeType: null,
+            targetPrice: null,
+            sellA: null,
+            sellB: null,
+            sellC: null,
+            savedManualSellLimit: null,
+            activeSellType: null as 'sellA' | 'sellB' | 'sellC' | 'manual' | null,
+            sellLimit: null,
+            paramsA: null as any,
+            paramsB: null as any,
+            paramsC: null as any,
+            fvA: null as number | null,
+            fvB: null as number | null,
+            fvC: null as number | null
+        };
+    }
 
     const symKey = (stock.symbol || '').trim().toUpperCase();
-    let activeParams = stock.fairValueParams;
-    if (!activeParams && symKey) {
+    let localEntry: any = null;
+    if (symKey) {
         try {
             const map = JSON.parse(localStorage.getItem('fair_value_params_map') || '{}');
-            if (map[symKey]) activeParams = map[symKey];
+            if (map[symKey]) localEntry = map[symKey];
         } catch {
             // ignore
         }
     }
+    const activeParams = stock.fairValueParams || localEntry;
 
     const effectivePrice = stock.currentPrice || stock.price || 0;
     let limitA: number | null = null;
     let limitB: number | null = null;
+    let limitC: number | null = null;
+    let sellA: number | null = null;
+    let sellB: number | null = null;
+    let sellC: number | null = null;
+    let paramsA: any = null;
+    let paramsB: any = null;
+    let paramsC: any = null;
+    let fvA: number | null = null;
+    let fvB: number | null = null;
+    let fvC: number | null = null;
 
     if (effectivePrice > 0 && symKey) {
+        const qStub = {
+            price: effectivePrice,
+            dividendYield: stock.dividendYield,
+            eps: stock.eps,
+            forwardEps: stock.forwardEps,
+            trailingPE: stock.trailingPE,
+            forwardPE: stock.forwardPE,
+            kcv: stock.kcv,
+            sector: stock.sector,
+            currency: stock.currency
+        };
         try {
-            const smartC = computeSmartAutoParams({ price: effectivePrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'conservative', fxRates);
-            const dcfC = calculateDcfFairValue(
+            const smartC = computeSmartAutoParams(qStub, null, stock, symKey, 'conservative', fxRates);
+            const isEtfStock = Boolean(smartC.isEtf);
+            const sellMultA = isEtfStock ? 1.20 : 1.25;
+            const sellMultB = isEtfStock ? 1.25 : 1.30;
+            const resolvedParamsA =
                 activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && (activeParams?.eps ?? 0) > 0
                     ? activeParams
-                    : smartC,
-                effectivePrice
-            );
+                    : smartC;
+            paramsA = resolvedParamsA;
+            const dcfC = calculateDcfFairValue(resolvedParamsA, effectivePrice);
             if (dcfC.buyPrice > 0) {
                 limitA = parseFloat(dcfC.buyPrice.toFixed(2));
             }
-        } catch {
-            // ignore
-        }
+            if (dcfC.fairValue > 0) {
+                fvA = parseFloat(dcfC.fairValue.toFixed(2));
+                sellA = parseFloat((dcfC.fairValue * sellMultA).toFixed(2));
+            }
+            const smartR = applyRiskModeParams(smartC);
+            const resolvedParamsC =
+                activeParams?.valuationMode === 'risk' && !activeParams?.isCustom && (activeParams?.eps ?? 0) > 0
+                    ? activeParams
+                    : smartR;
+            paramsC = resolvedParamsC;
+            const dcfR = calculateDcfFairValue(resolvedParamsC, effectivePrice);
+            if (dcfR.buyPrice > 0) {
+                limitC = parseFloat(dcfR.buyPrice.toFixed(2));
+            }
+            if (dcfR.fairValue > 0) {
+                fvC = parseFloat(dcfR.fairValue.toFixed(2));
+                sellC = parseFloat((dcfR.fairValue * sellMultA).toFixed(2));
+            }
 
-        try {
-            const smartQ = computeSmartAutoParams({ price: effectivePrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'quality', fxRates);
-            const dcfQ = calculateDcfFairValue(
+            const smartQ = computeSmartAutoParams(qStub, null, stock, symKey, 'quality', fxRates);
+            const resolvedParamsB =
                 activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && (activeParams?.eps ?? 0) > 0
                     ? activeParams
-                    : smartQ,
-                effectivePrice
-            );
+                    : smartQ;
+            paramsB = resolvedParamsB;
+            const dcfQ = calculateDcfFairValue(resolvedParamsB, effectivePrice);
             if (dcfQ.buyPrice > 0) {
                 limitB = parseFloat(dcfQ.buyPrice.toFixed(2));
+            }
+            if (dcfQ.fairValue > 0) {
+                fvB = parseFloat(dcfQ.fairValue.toFixed(2));
+                sellB = parseFloat((dcfQ.fairValue * sellMultB).toFixed(2));
             }
         } catch {
             // ignore
@@ -78,11 +145,13 @@ const getStockLimits = (stock: any, fxRates?: Record<string, number> | null) => 
     }
 
     let manualLimit: number | null = null;
-    let activeType: 'limitA' | 'limitB' | 'limitC' | 'manual' | null = null;
+    let activeType: 'limitA' | 'limitB' | 'limitC' | 'fairValue' | 'manual' | null = null;
 
     if (stock.targetPrice && stock.targetPrice > 0) {
         const tp = parseFloat(stock.targetPrice.toFixed(2));
-        if (stock.targetPriceType === 'risk') {
+        if (stock.targetPriceType === 'fairValue') {
+            activeType = 'fairValue';
+        } else if (stock.targetPriceType === 'risk') {
             activeType = 'limitC';
         } else if (stock.targetPriceType === 'quality') {
             activeType = 'limitB';
@@ -98,6 +167,8 @@ const getStockLimits = (stock: any, fxRates?: Record<string, number> | null) => 
             activeType = 'limitA';
         } else if (limitB !== null && Math.abs(tp - limitB) < 0.05) {
             activeType = 'limitB';
+        } else if (limitC !== null && Math.abs(tp - limitC) < 0.05) {
+            activeType = 'limitC';
         } else if (activeParams?.valuationMode === 'quality') {
             activeType = 'limitB';
         } else if (activeParams?.valuationMode === 'conservative') {
@@ -110,7 +181,72 @@ const getStockLimits = (stock: any, fxRates?: Record<string, number> | null) => 
         }
     }
 
-    return { limitA, limitB, manualLimit, activeType, targetPrice: stock.targetPrice };
+    const rawStoredManual =
+        Number(stock.fairValueParams?.manualTargetPrice) ||
+        Number(localEntry?.manualTargetPrice) ||
+        (manualLimit ?? 0);
+    const savedManualLimit = rawStoredManual > 0 ? parseFloat(rawStoredManual.toFixed(2)) : null;
+
+    // Active Sell Limit classification (A / B / C / Manual) — strictly independent from Buy Limit!
+    let activeSellType: 'sellA' | 'sellB' | 'sellC' | 'manual' | null = null;
+    let detectedManualSell: number | null = null;
+    const savedSellType = (stock.sellLimitType || stock.fairValueParams?.sellLimitType || localEntry?.sellLimitType) as
+        | 'conservative'
+        | 'quality'
+        | 'risk'
+        | 'manual'
+        | undefined;
+
+    if (stock.sellLimit && stock.sellLimit > 0) {
+        const sp = parseFloat(stock.sellLimit.toFixed(2));
+        if (savedSellType === 'conservative') {
+            activeSellType = 'sellA';
+        } else if (savedSellType === 'quality') {
+            activeSellType = 'sellB';
+        } else if (savedSellType === 'risk') {
+            activeSellType = 'sellC';
+        } else if (savedSellType === 'manual') {
+            activeSellType = 'manual';
+            detectedManualSell = sp;
+        } else if (sellA !== null && Math.abs(sp - sellA) < 0.05) {
+            activeSellType = 'sellA';
+        } else if (sellB !== null && Math.abs(sp - sellB) < 0.05) {
+            activeSellType = 'sellB';
+        } else if (sellC !== null && Math.abs(sp - sellC) < 0.05) {
+            activeSellType = 'sellC';
+        } else {
+            activeSellType = 'manual';
+            detectedManualSell = sp;
+        }
+    }
+
+    const rawStoredManualSell =
+        Number(stock.fairValueParams?.manualSellLimit) ||
+        Number(localEntry?.manualSellLimit) ||
+        (detectedManualSell ?? 0);
+    const savedManualSellLimit = rawStoredManualSell > 0 ? parseFloat(rawStoredManualSell.toFixed(2)) : null;
+
+    return {
+        limitA,
+        limitB,
+        limitC,
+        manualLimit,
+        savedManualLimit,
+        activeType,
+        targetPrice: stock.targetPrice,
+        sellA,
+        sellB,
+        sellC,
+        savedManualSellLimit,
+        activeSellType,
+        sellLimit: stock.sellLimit,
+        paramsA,
+        paramsB,
+        paramsC,
+        fvA,
+        fvB,
+        fvC
+    };
 };
 
 const getPriceClassification = (
@@ -150,7 +286,18 @@ const getPriceClassification = (
         };
     }
 
-    // 3. Matches stock.targetPrice (could be A, B, or Manual)
+    // 3. Matches Limit C
+    if (limits.limitC !== null && matchesVal(currentPrice, limits.limitC)) {
+        return {
+            type: 'limitC' as const,
+            label: 'Limit C',
+            detail: 'Risiko C',
+            colorClass: 'text-amber-400 font-bold',
+            badgeClass: 'text-amber-400 bg-amber-500/15 border-amber-500/30',
+        };
+    }
+
+    // 4. Matches stock.targetPrice (could be A, B, C, Fairer Wert, or Manual)
     if (limits.targetPrice !== null && limits.targetPrice !== undefined && matchesVal(currentPrice, limits.targetPrice)) {
         if (limits.activeType === 'limitA') {
             return {
@@ -170,16 +317,45 @@ const getPriceClassification = (
                 badgeClass: 'text-purple-400 bg-purple-500/15 border-purple-500/30',
             };
         }
+        if (limits.activeType === 'limitC') {
+            return {
+                type: 'limitC' as const,
+                label: 'Limit C',
+                detail: 'Risiko C',
+                colorClass: 'text-amber-400 font-bold',
+                badgeClass: 'text-amber-400 bg-amber-500/15 border-amber-500/30',
+            };
+        }
+        if (limits.activeType === 'fairValue') {
+            return {
+                type: 'fairValue' as const,
+                label: 'FW',
+                detail: 'Fairer Wert',
+                colorClass: 'text-blue-400 font-bold',
+                badgeClass: 'text-blue-400 bg-blue-500/15 border-blue-500/30',
+            };
+        }
         return {
             type: 'manual' as const,
-            label: 'Manuell',
-            detail: 'Eigenes Kauflimit',
-            colorClass: 'text-emerald-400 font-bold',
-            badgeClass: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30',
+            label: 'Limit M',
+            detail: 'Gespeichertes Kauflimit M',
+            colorClass: 'text-pink-400 font-bold',
+            badgeClass: 'text-pink-400 bg-pink-500/15 border-pink-500/30',
         };
     }
 
-    // 4. Matches current market price
+    // 5. Matches previously saved Manual Limit
+    if (limits.savedManualLimit !== null && matchesVal(currentPrice, limits.savedManualLimit)) {
+        return {
+            type: 'manual' as const,
+            label: 'Limit M',
+            detail: 'Gespeichertes Kauflimit M',
+            colorClass: 'text-pink-400 font-bold',
+            badgeClass: 'text-pink-400 bg-pink-500/15 border-pink-500/30',
+        };
+    }
+
+    // 6. Matches current market price
     if (marketPrice !== undefined && marketPrice > 0 && matchesVal(currentPrice, marketPrice)) {
         return {
             type: 'market' as const,
@@ -190,13 +366,13 @@ const getPriceClassification = (
         };
     }
 
-    // 5. Otherwise: user entered a custom price manually!
+    // 7. Otherwise: user entered a custom price manually!
     return {
         type: 'manual' as const,
         label: 'Manuell',
         detail: 'Eigener Kaufkurs',
-        colorClass: 'text-emerald-400 font-bold',
-        badgeClass: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30',
+        colorClass: 'text-pink-400 font-bold',
+        badgeClass: 'text-pink-400 bg-pink-500/15 border-pink-500/30',
     };
 };
 
@@ -301,7 +477,7 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 export function DividendCalculator() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, watchlists, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition, simulations, addSimulation, addOrderBookEntry } = usePortfolio();
+    const { stocks, watchlists, addStock, addToWatchlist, removeFromWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition, simulations, addSimulation, addOrderBookEntry, orderBook, refreshAllPrices, isGlobalRefreshing } = usePortfolio();
     const { rates } = useExchangeRates();
 
     // Catch-all: Ensure GBp is always converted to GBP on mount/update
@@ -310,66 +486,72 @@ export function DividendCalculator() {
             updateSimulatorState({
                 simCurrency: 'GBP',
                 price: simulatorState.price / 100,
+                ...(simulatorState.buyPrice ? { buyPrice: simulatorState.buyPrice / 100 } : {}),
+                ...(simulatorState.sellPrice ? { sellPrice: simulatorState.sellPrice / 100 } : {}),
                 dividend: simulatorState.dividend / 100
             });
         }
-    }, [simulatorState.simCurrency, simulatorState.price, simulatorState.dividend, updateSimulatorState]);
+    }, [simulatorState.simCurrency, simulatorState.price, simulatorState.buyPrice, simulatorState.sellPrice, simulatorState.dividend, updateSimulatorState]);
 
     // Load planned purchase from URL parameter
     const lastLoadedParamRef = useRef<string | null>(null);
     useEffect(() => {
         const stockId = searchParams.get('stock');
-        const currentParamKey = `${stockId || ''}`;
+        const urlMode = searchParams.get('mode') === 'sell' ? 'sell' : 'buy';
+        const urlPriceRaw = searchParams.get('price');
+        const urlPriceParsed = urlPriceRaw ? parseFloat(urlPriceRaw) : NaN;
+        const currentParamKey = `${stockId || ''}:${urlMode}:${urlPriceRaw || ''}`;
 
         if (stockId && stockId !== 'new' && currentParamKey !== lastLoadedParamRef.current) {
             const stock = stocks.find(s => String(s.id) === String(stockId) || s.symbol.toLowerCase() === stockId.toLowerCase());
             if (stock) {
-                const effectivePrice = stock.plannedPurchase
-                    ? stock.plannedPurchase.pricePerShare
-                    : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice);
+                lastSyncedStockIdRef.current = stock.id;
+                const ownedPos = positions.find(p => String(p.stockId) === String(stock.id) && p.shares > 0);
+                // Start with the active saved buy/sell limit (falls back to live market price when no limit is set),
+                // unless an explicit ?price= was passed (e.g. from Finanz Rechner). Keep Buy & Sell prices strictly independent!
+                const livePrice = stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice;
+                const savedTargetNorm = stock.targetPrice && stock.targetPrice > 0
+                    ? (stock.currency === 'GBp' ? stock.targetPrice / 100 : stock.targetPrice)
+                    : livePrice;
+                const savedSellNorm = stock.sellLimit && stock.sellLimit > 0
+                    ? (stock.currency === 'GBp' ? stock.sellLimit / 100 : stock.sellLimit)
+                    : livePrice;
+                const effectivePrice = Number.isFinite(urlPriceParsed) && urlPriceParsed > 0
+                    ? urlPriceParsed
+                    : (urlMode === 'sell' ? savedSellNorm : savedTargetNorm);
+                const initBuyPrice = urlMode === 'buy' ? effectivePrice : savedTargetNorm;
+                const initSellPrice = urlMode === 'sell' ? effectivePrice : savedSellNorm;
 
                 const stampDutyParam = getStampDutyForStock(stock);
                 const stockIsAccumulating = stock.distributionPolicy === 'accumulating';
-                if (stock.plannedPurchase) {
-                    // Load with planned purchase data
-                    const pp = stock.plannedPurchase;
-                    updateSimulatorState({
-                        selectedStockId: stock.id,
-                        shares: pp.shares,
-                        price: effectivePrice,
-                        dividend: stockIsAccumulating ? 0 : pp.dividendPerShare,
-                        simCurrency: pp.currency === 'GBp' ? 'GBP' : pp.currency,
-                        mode: 'buy',
-                        simName: stock.name,
-                        simSymbol: stock.symbol,
-                        simIsin: stock.isin || '',
-                        simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
-                        simFrequency: stockIsAccumulating ? undefined : (stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually'),
-                        fees: { ...simulatorState.fees, stampDutyPercent: stampDutyParam }
-                    });
-                } else {
-                    // Load stock selection without planned data
-                    let annualDiv = stock.dividendAmount || 0;
-                    const stockFreq = stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually';
-                    if (stockFreq === 'quarterly') annualDiv *= 4;
-                    else if (stockFreq === 'monthly') annualDiv *= 12;
-                    else if (stockFreq === 'semi-annually') annualDiv *= 2;
 
-                    updateSimulatorState({
-                        selectedStockId: stock.id,
-                        mode: 'buy',
-                        simName: stock.name,
-                        simSymbol: stock.symbol,
-                        simIsin: stock.isin || '',
-                        simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
-                        simType: stock.type,
-                        simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
-                        simFrequency: stockIsAccumulating ? undefined : stockFreq,
-                        price: effectivePrice,
-                        dividend: stockIsAccumulating ? 0 : annualDiv,
-                        fees: { ...simulatorState.fees, stampDutyPercent: stampDutyParam }
-                    });
-                }
+                let annualDiv = stock.dividendAmount || 0;
+                const stockFreq = stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually';
+                if (stockFreq === 'quarterly') annualDiv *= 4;
+                else if (stockFreq === 'monthly') annualDiv *= 12;
+                else if (stockFreq === 'semi-annually') annualDiv *= 2;
+
+                updateSimulatorState({
+                    selectedStockId: stock.id,
+                    mode: urlMode,
+                    ...(urlMode === 'sell' && ownedPos
+                        ? { shares: ownedPos.shares }
+                        : stock.plannedPurchase?.shares && stock.plannedPurchase.shares > 0
+                            ? { shares: stock.plannedPurchase.shares }
+                            : {}),
+                    simName: stock.name,
+                    simSymbol: stock.symbol,
+                    simIsin: stock.isin || '',
+                    simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
+                    simType: stock.type,
+                    simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
+                    simFrequency: stockIsAccumulating ? undefined : stockFreq,
+                    price: parseFloat(effectivePrice.toFixed(4)),
+                    buyPrice: parseFloat(initBuyPrice.toFixed(4)),
+                    sellPrice: parseFloat(initSellPrice.toFixed(4)),
+                    dividend: stockIsAccumulating ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
+                    fees: { ...simulatorState.fees, stampDutyPercent: stampDutyParam }
+                });
                 lastLoadedParamRef.current = currentParamKey;
             }
         }
@@ -377,7 +559,7 @@ export function DividendCalculator() {
         if (!stockId) {
             lastLoadedParamRef.current = null;
         }
-    }, [searchParams, stocks, updateSimulatorState]);
+    }, [searchParams, stocks, positions, updateSimulatorState]);
 
 
 
@@ -802,7 +984,7 @@ export function DividendCalculator() {
     };
 
     // Destructure Simulator State
-    const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, simFrequency, simDistributionPolicy, fees, mode } = simulatorState;
+    const { shares, price, buyPrice, sellPrice, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, simFrequency, simDistributionPolicy, fees, mode } = simulatorState;
     const selectedStock = stocks.find(s => s.id === selectedStockId);
     const isManual = !selectedStockId || selectedStockId === 'new';
     const isETF = (selectedStock?.type === 'etf') || (simulatorState.simType === 'etf');
@@ -812,17 +994,91 @@ export function DividendCalculator() {
     const frequency = simFrequency || 'annually';
     const freqFactor = frequency === 'quarterly' ? 4 : frequency === 'semi-annually' ? 2 : frequency === 'monthly' ? 12 : 1;
 
+    // Independent Kaufen / Verkaufen mode switching (preserves Buy price and Sell price separately!)
+    const handleSwitchMode = (nextMode: 'buy' | 'sell') => {
+        if (nextMode === mode) return;
+        const mktPrice = selectedStock
+            ? (selectedStock.currency === 'GBp' ? selectedStock.currentPrice / 100 : selectedStock.currentPrice)
+            : 0;
+        if (nextMode === 'sell') {
+            const fallbackSell = selectedStock?.sellLimit && selectedStock.sellLimit > 0
+                ? (selectedStock.currency === 'GBp' ? selectedStock.sellLimit / 100 : selectedStock.sellLimit)
+                : (mktPrice > 0 ? mktPrice : price);
+            const targetSellPrice = sellPrice !== undefined && sellPrice > 0 ? sellPrice : fallbackSell;
+            updateSimulatorState({
+                mode: 'sell',
+                buyPrice: price,
+                sellPrice: targetSellPrice,
+                price: targetSellPrice
+            });
+        } else {
+            const fallbackBuy = selectedStock?.targetPrice && selectedStock.targetPrice > 0
+                ? (selectedStock.currency === 'GBp' ? selectedStock.targetPrice / 100 : selectedStock.targetPrice)
+                : (mktPrice > 0 ? mktPrice : price);
+            const targetBuyPrice = buyPrice !== undefined && buyPrice > 0 ? buyPrice : fallbackBuy;
+            updateSimulatorState({
+                mode: 'buy',
+                sellPrice: price,
+                buyPrice: targetBuyPrice,
+                price: targetBuyPrice
+            });
+        }
+    };
+
     // Watchlist & Archive Feedback
     const [showSuccess, setShowSuccess] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
     const [showArchive, setShowArchive] = useState(false);
     const [showOrderBook, setShowOrderBook] = useState(() => searchParams.get('orderbook') === 'true');
+    const [showTradeRadar, setShowTradeRadar] = useState(() => searchParams.get('radar') === 'true');
+    const [radarInitialCategory, setRadarInitialCategory] = useState<RadarCategory>('all_assets');
     const [showSavedFeedback, setShowSavedFeedback] = useState(false);
     const [showOrderBookSavedFeedback, setShowOrderBookSavedFeedback] = useState(false);
+
+    const openTradeRadar = (category: RadarCategory = 'all_assets') => {
+        setRadarInitialCategory(category);
+        setShowTradeRadar(true);
+    };
+
+    const tradeRadar = useMemo(
+        () => buildTradeRadar({ stocks, positions, watchlists, orderBook, fxRates: rates }),
+        [stocks, positions, watchlists, orderBook, rates]
+    );
+
+    const buyRadarSignalCount = useMemo(
+        () => tradeRadar.items.filter(i => i.isBuyLimitReached || i.buyZone !== null || i.isBelowSma200).length,
+        [tradeRadar.items]
+    );
+    const sellRadarSignalCount = useMemo(
+        () => tradeRadar.items.filter(i => i.sellStatus !== null).length,
+        [tradeRadar.items]
+    );
+
+    const selectedRadarItem = useMemo(() => {
+        if (!selectedStock) return null;
+        const symUpper = (selectedStock.symbol || '').trim().toUpperCase();
+        const found = tradeRadar.items.find(
+            item =>
+                String(item.stock.id) === String(selectedStock.id) ||
+                (symUpper !== '' && item.stock.symbol.trim().toUpperCase() === symUpper)
+        );
+        if (found) return found;
+        if (!(selectedStock.currentPrice > 0)) return null;
+        return buildTradeRadar({
+            stocks: [selectedStock],
+            positions,
+            watchlists: [{ id: '__selected__', name: '', stockIds: [selectedStock.id] }],
+            orderBook,
+            fxRates: rates
+        }).items[0] || null;
+    }, [selectedStock, tradeRadar, positions, orderBook, rates]);
 
     useEffect(() => {
         if (searchParams.get('orderbook') === 'true') {
             setShowOrderBook(true);
+        }
+        if (searchParams.get('radar') === 'true') {
+            setShowTradeRadar(true);
         }
     }, [searchParams]);
     const getEndOfWeekDate = () => {
@@ -852,6 +1108,17 @@ export function DividendCalculator() {
             annualDiv = (sim.grossYield / 100) * sim.price;
         }
 
+        const matchedStock = sim.stockId ? stocks.find(s => s.id === sim.stockId) : undefined;
+        const mktPrice = matchedStock
+            ? (matchedStock.currency === 'GBp' ? matchedStock.currentPrice / 100 : matchedStock.currentPrice)
+            : sim.price;
+        const otherBuy = matchedStock?.targetPrice && matchedStock.targetPrice > 0
+            ? (matchedStock.currency === 'GBp' ? matchedStock.targetPrice / 100 : matchedStock.targetPrice)
+            : mktPrice;
+        const otherSell = matchedStock?.sellLimit && matchedStock.sellLimit > 0
+            ? (matchedStock.currency === 'GBp' ? matchedStock.sellLimit / 100 : matchedStock.sellLimit)
+            : mktPrice;
+
         updateSimulatorState({
             mode: sim.mode,
             selectedStockId: sim.stockId || '',
@@ -860,6 +1127,8 @@ export function DividendCalculator() {
             simIsin: sim.stockIsin || '',
             shares: sim.shares,
             price: sim.price,
+            buyPrice: sim.mode === 'buy' ? sim.price : otherBuy,
+            sellPrice: sim.mode === 'sell' ? sim.price : otherSell,
             simCurrency: sim.currency as any,
             dividend: parseFloat(annualDiv.toFixed(4)),
             simFrequency: sim.dividendFrequency || 'annually',
@@ -940,6 +1209,17 @@ export function DividendCalculator() {
             annualDiv = (order.grossYield / 100) * order.limitPrice;
         }
 
+        const matchedStock = order.stockId ? stocks.find(s => s.id === order.stockId) : undefined;
+        const mktPrice = matchedStock
+            ? (matchedStock.currency === 'GBp' ? matchedStock.currentPrice / 100 : matchedStock.currentPrice)
+            : order.limitPrice;
+        const otherBuy = matchedStock?.targetPrice && matchedStock.targetPrice > 0
+            ? (matchedStock.currency === 'GBp' ? matchedStock.targetPrice / 100 : matchedStock.targetPrice)
+            : mktPrice;
+        const otherSell = matchedStock?.sellLimit && matchedStock.sellLimit > 0
+            ? (matchedStock.currency === 'GBp' ? matchedStock.sellLimit / 100 : matchedStock.sellLimit)
+            : mktPrice;
+
         updateSimulatorState({
             mode: order.mode,
             selectedStockId: order.stockId || '',
@@ -948,6 +1228,8 @@ export function DividendCalculator() {
             simIsin: order.stockIsin || '',
             shares: order.shares,
             price: order.limitPrice,
+            buyPrice: order.mode === 'buy' ? order.limitPrice : otherBuy,
+            sellPrice: order.mode === 'sell' ? order.limitPrice : otherSell,
             simCurrency: (order.currency as any) || 'CHF',
             dividend: parseFloat(annualDiv.toFixed(4)),
             simFrequency: order.dividendFrequency || 'annually',
@@ -1005,9 +1287,21 @@ export function DividendCalculator() {
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
     const [searchTerm, setSearchTerm] = useState('');
     const [showStockList, setShowStockList] = useState(false);
-    const [savedWatchlistId, setSavedWatchlistId] = useState<string | null>(null);
+    const [watchlistFeedback, setWatchlistFeedback] = useState<{ type: 'added' | 'removed'; id: string } | null>(null);
+    const watchlistFeedbackTimerRef = useRef<number | null>(null);
     const searchRef = useRef<HTMLDivElement>(null);
     const watchlistPopoverRef = useRef<HTMLDivElement>(null);
+
+    const flashWatchlistFeedback = (type: 'added' | 'removed', id: string) => {
+        if (watchlistFeedbackTimerRef.current) {
+            window.clearTimeout(watchlistFeedbackTimerRef.current);
+        }
+        setWatchlistFeedback({ type, id });
+        watchlistFeedbackTimerRef.current = window.setTimeout(() => {
+            setWatchlistFeedback(null);
+            watchlistFeedbackTimerRef.current = null;
+        }, 2000);
+    };
 
     const canSaveToWatchlist = Boolean(
         (selectedStockId && selectedStockId !== 'new') ||
@@ -1048,10 +1342,18 @@ export function DividendCalculator() {
 
     const [isEditingPrice, setIsEditingPrice] = useState(false);
     const [editPriceVal, setEditPriceVal] = useState('');
+    const [quickLimitSavedFeedback, setQuickLimitSavedFeedback] = useState(false);
+    const [isLoadingDivDates, setIsLoadingDivDates] = useState(false);
+    const [divDatesFeedback, setDivDatesFeedback] = useState<{ type: 'success' | 'warning'; text: string } | null>(null);
 
-    // Reset edit mode when stock changes
+    // Reset edit modes when stock or buy/sell mode changes
     useEffect(() => {
         setIsEditingPrice(false);
+    }, [selectedStockId, mode]);
+
+    // Reset inline dividend schedule feedback when switching stock
+    useEffect(() => {
+        setDivDatesFeedback(null);
     }, [selectedStockId]);
 
     // Flag to prevent double-initialization or reset-loops from URL
@@ -1118,6 +1420,17 @@ export function DividendCalculator() {
             const useUrlPrice = Number.isFinite(urlPrice) && urlPrice > 0;
             hasAppliedUrlPriceRef.current = true;
 
+            const livePrice = stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice;
+            const savedTargetNorm = stock.targetPrice && stock.targetPrice > 0
+                ? (stock.currency === 'GBp' ? stock.targetPrice / 100 : stock.targetPrice)
+                : livePrice;
+            const savedSellNorm = stock.sellLimit && stock.sellLimit > 0
+                ? (stock.currency === 'GBp' ? stock.sellLimit / 100 : stock.sellLimit)
+                : livePrice;
+            const syncedPrice = useUrlPrice
+                ? urlPrice
+                : (mode === 'sell' ? savedSellNorm : savedTargetNorm);
+
             updateSimulatorState({
                 simName: stock.name,
                 simSymbol: stock.symbol,
@@ -1125,7 +1438,9 @@ export function DividendCalculator() {
                 simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
                 simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
                 simFrequency: stockIsAccumulating ? undefined : stockFreq,
-                price: useUrlPrice ? urlPrice : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice),
+                price: syncedPrice,
+                buyPrice: mode === 'buy' ? syncedPrice : savedTargetNorm,
+                sellPrice: mode === 'sell' ? syncedPrice : savedSellNorm,
                 dividend: stockIsAccumulating ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
@@ -1248,6 +1563,207 @@ export function DividendCalculator() {
     const grossYield = price > 0 ? (dividend / price) * 100 : 0;
     const netYield = totalInvestCHF > 0 ? (getCHF(shares * dividend, simCurrency || 'CHF') / totalInvestCHF) * 100 : 0;
 
+    // Upcoming dividend dates (Ex-Date & Pay-Date) for the selected stock — shown in BOTH Kaufen & Verkaufen
+    const upcomingDividendInfo = useMemo(() => {
+        if (!selectedStock) return { slots: [] as { exDate?: string; payDate?: string; exFormatted: string; payFormatted: string; daysToEx: number | null; daysToPay: number | null }[], hasFuture: false };
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayMs = today.getTime();
+
+        const rawPairs: { exDate?: string; payDate?: string }[] = [];
+        if (Array.isArray(selectedStock.dividendDates)) {
+            selectedStock.dividendDates.forEach(d => {
+                if (d?.exDate || d?.payDate) rawPairs.push({ exDate: d.exDate, payDate: d.payDate });
+            });
+        }
+        if (selectedStock.dividendExDate || selectedStock.dividendPayDate) {
+            const exists = rawPairs.some(
+                p => p.exDate === selectedStock.dividendExDate && p.payDate === selectedStock.dividendPayDate
+            );
+            if (!exists) {
+                rawPairs.push({ exDate: selectedStock.dividendExDate, payDate: selectedStock.dividendPayDate });
+            }
+        }
+
+        const parseDayMs = (iso?: string): number | null => {
+            if (!iso) return null;
+            const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (m) {
+                return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime();
+            }
+            const t = new Date(iso).getTime();
+            if (isNaN(t)) return null;
+            const d = new Date(t);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime();
+        };
+
+        const fmtDate = (iso?: string): string => {
+            if (!iso) return '—';
+            const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+            const t = new Date(iso);
+            return !isNaN(t.getTime()) ? t.toLocaleDateString('de-CH') : iso;
+        };
+
+        const normalized = rawPairs
+            .map(p => {
+                const exMs = parseDayMs(p.exDate);
+                const payMs = parseDayMs(p.payDate);
+                const sortMs = exMs ?? payMs ?? Infinity;
+                const daysToEx = exMs !== null ? Math.round((exMs - todayMs) / 86400000) : null;
+                const daysToPay = payMs !== null ? Math.round((payMs - todayMs) / 86400000) : null;
+                return {
+                    exDate: p.exDate,
+                    payDate: p.payDate,
+                    exFormatted: fmtDate(p.exDate),
+                    payFormatted: fmtDate(p.payDate),
+                    daysToEx,
+                    daysToPay,
+                    sortMs
+                };
+            })
+            .filter(s => s.exDate || s.payDate)
+            .sort((a, b) => a.sortMs - b.sortMs);
+
+        const futureSlots = normalized.filter(
+            s => (s.daysToEx !== null && s.daysToEx >= 0) || (s.daysToPay !== null && s.daysToPay >= 0)
+        );
+
+        if (futureSlots.length > 0) {
+            return { slots: futureSlots.slice(0, 2), hasFuture: true };
+        }
+        // Fallback: show most recent past slot if no future date is entered yet
+        const lastKnown = normalized.length > 0 ? [normalized[normalized.length - 1]] : [];
+        return { slots: lastKnown, hasFuture: false };
+    }, [selectedStock]);
+
+    // 1-Klick inline Laden & Speichern der Dividenden-Termine (DivvyDiary / Yahoo Finance)
+    const handleFetchDividendDatesInline = async () => {
+        if (!selectedStock || isLoadingDivDates) return;
+        const targetStockId = selectedStock.id;
+        const targetSym = (selectedStock.symbol || simSymbol || '').trim();
+        const targetIsin = (selectedStock.isin || simIsin || '').trim();
+        if (!targetSym && !targetIsin) return;
+
+        setIsLoadingDivDates(true);
+        setDivDatesFeedback(null);
+
+        const getFreqFactor = (freq?: string) => {
+            if (freq === 'monthly') return 12;
+            if (freq === 'quarterly') return 4;
+            if (freq === 'semi-annually') return 2;
+            return 1;
+        };
+
+        try {
+            const existingPairs: { exDate?: string; payDate?: string }[] = [];
+            if (Array.isArray(selectedStock.dividendDates) && selectedStock.dividendDates.length > 0) {
+                selectedStock.dividendDates.forEach(d => {
+                    if (d?.exDate || d?.payDate) existingPairs.push({ exDate: d.exDate, payDate: d.payDate });
+                });
+            } else if (selectedStock.dividendExDate || selectedStock.dividendPayDate) {
+                existingPairs.push({
+                    exDate: selectedStock.dividendExDate,
+                    payDate: selectedStock.dividendPayDate
+                });
+            }
+
+            const currentFreq = (selectedStock.dividendFrequency && selectedStock.dividendFrequency !== 'none')
+                ? selectedStock.dividendFrequency
+                : frequency;
+
+            const result = await fetchSmartDividendSchedule(targetSym, {
+                isin: targetIsin || undefined,
+                isEtf: selectedStock.type === 'etf',
+                currentFrequency: currentFreq,
+                existingDates: existingPairs
+            });
+
+            if (result.resolvedIsin && !selectedStock.isin) {
+                updateStock(targetStockId, { isin: result.resolvedIsin });
+                if (selectedStockId === targetStockId) {
+                    updateSimulatorState({ simIsin: result.resolvedIsin });
+                }
+            }
+
+            if (result.error || result.slots.length === 0) {
+                const detail = result.divvyDiaryHint ? ` · ${result.divvyDiaryHint}` : '';
+                setDivDatesFeedback({
+                    type: 'warning',
+                    text: `${result.error || 'Keine Dividenden-Termine gefunden'}${detail}`
+                });
+                return;
+            }
+
+            const newFreq = result.frequency;
+            const updates: Partial<typeof selectedStock> = {
+                dividendFrequency: newFreq
+            };
+
+            if (result.resolvedIsin && !selectedStock.isin) {
+                updates.isin = result.resolvedIsin;
+            }
+
+            // Dividenden-Betrag pro Ausschüttung sauber umskalieren, falls sich der Rhythmus geändert hat
+            if (newFreq !== currentFreq && selectedStock.dividendAmount && selectedStock.dividendAmount > 0) {
+                const oldFactor = getFreqFactor(currentFreq);
+                const newFactor = getFreqFactor(newFreq);
+                const scaledAmount = (selectedStock.dividendAmount * oldFactor) / newFactor;
+                if (isFinite(scaledAmount) && scaledAmount > 0) {
+                    updates.dividendAmount = parseFloat(scaledAmount.toFixed(4));
+                }
+            }
+
+            if (newFreq === 'quarterly' || newFreq === 'semi-annually') {
+                const maxSlots = newFreq === 'quarterly' ? 4 : 2;
+                const mapped = result.slots.slice(0, maxSlots).map(s => ({
+                    exDate: s.exDate || '',
+                    payDate: s.payDate || ''
+                }));
+                updates.dividendDates = mapped;
+                const firstValid = mapped.find(d => d.exDate || d.payDate);
+                updates.dividendExDate = firstValid?.exDate || undefined;
+                updates.dividendPayDate = firstValid?.payDate || undefined;
+            } else {
+                const first = result.slots[0];
+                updates.dividendExDate = first?.exDate || undefined;
+                updates.dividendPayDate = first?.payDate || undefined;
+                updates.dividendDates = result.slots.length > 1
+                    ? result.slots.map(s => ({ exDate: s.exDate || '', payDate: s.payDate || '' }))
+                    : undefined;
+            }
+
+            updateStock(targetStockId, updates);
+            if (selectedStockId === targetStockId && newFreq !== frequency) {
+                updateSimulatorState({ simFrequency: newFreq });
+            }
+
+            const providerLabel = result.provider === 'divvydiary' ? 'DivvyDiary' : 'Yahoo Finance';
+            const freqLabel = newFreq === 'quarterly'
+                ? 'Quartalsweise'
+                : newFreq === 'semi-annually'
+                    ? 'Halbjährlich'
+                    : newFreq === 'monthly'
+                        ? 'Monatlich'
+                        : 'Jährlich';
+
+            setDivDatesFeedback({
+                type: 'success',
+                text: `Geladen & gespeichert · ${result.slots.length} ${result.slots.length === 1 ? 'Termin' : 'Termine'} · ${freqLabel} · ${providerLabel}`
+            });
+        } catch (err) {
+            console.error('[DividendCalculator] Inline schedule fetch failed:', err);
+            setDivDatesFeedback({
+                type: 'warning',
+                text: 'Fehler beim Laden der Termine — bitte über «Bearbeiten» prüfen.'
+            });
+        } finally {
+            setIsLoadingDivDates(false);
+        }
+    };
+
     // Handle Stock Selection
     const handleStockSelect = (stockId: string) => {
         setShowStockList(false);
@@ -1265,6 +1781,8 @@ export function DividendCalculator() {
                 simSector: '',
                 simValor: '',
                 price: 0,
+                buyPrice: 0,
+                sellPrice: 0,
                 dividend: 0,
                 mode: 'buy'
             });
@@ -1282,6 +1800,15 @@ export function DividendCalculator() {
             else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
             else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
 
+            const livePrice = stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice;
+            const savedTargetNorm = stock.targetPrice && stock.targetPrice > 0
+                ? (stock.currency === 'GBp' ? stock.targetPrice / 100 : stock.targetPrice)
+                : livePrice;
+            const savedSellNorm = stock.sellLimit && stock.sellLimit > 0
+                ? (stock.currency === 'GBp' ? stock.sellLimit / 100 : stock.sellLimit)
+                : livePrice;
+            const initialModePrice = mode === 'sell' ? savedSellNorm : savedTargetNorm;
+
             updateSimulatorState({
                 selectedStockId: stock.id,
                 simName: stock.name,
@@ -1294,10 +1821,61 @@ export function DividendCalculator() {
                 simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
                 simFrequency: stockIsAccumulating ? undefined : (stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually'),
                 dividend: stockIsAccumulating ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
-                price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
+                price: initialModePrice,
+                buyPrice: savedTargetNorm,
+                sellPrice: savedSellNorm,
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
         }
+    };
+
+    const handleSelectFromRadar = (stockId: string, tradeMode: 'buy' | 'sell', suggestedPrice?: number) => {
+        const stock = stocks.find(s => s.id === stockId);
+        if (!stock) return;
+
+        lastSyncedStockIdRef.current = stock.id;
+        setActiveTab('search');
+
+        const newStamp = getStampDutyForStock(stock);
+        const stockIsAccumulating = stock.distributionPolicy === 'accumulating';
+        let annualDiv = stock.dividendAmount || 0;
+        const stockFreq = stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually';
+        if (stockFreq === 'quarterly') annualDiv *= 4;
+        else if (stockFreq === 'monthly') annualDiv *= 12;
+        else if (stockFreq === 'semi-annually') annualDiv *= 2;
+
+        const basePrice = suggestedPrice && suggestedPrice > 0 ? suggestedPrice : stock.currentPrice;
+        const normalizedPrice = parseFloat((stock.currency === 'GBp' ? basePrice / 100 : basePrice).toFixed(2));
+        const livePrice = stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice;
+        const savedTargetNorm = stock.targetPrice && stock.targetPrice > 0
+            ? (stock.currency === 'GBp' ? stock.targetPrice / 100 : stock.targetPrice)
+            : livePrice;
+        const savedSellNorm = stock.sellLimit && stock.sellLimit > 0
+            ? (stock.currency === 'GBp' ? stock.sellLimit / 100 : stock.sellLimit)
+            : livePrice;
+        const ownedPos = positions.find(p => p.stockId === stock.id && p.shares > 0);
+
+        updateSimulatorState({
+            mode: tradeMode,
+            selectedStockId: stock.id,
+            simName: stock.name,
+            simSymbol: stock.symbol,
+            simIsin: stock.isin || '',
+            simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
+            simType: stock.type || 'stock',
+            simSector: stock.sector || '',
+            simValor: stock.valor || '',
+            simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
+            simFrequency: stockIsAccumulating ? undefined : stockFreq,
+            dividend: stockIsAccumulating ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
+            price: normalizedPrice,
+            buyPrice: tradeMode === 'buy' ? normalizedPrice : savedTargetNorm,
+            sellPrice: tradeMode === 'sell' ? normalizedPrice : savedSellNorm,
+            ...(tradeMode === 'sell' && ownedPos ? { shares: ownedPos.shares } : {}),
+            fees: { ...fees, stampDutyPercent: newStamp }
+        });
+
+        setShowTradeRadar(false);
     };
 
     // Refined Execute Handler
@@ -1459,8 +2037,7 @@ export function DividendCalculator() {
             updateStock(selectedStockId, { plannedPurchase, ...getFvExtra(fvData) });
             addToWatchlist(selectedStockId, watchlistId);
             setShowWatchlistPicker(false);
-            setSavedWatchlistId(watchlistId || '__default__');
-            setTimeout(() => setSavedWatchlistId(null), 2200);
+            flashWatchlistFeedback('added', watchlistId || '__default__');
             setShowSuccess(true);
             setTimeout(() => {
                 setShowSuccess(false);
@@ -1510,8 +2087,7 @@ export function DividendCalculator() {
             });
             addToWatchlist(newId, watchlistId);
             setShowWatchlistPicker(false);
-            setSavedWatchlistId(watchlistId || '__default__');
-            setTimeout(() => setSavedWatchlistId(null), 2200);
+            flashWatchlistFeedback('added', watchlistId || '__default__');
             updateSimulatorState({ selectedStockId: newId });
             setShowSuccess(true);
             setTimeout(() => {
@@ -1519,6 +2095,17 @@ export function DividendCalculator() {
                 if (fromWatchlist) navigate('/watchlist');
             }, 1000);
         }
+    };
+
+    const handleToggleWatchlist = async (watchlistId: string) => {
+        const wl = watchlists.find(w => w.id === watchlistId);
+        const isAlreadyInWl = Boolean(selectedStockId && selectedStockId !== 'new' && wl?.stockIds.includes(selectedStockId));
+        if (isAlreadyInWl && selectedStockId && selectedStockId !== 'new') {
+            removeFromWatchlist(selectedStockId, watchlistId);
+            flashWatchlistFeedback('removed', watchlistId);
+            return;
+        }
+        await handleAddToWatchlist(watchlistId);
     };
 
     const handleLoadStockData = async () => {
@@ -1647,22 +2234,45 @@ export function DividendCalculator() {
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 iphone-landscape-portfolio-header-row">
-                            <div className="flex items-center gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
-                                <LandscapeBackButton onClick={handleBack} />
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 iphone-landscape-portfolio-icon">
-                                    <Coins className="size-6" />
+                            <div className="flex items-center gap-3 sm:gap-4 flex-wrap w-full sm:w-auto iphone-landscape-portfolio-title-group">
+                                <div className="flex items-center gap-3">
+                                    <LandscapeBackButton onClick={handleBack} />
+                                    <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 iphone-landscape-portfolio-icon">
+                                        <Coins className="size-6" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Kauf / Verkauf</h1>
+                                        <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Investment Simulator</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Kauf / Verkauf</h1>
-                                    <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Investment Simulator</p>
-                                </div>
+
+                                {/* Prominenter Haupt-Button: Kauf-Radar / Verkaufs-Radar direkt neben dem Titel */}
+                                <button
+                                    type="button"
+                                    onClick={() => openTradeRadar('all_assets')}
+                                    title={mode === 'buy'
+                                        ? 'Kauf-Radar öffnen (Kauflimiten & Kaufzonen 1–3 für Bestand & alle Watchlists)'
+                                        : 'Verkaufs-Radar öffnen (Verkaufslimiten & Verkaufszonen für Bestand)'}
+                                    className={cn(
+                                        "h-10 px-4 py-0 text-sm inline-flex items-center justify-center gap-2 leading-none border rounded-xl transition-all font-bold shadow-md active:scale-95 cursor-pointer whitespace-nowrap shrink-0",
+                                        mode === 'buy'
+                                            ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/60 shadow-emerald-900/30"
+                                            : "bg-orange-600 hover:bg-orange-500 text-white border-orange-400/60 shadow-orange-900/30"
+                                    )}
+                                >
+                                    <Radar className="size-4 shrink-0" />
+                                    <span>{mode === 'buy' ? 'Kauf-Radar' : 'Verkaufs-Radar'}</span>
+                                    <span className="h-5 px-2 inline-flex items-center justify-center rounded-full bg-white/20 text-white text-xs font-extrabold leading-none tabular-nums">
+                                        {mode === 'buy' ? buyRadarSignalCount : sellRadarSignalCount} Signale
+                                    </span>
+                                </button>
                             </div>
 
                             <div className="flex items-center gap-2 ml-auto w-full sm:w-auto justify-end iphone-landscape-portfolio-actions">
                                 {/* Buy/Sell Switch */}
                                 <div className="h-8 inline-flex items-center bg-muted rounded-lg p-0.5 border border-border/50 iphone-landscape-segmented">
                                     <button
-                                        onClick={() => updateSimulatorState({ mode: 'buy' })}
+                                        onClick={() => handleSwitchMode('buy')}
                                         className={`h-full px-3 py-0 inline-flex items-center justify-center leading-none text-xs font-medium rounded-md transition-all cursor-pointer ${mode === 'buy'
                                             ? 'bg-green-600 text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
@@ -1671,7 +2281,7 @@ export function DividendCalculator() {
                                         Kaufen
                                     </button>
                                     <button
-                                        onClick={() => updateSimulatorState({ mode: 'sell' })}
+                                        onClick={() => handleSwitchMode('sell')}
                                         className={`h-full px-3 py-0 inline-flex items-center justify-center leading-none text-xs font-medium rounded-md transition-all cursor-pointer ${mode === 'sell'
                                             ? 'bg-red-600 text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
@@ -1689,22 +2299,22 @@ export function DividendCalculator() {
                                             title={canSaveToWatchlist ? "Direkt in eine Watchlist speichern" : "Zuerst Aktie / ETF wählen oder Name & Symbol laden"}
                                             className={cn(
                                                 "h-8 px-3 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1.5 leading-none transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap",
-                                                savedWatchlistId
+                                                watchlistFeedback?.type === 'added'
                                                     ? "bg-emerald-600 text-white border-emerald-500"
                                                     : showWatchlistPicker
                                                         ? "bg-blue-600 text-white border-blue-500"
                                                         : "bg-blue-600/15 text-blue-600 dark:text-blue-400 border-blue-500/40 hover:bg-blue-600 hover:text-white hover:border-blue-500"
                                             )}
                                         >
-                                            {savedWatchlistId ? <Check size={14} className="shrink-0" /> : <Eye size={14} className="shrink-0" />}
-                                            <span className="hidden sm:inline">{savedWatchlistId ? 'Gespeichert' : 'In Watchlist'}</span>
+                                            {watchlistFeedback?.type === 'added' ? <Check size={14} className="shrink-0" /> : <Eye size={14} className="shrink-0" />}
+                                            <span className="hidden sm:inline">{watchlistFeedback?.type === 'added' ? 'Gespeichert' : 'In Watchlist'}</span>
                                         </button>
                                         {showWatchlistPicker && (
                                             <div className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-card border border-border rounded-xl shadow-2xl z-50 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                                                         <Eye className="size-3.5 text-blue-500" />
-                                                        Watchlist wählen · 1 Klick
+                                                        Watchlist an-/abwählen · 1 Klick
                                                     </span>
                                                     <button
                                                         type="button"
@@ -1718,21 +2328,20 @@ export function DividendCalculator() {
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {watchlists.map(wl => {
                                                         const isAlreadyInWl = Boolean(selectedStockId && selectedStockId !== 'new' && wl.stockIds.includes(selectedStockId));
-                                                        const justSaved = savedWatchlistId === wl.id;
                                                         return (
                                                             <button
                                                                 key={wl.id}
                                                                 type="button"
-                                                                onClick={() => handleAddToWatchlist(wl.id)}
+                                                                onClick={() => handleToggleWatchlist(wl.id)}
                                                                 className={cn(
                                                                     "h-7 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1.5 leading-none transition-all cursor-pointer active:scale-95",
-                                                                    justSaved || isAlreadyInWl
-                                                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
+                                                                    isAlreadyInWl
+                                                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-rose-500/15 hover:text-rose-400 hover:border-rose-500/40"
                                                                         : "bg-muted/50 text-foreground border-border hover:bg-blue-600 hover:text-white hover:border-blue-500"
                                                                 )}
-                                                                title={isAlreadyInWl ? `Bereits in ${wl.name} · Klick aktualisiert Daten` : `In Watchlist ${wl.name} speichern`}
+                                                                title={isAlreadyInWl ? `Aus Watchlist ${wl.name} entfernen` : `In Watchlist ${wl.name} speichern`}
                                                             >
-                                                                {justSaved || isAlreadyInWl ? <Check className="size-3.5 shrink-0" /> : <Plus className="size-3.5 shrink-0 opacity-75" />}
+                                                                {isAlreadyInWl ? <Check className="size-3.5 shrink-0" /> : <Plus className="size-3.5 shrink-0 opacity-75" />}
                                                                 <span>{wl.name}</span>
                                                             </button>
                                                         );
@@ -1796,7 +2405,7 @@ export function DividendCalculator() {
             </div>
 
             {/* Content */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
 
                 {/* Integrated Investment Simulator (Full Width) */}
                 <div className="w-full space-y-4">
@@ -1922,39 +2531,96 @@ export function DividendCalculator() {
                                                     </div>
                                                 </>
                                             ) : (
-                                                <div className="p-4 border border-border rounded-lg bg-muted/30 flex items-center gap-3 animate-in fade-in zoom-in-95">
+                                                <div className="p-4 border border-border rounded-lg bg-muted/30 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3 animate-in fade-in zoom-in-95">
                                                     <div
-                                                        className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+                                                        className="flex items-center gap-3 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
                                                         onClick={() => navigate(`/stock/${selectedStockId}`)}
                                                         title="Zu Aktien-Details"
                                                     >
-                                                        {stocks.find(s => s.id === selectedStockId)?.logoUrl ? (
-                                                            <div className="size-12 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden">
+                                                        {selectedStock?.logoUrl ? (
+                                                            <div className="size-12 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
                                                                 <img
-                                                                    src={stocks.find(s => s.id === selectedStockId)?.logoUrl}
+                                                                    src={selectedStock.logoUrl}
                                                                     alt="Logo"
                                                                     className="w-full h-full object-contain"
                                                                 />
                                                             </div>
                                                         ) : (
-                                                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                                                {stocks.find(s => s.id === selectedStockId)?.symbol.slice(0, 2)}
+                                                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 shrink-0">
+                                                                {selectedStock?.symbol.slice(0, 2)}
                                                             </div>
                                                         )}
-                                                        <div className="flex-1">
-                                                            <div className="font-semibold">{stocks.find(s => s.id === selectedStockId)?.name}</div>
-                                                            <div className="text-sm text-muted-foreground">
-                                                                {stocks.find(s => s.id === selectedStockId)?.symbol}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => updateSimulatorState({ selectedStockId: '' })}
-                                                        className="text-muted-foreground hover:text-foreground p-1"
-                                                        title="Auswahl entfernen"
-                                                    >
-                                                        <X className="size-5" />
-                                                    </button>
+                                                         <div className="flex-1 min-w-0">
+                                                             <div className="font-semibold truncate">{selectedStock?.name}</div>
+                                                             <div className="text-sm text-muted-foreground">
+                                                                 {selectedStock?.symbol}
+                                                             </div>
+                                                         </div>
+                                                     </div>
+
+                                                     {/* Markanter Aktueller Kurs — immer sichtbar, exakt mittig über Ø Einstieg */}
+                                                     {selectedStock && selectedStock.currentPrice > 0 && (() => {
+                                                         const liveNorm = selectedStock.currency === 'GBp' ? selectedStock.currentPrice / 100 : selectedStock.currentPrice;
+                                                         const prevNorm = selectedStock.previousClose
+                                                             ? (selectedStock.currency === 'GBp' ? selectedStock.previousClose / 100 : selectedStock.previousClose)
+                                                             : 0;
+                                                         const dayPct = prevNorm > 0 ? ((liveNorm - prevNorm) / prevNorm) * 100 : null;
+                                                         const liveCurr = selectedStock.currency === 'GBp' ? 'GBP' : (selectedStock.currency || simCurrency || 'CHF');
+                                                         const heldPos = positions.find(p => p.stockId === selectedStock.id && p.shares > 0);
+                                                         const heldAvgNorm = heldPos && heldPos.buyPriceAvg > 0
+                                                             ? (selectedStock.currency === 'GBp' ? heldPos.buyPriceAvg / 100 : heldPos.buyPriceAvg)
+                                                             : 0;
+                                                         const depotPct = heldAvgNorm > 0 ? ((liveNorm - heldAvgNorm) / heldAvgNorm) * 100 : null;
+
+                                                         return (
+                                                             <button
+                                                                 type="button"
+                                                                 onClick={() => {
+                                                                     const clean = parseFloat(liveNorm.toFixed(4));
+                                                                     updateSimulatorState({
+                                                                         price: clean,
+                                                                         ...(mode === 'sell' ? { sellPrice: clean } : { buyPrice: clean })
+                                                                     });
+                                                                 }}
+                                                                 title="Aktueller Marktkurs · Klick übernimmt diesen Kurs ins Eingabefeld"
+                                                                 className="px-4 py-1.5 rounded-xl bg-background/85 border border-border/80 hover:border-primary/60 shadow-2xs flex flex-col items-center justify-center text-center transition-colors cursor-pointer shrink-0 justify-self-center"
+                                                             >
+                                                                 <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground leading-none">
+                                                                     Aktueller Kurs
+                                                                 </span>
+                                                                 <span className="text-2xl font-black font-mono tabular-nums text-foreground leading-tight mt-0.5 whitespace-nowrap">
+                                                                     {liveNorm.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {liveCurr}
+                                                                 </span>
+                                                                 {(dayPct !== null || depotPct !== null) && (
+                                                                     <div className="flex items-center justify-center gap-1.5 text-xs font-mono font-semibold tabular-nums leading-none mt-1 whitespace-nowrap">
+                                                                         {dayPct !== null && (
+                                                                             <span className={dayPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                                                                 {dayPct >= 0 ? '+' : ''}{dayPct.toFixed(2)} %
+                                                                             </span>
+                                                                         )}
+                                                                         {dayPct !== null && depotPct !== null && (
+                                                                             <span className="text-muted-foreground/60">·</span>
+                                                                         )}
+                                                                         {depotPct !== null && (
+                                                                             <span className={depotPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                                                                 Depot {depotPct >= 0 ? '+' : ''}{depotPct.toFixed(1)} %
+                                                                             </span>
+                                                                         )}
+                                                                     </div>
+                                                                 )}
+                                                             </button>
+                                                         );
+                                                     })()}
+
+                                                     <div className="flex items-center justify-end gap-2 min-w-0">
+                                                         <button
+                                                             onClick={() => updateSimulatorState({ selectedStockId: '' })}
+                                                             className="text-muted-foreground hover:text-foreground p-1 shrink-0 cursor-pointer"
+                                                             title="Auswahl entfernen"
+                                                         >
+                                                             <X className="size-5" />
+                                                         </button>
+                                                     </div>
                                                 </div>
                                             )}
                                         </div>
@@ -2160,22 +2826,24 @@ export function DividendCalculator() {
                                         if (currentPos) displayAvgPrice = currentPos.buyPriceAvg / 100;
                                     }
 
-                                    const curPrice = stock ? (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice) : 0;
+                                    const fvCenterNorm = selectedRadarItem && selectedRadarItem.fairValue > 0
+                                        ? (stock?.currency === 'GBp' ? selectedRadarItem.fairValue / 100 : selectedRadarItem.fairValue)
+                                        : 0;
+                                    const centerCurr = simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF');
 
                                     return (
-                                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50 mb-6">
+                                        <div className="grid grid-cols-3 items-center p-4 bg-muted/30 rounded-lg border border-border/50 mb-6 gap-2">
                                             {/* Shares */}
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Bestand</span>
-                                                <span className="text-xl font-medium">{currentPos ? `${currentPos.shares} Stk.` : '0 Stk.'}</span>
+                                            <div className="flex flex-col items-center gap-1 text-center">
+                                                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Bestand</span>
+                                                <span className="text-xl font-medium tabular-nums">{currentPos ? `${currentPos.shares} Stk.` : '0 Stk.'}</span>
                                             </div>
 
-                                            {/* Divider */}
-                                            <div className="h-8 w-px bg-border/50"></div>
-
-                                            {/* Avg Price or Current Price */}
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{currentPos ? 'Ø Einstieg' : 'Aktueller Kurs'}</span>
+                                            {/* Avg Entry Price (exact center aligned directly below Aktueller Kurs!) */}
+                                            <div className="flex flex-col items-center gap-1 text-center border-x border-border/50 px-2">
+                                                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                                                    {currentPos ? 'Ø Einstieg' : fvCenterNorm > 0 ? 'Fairer Wert' : 'Ø Einstieg'}
+                                                </span>
                                                 {currentPos ? (
                                                     <div className="flex items-center gap-2 group cursor-pointer"
                                                         onClick={() => {
@@ -2218,28 +2886,27 @@ export function DividendCalculator() {
                                                                 </button>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-xl font-bold group-hover:text-primary transition-colors flex items-center gap-2">
-                                                                {displayAvgPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
+                                                            <span className="text-xl font-bold tabular-nums group-hover:text-primary transition-colors flex items-center gap-2">
+                                                                {displayAvgPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {centerCurr}
                                                                 <Pencil size={12} className="opacity-0 group-hover:opacity-50 text-muted-foreground" />
                                                             </span>
                                                         )}
                                                     </div>
-                                                ) : (
-                                                    <span className="text-xl font-bold">
-                                                        {curPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
+                                                ) : fvCenterNorm > 0 ? (
+                                                    <span className="text-xl font-bold tabular-nums">
+                                                        {fvCenterNorm.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {centerCurr}
                                                     </span>
+                                                ) : (
+                                                    <span className="text-xl font-bold text-muted-foreground">—</span>
                                                 )}
                                             </div>
 
-                                            {/* Divider */}
-                                            <div className="h-8 w-px bg-border/50"></div>
-
                                             {/* Total Value or Status */}
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{currentPos ? 'Gesamtwert' : 'Status'}</span>
-                                                <span className="text-xl font-medium">
+                                            <div className="flex flex-col items-center gap-1 text-center">
+                                                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{currentPos ? 'Gesamtwert' : 'Status'}</span>
+                                                <span className="text-xl font-medium tabular-nums">
                                                     {currentPos
-                                                        ? `${(displayAvgPrice * currentPos.shares).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}`
+                                                        ? `${(displayAvgPrice * currentPos.shares).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${centerCurr}`
                                                         : (stock?.targetPrice ? 'Auf Watchlist mit Limit' : 'Beobachtet')}
                                                 </span>
                                             </div>
@@ -2249,71 +2916,408 @@ export function DividendCalculator() {
                                 })()}
                                 {/* Transaction details below selector always visible */}
 
-                                {/* Kauflimit & Fairer Wert Buttons (mittig über den Eingabefeldern) */}
+                                {/* Kauf-/Verkaufslimit, M-Direktspeichern, Fairer Wert & Kursdaten (alle exakt h-8) */}
                                 {(() => {
                                     const stock = stocks.find(s => s.id === selectedStockId);
-                                    if (!stock?.targetPrice && !stock?.symbol) return null;
-                                    const limitCurr = (stock?.currency === 'GBp' || stock?.currency === 'GBP') ? 'GBp' : (stock?.currency || 'CHF');
+                                    if (!stock?.symbol && !stock?.targetPrice && !stock?.sellLimit) return null;
+                                    const limitCurr = (stock?.currency === 'GBp' || stock?.currency === 'GBP') ? 'GBP' : (stock?.currency || 'CHF');
                                     const limits = getStockLimits(stock, rates);
+                                    const activeLimitVal = mode === 'sell' ? stock?.sellLimit : stock?.targetPrice;
+
+                                    const isGbpLimit = stock?.currency === 'GBp' || stock?.currency === 'GBP';
+                                    const matchesLimitVal = (a: number, b: number | null | undefined) => {
+                                        if (!b || b <= 0) return false;
+                                        if (Math.abs(a - b) < 0.02) return true;
+                                        if (isGbpLimit && (Math.abs(a - b / 100) < 0.001 || Math.abs(a * 100 - b) < 0.1)) return true;
+                                        return false;
+                                    };
+                                    const liveMarketVal = stock?.currentPrice || (stock as any)?.price || 0;
+                                    const isUnsavedCustomPrice =
+                                        price > 0 &&
+                                        !matchesLimitVal(price, liveMarketVal) &&
+                                        (mode === 'sell'
+                                            ? !matchesLimitVal(price, limits.sellA) &&
+                                              !matchesLimitVal(price, limits.sellB) &&
+                                              !matchesLimitVal(price, limits.sellC) &&
+                                              !matchesLimitVal(price, limits.savedManualSellLimit) &&
+                                              !matchesLimitVal(price, limits.sellLimit)
+                                            : !matchesLimitVal(price, limits.limitA) &&
+                                              !matchesLimitVal(price, limits.limitB) &&
+                                              !matchesLimitVal(price, limits.limitC) &&
+                                              !matchesLimitVal(price, limits.savedManualLimit) &&
+                                              !matchesLimitVal(price, limits.targetPrice));
+
+                                    const handleApplyBuyLimitPreset = (
+                                        val: number,
+                                        type: 'conservative' | 'quality' | 'risk' | 'manual' | 'fairValue'
+                                    ) => {
+                                        if (!stock || !(val > 0)) return;
+                                        const cleanVal = parseFloat(val.toFixed(2));
+                                        updateSimulatorState({ price: cleanVal, buyPrice: cleanVal });
+
+                                        const preserveManual = type === 'manual' ? cleanVal : limits.savedManualLimit;
+                                        const existingParams = stock.fairValueParams || {};
+                                        const matchedPresetParams =
+                                            type === 'conservative'
+                                                ? limits.paramsA
+                                                : type === 'quality'
+                                                    ? limits.paramsB
+                                                    : type === 'risk'
+                                                        ? limits.paramsC
+                                                        : null;
+                                        const matchedFv =
+                                            type === 'conservative'
+                                                ? limits.fvA
+                                                : type === 'quality'
+                                                    ? limits.fvB
+                                                    : type === 'risk'
+                                                        ? limits.fvC
+                                                        : null;
+
+                                        // Only sync DCF profile parameters when switching A/B/C auto presets (never overwrite Sell Limit fields!)
+                                        const nextFairValueParams: any = {
+                                            ...existingParams,
+                                            ...(matchedPresetParams && !existingParams.isCustom
+                                                ? {
+                                                    eps: matchedPresetParams.eps,
+                                                    growthRate: matchedPresetParams.growthRate,
+                                                    pe: matchedPresetParams.pe,
+                                                    dividendYield: matchedPresetParams.dividendYield,
+                                                    discountRate: matchedPresetParams.discountRate,
+                                                    mos: matchedPresetParams.mos,
+                                                    isCustom: false,
+                                                    valuationMode: type
+                                                }
+                                                : type === 'manual'
+                                                    ? {}
+                                                    : type !== 'fairValue'
+                                                        ? { valuationMode: type }
+                                                        : {}),
+                                            ...(preserveManual ? { manualTargetPrice: preserveManual } : {})
+                                        };
+
+                                        updateStock(stock.id, {
+                                            targetPrice: cleanVal,
+                                            targetPriceType: type,
+                                            ...(matchedFv && !existingParams.isCustom ? { fairValue: matchedFv } : {}),
+                                            fairValueParams: nextFairValueParams
+                                        });
+                                        try {
+                                            const symKey = (stock.symbol || '').toUpperCase();
+                                            if (symKey) {
+                                                const raw = localStorage.getItem('fair_value_params_map');
+                                                const map = raw ? JSON.parse(raw) : {};
+                                                map[symKey] = {
+                                                    ...map[symKey],
+                                                    ...nextFairValueParams,
+                                                    targetPrice: cleanVal,
+                                                    targetPriceType: type,
+                                                    ...(matchedFv && !existingParams.isCustom ? { fairValue: matchedFv } : {})
+                                                };
+                                                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                            }
+                                        } catch {
+                                            // ignore
+                                        }
+                                    };
+
+                                    const handleApplySellLimitPreset = (
+                                        val: number,
+                                        type: 'conservative' | 'quality' | 'risk' | 'manual'
+                                    ) => {
+                                        if (!stock || !(val > 0)) return;
+                                        const cleanVal = parseFloat(val.toFixed(2));
+                                        updateSimulatorState({ price: cleanVal, sellPrice: cleanVal });
+
+                                        const preserveManualSell = type === 'manual' ? cleanVal : limits.savedManualSellLimit;
+                                        updateStock(stock.id, {
+                                            sellLimit: cleanVal,
+                                            sellLimitType: type,
+                                            fairValueParams: {
+                                                ...(stock.fairValueParams || {}),
+                                                ...(preserveManualSell ? { manualSellLimit: preserveManualSell } : {}),
+                                                sellLimitType: type
+                                            }
+                                        });
+                                        try {
+                                            const symKey = (stock.symbol || '').toUpperCase();
+                                            if (symKey) {
+                                                const raw = localStorage.getItem('fair_value_params_map');
+                                                const map = raw ? JSON.parse(raw) : {};
+                                                map[symKey] = {
+                                                    ...map[symKey],
+                                                    sellLimit: cleanVal,
+                                                    sellLimitType: type,
+                                                    ...(preserveManualSell ? { manualSellLimit: preserveManualSell } : {})
+                                                };
+                                                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                            }
+                                        } catch {
+                                            // ignore
+                                        }
+                                    };
+
+                                    const handleSaveManualFromPrice = () => {
+                                        if (!stock || !(price > 0)) return;
+                                        const nextVal = parseFloat(price.toFixed(2));
+                                        if (mode === 'sell') {
+                                            updateStock(stock.id, {
+                                                sellLimit: nextVal,
+                                                sellLimitType: 'manual',
+                                                fairValueParams: {
+                                                    ...(stock.fairValueParams || {}),
+                                                    manualSellLimit: nextVal,
+                                                    sellLimitType: 'manual'
+                                                }
+                                            });
+                                            updateSimulatorState({ price: nextVal, sellPrice: nextVal });
+                                        } else {
+                                            updateStock(stock.id, {
+                                                targetPrice: nextVal,
+                                                targetPriceType: 'manual',
+                                                fairValueParams: {
+                                                    ...(stock.fairValueParams || {}),
+                                                    manualTargetPrice: nextVal
+                                                }
+                                            });
+                                            updateSimulatorState({ price: nextVal, buyPrice: nextVal });
+                                        }
+                                        try {
+                                            const symKey = (stock.symbol || '').toUpperCase();
+                                            if (symKey) {
+                                                const raw = localStorage.getItem('fair_value_params_map');
+                                                const map = raw ? JSON.parse(raw) : {};
+                                                map[symKey] = {
+                                                    ...map[symKey],
+                                                    ...(mode === 'sell'
+                                                        ? {
+                                                            sellLimit: nextVal,
+                                                            sellLimitType: 'manual',
+                                                            manualSellLimit: nextVal
+                                                        }
+                                                        : {
+                                                            targetPrice: nextVal,
+                                                            targetPriceType: 'manual',
+                                                            manualTargetPrice: nextVal
+                                                        })
+                                                };
+                                                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                            }
+                                        } catch {
+                                            // ignore
+                                        }
+                                        setQuickLimitSavedFeedback(true);
+                                        setTimeout(() => setQuickLimitSavedFeedback(false), 2000);
+                                    };
+
                                     return (
                                         <div className="flex items-center justify-center gap-2 -mt-2 mb-3 flex-wrap">
-                                            {stock?.targetPrice ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
-                                                    className={cn(
-                                                        "text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5 border",
-                                                        limits.activeType === 'limitA'
-                                                            ? "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
-                                                            : limits.activeType === 'limitB'
-                                                                ? "text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30"
-                                                                : limits.activeType === 'limitC'
-                                                                    ? "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30"
-                                                                    : "text-pink-400 bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/30"
+                                            {mode === 'sell' ? (
+                                                <>
+                                                    {/* Direkte 1-Klick-Auswahl: Verkaufslimit A / B / C / zuvor manuell (M) */}
+                                                    {limits.sellA !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplySellLimitPreset(limits.sellA!, 'conservative')}
+                                                            className={cn(
+                                                                "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                limits.activeSellType === 'sellA'
+                                                                    ? "bg-blue-600 text-white border-blue-500 shadow-xs"
+                                                                    : "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/35"
+                                                            )}
+                                                            title={`Verkaufslimit Sicherheit A übernehmen & aktivieren: ${limits.sellA.toFixed(2)} ${limitCurr}`}
+                                                        >
+                                                            <span className="font-bold">A</span>
+                                                            <span className="font-mono tabular-nums">{limits.sellA.toFixed(2)}</span>
+                                                        </button>
                                                     )}
-                                                    title={
-                                                        limits.activeType === 'limitA'
-                                                            ? "Kauflimit A (Sicherheit) als Kaufpreis übernehmen"
-                                                            : limits.activeType === 'limitB'
-                                                                ? "Kauflimit B (Qualität) als Kaufpreis übernehmen"
-                                                                : limits.activeType === 'limitC'
-                                                                    ? "Kauflimit C (Risiko-Abschlag) als Kaufpreis übernehmen"
-                                                                    : "Manuelles Kauflimit als Kaufpreis übernehmen"
-                                                    }
-                                                >
-                                                    <Target className={cn(
-                                                        "size-3.5",
-                                                        limits.activeType === 'limitA'
-                                                            ? "text-blue-400"
-                                                            : limits.activeType === 'limitB'
-                                                                ? "text-purple-400"
-                                                                : limits.activeType === 'limitC'
-                                                                    ? "text-amber-400"
-                                                                    : "text-pink-400"
-                                                    )} />
-                                                    <span>
-                                                        {limits.activeType === 'limitA'
-                                                            ? `Kauflimit A übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`
-                                                            : limits.activeType === 'limitB'
-                                                                ? `Kauflimit B übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`
-                                                                : limits.activeType === 'limitC'
-                                                                    ? `Kauflimit C übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`
-                                                                    : `Kauflimit (Manuell) übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`}
-                                                    </span>
-                                                </button>
-                                            ) : null}
+                                                    {limits.sellB !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplySellLimitPreset(limits.sellB!, 'quality')}
+                                                            className={cn(
+                                                                "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                limits.activeSellType === 'sellB'
+                                                                    ? "bg-purple-600 text-white border-purple-500 shadow-xs"
+                                                                    : "text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/35"
+                                                            )}
+                                                            title={`Verkaufslimit Qualität B übernehmen & aktivieren: ${limits.sellB.toFixed(2)} ${limitCurr}`}
+                                                        >
+                                                            <span className="font-bold">B</span>
+                                                            <span className="font-mono tabular-nums">{limits.sellB.toFixed(2)}</span>
+                                                        </button>
+                                                    )}
+                                                    {limits.sellC !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplySellLimitPreset(limits.sellC!, 'risk')}
+                                                            className={cn(
+                                                                "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                limits.activeSellType === 'sellC'
+                                                                    ? "bg-amber-600 text-white border-amber-500 shadow-xs"
+                                                                    : "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/35"
+                                                            )}
+                                                            title={`Verkaufslimit Risiko C übernehmen & aktivieren: ${limits.sellC.toFixed(2)} ${limitCurr}`}
+                                                        >
+                                                            <span className="font-bold">C</span>
+                                                            <span className="font-mono tabular-nums">{limits.sellC.toFixed(2)}</span>
+                                                        </button>
+                                                    )}
+                                                    {limits.savedManualSellLimit !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplySellLimitPreset(limits.savedManualSellLimit!, 'manual')}
+                                                            className={cn(
+                                                                "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                limits.activeSellType === 'manual'
+                                                                    ? "bg-pink-600 text-white border-pink-500 shadow-xs"
+                                                                    : "text-pink-400 bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/35"
+                                                            )}
+                                                            title={`Zuvor manuell gesetztes Verkaufslimit übernehmen: ${limits.savedManualSellLimit.toFixed(2)} ${limitCurr}`}
+                                                        >
+                                                            <span className="font-bold">M</span>
+                                                            <span className="font-mono tabular-nums">{limits.savedManualSellLimit.toFixed(2)}</span>
+                                                        </button>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {/* Direkte 1-Klick-Auswahl: Kauflimit A / B / C / zuvor manuell (M) / Fairer Wert (FW) */}
+                                                    {limits.limitA !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplyBuyLimitPreset(limits.limitA!, 'conservative')}
+                                                            className={cn(
+                                                                "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                limits.activeType === 'limitA'
+                                                                    ? "bg-blue-600 text-white border-blue-500 shadow-xs"
+                                                                    : "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/35"
+                                                            )}
+                                                            title={`Kauflimit Sicherheit A übernehmen & aktivieren: ${limits.limitA.toFixed(2)} ${limitCurr}`}
+                                                        >
+                                                            <span className="font-bold">A</span>
+                                                            <span className="font-mono tabular-nums">{limits.limitA.toFixed(2)}</span>
+                                                        </button>
+                                                    )}
+                                                    {limits.limitB !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplyBuyLimitPreset(limits.limitB!, 'quality')}
+                                                            className={cn(
+                                                                "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                limits.activeType === 'limitB'
+                                                                    ? "bg-purple-600 text-white border-purple-500 shadow-xs"
+                                                                    : "text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/35"
+                                                            )}
+                                                            title={`Kauflimit Qualität B übernehmen & aktivieren: ${limits.limitB.toFixed(2)} ${limitCurr}`}
+                                                        >
+                                                            <span className="font-bold">B</span>
+                                                            <span className="font-mono tabular-nums">{limits.limitB.toFixed(2)}</span>
+                                                        </button>
+                                                    )}
+                                                    {limits.limitC !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplyBuyLimitPreset(limits.limitC!, 'risk')}
+                                                            className={cn(
+                                                                "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                limits.activeType === 'limitC'
+                                                                    ? "bg-amber-600 text-white border-amber-500 shadow-xs"
+                                                                    : "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/35"
+                                                            )}
+                                                            title={`Kauflimit Risiko C übernehmen & aktivieren: ${limits.limitC.toFixed(2)} ${limitCurr}`}
+                                                        >
+                                                            <span className="font-bold">C</span>
+                                                            <span className="font-mono tabular-nums">{limits.limitC.toFixed(2)}</span>
+                                                        </button>
+                                                    )}
+                                                    {limits.savedManualLimit !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplyBuyLimitPreset(limits.savedManualLimit!, 'manual')}
+                                                            className={cn(
+                                                                "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                limits.activeType === 'manual'
+                                                                    ? "bg-pink-600 text-white border-pink-500 shadow-xs"
+                                                                    : "text-pink-400 bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/35"
+                                                            )}
+                                                            title={`Zuvor manuell gesetztes Kauflimit übernehmen: ${limits.savedManualLimit.toFixed(2)} ${limitCurr}`}
+                                                        >
+                                                            <span className="font-bold">M</span>
+                                                            <span className="font-mono tabular-nums">{limits.savedManualLimit.toFixed(2)}</span>
+                                                        </button>
+                                                    )}
+                                                    {limits.activeType === 'fairValue' && stock?.targetPrice && stock.targetPrice > 0 && (() => {
+                                                        const fwMode = stock.fairValueParams?.valuationMode || 'conservative';
+                                                        const fwCls =
+                                                            fwMode === 'quality'
+                                                                ? "bg-purple-600 text-white border-purple-500 shadow-xs"
+                                                                : fwMode === 'risk'
+                                                                    ? "bg-amber-600 text-white border-amber-500 shadow-xs"
+                                                                    : fwMode === 'manual'
+                                                                        ? "bg-pink-600 text-white border-pink-500 shadow-xs"
+                                                                        : "bg-blue-600 text-white border-blue-500 shadow-xs";
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleApplyBuyLimitPreset(stock.targetPrice!, 'fairValue')}
+                                                                className={cn(
+                                                                    "h-8 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer active:scale-95 whitespace-nowrap",
+                                                                    fwCls
+                                                                )}
+                                                                title={`Aktives Fairer-Wert-Kauflimit übernehmen: ${stock.targetPrice.toFixed(2)} ${limitCurr}`}
+                                                            >
+                                                                <span className="font-bold">FW</span>
+                                                                <span className="font-mono tabular-nums">{stock.targetPrice.toFixed(2)}</span>
+                                                            </button>
+                                                        );
+                                                    })()}
+                                                </>
+                                            )}
 
-                                            {stock?.symbol ? (
+                                            {isUnsavedCustomPrice && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(stock.id || stock.symbol))}&from=calculator`)}
-                                                    className="text-xs font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
-                                                    title="Zur fundamentalen Analyse & Innerer Wert springen"
+                                                    onClick={handleSaveManualFromPrice}
+                                                    className="h-8 px-2.5 py-0 rounded-lg border border-pink-400/70 bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none transition-all cursor-pointer shadow-xs active:scale-95 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150"
+                                                    title={mode === 'sell'
+                                                        ? `Eingegebenen Kurs ${price.toFixed(2)} ${limitCurr} als fixes manuelles Verkaufslimit M speichern`
+                                                        : `Eingegebenen Kurs ${price.toFixed(2)} ${limitCurr} als fixes manuelles Kauflimit M speichern`}
                                                 >
-                                                    <Telescope className="size-3.5 text-blue-400" />
-                                                    <span>Fairer Wert</span>
+                                                    <Check className="size-3.5 shrink-0" />
+                                                    <span>M {price.toFixed(2)} speichern</span>
                                                 </button>
-                                            ) : null}
+                                            )}
+
+                                            {quickLimitSavedFeedback && (
+                                                <span className="h-8 px-2.5 py-0 rounded-lg border border-emerald-500/40 bg-emerald-500/15 text-emerald-400 text-xs font-semibold inline-flex items-center justify-center gap-1 leading-none whitespace-nowrap">
+                                                    <Check className="size-3.5" />
+                                                    <span>Gespeichert</span>
+                                                </span>
+                                            )}
+
+                                            {stock?.symbol && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(stock.id || stock.symbol))}&from=calculator`)}
+                                                        className="h-8 text-xs font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-3 py-0 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 inline-flex items-center justify-center gap-1.5 leading-none whitespace-nowrap"
+                                                        title="Zu Fairer Wert, Kauf- & Verkaufslimit-Rechner springen"
+                                                    >
+                                                        <Telescope className="size-3.5 text-blue-400 shrink-0" />
+                                                        <span>Fairer Wert</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigate(`/dividends/edit/${encodeURIComponent(String(stock.id))}?from=calculator&section=kursdaten`)}
+                                                        className="h-8 text-xs font-semibold text-muted-foreground hover:text-foreground bg-background hover:bg-muted border border-border px-3 py-0 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 inline-flex items-center justify-center gap-1.5 leading-none whitespace-nowrap"
+                                                        title={`Kursdaten bearbeiten (${activeLimitVal ? `Limit ${activeLimitVal.toFixed(2)} ${limitCurr}` : 'Stammdaten & Limite'})`}
+                                                    >
+                                                        <Pencil className="size-3.5 shrink-0" />
+                                                        <span>Kursdaten</span>
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     );
                                 })()}
@@ -2340,6 +3344,39 @@ export function DividendCalculator() {
                                         const stock = stocks.find(s => s.id === selectedStockId);
                                         const limits = getStockLimits(stock, rates);
                                         const priceClass = getPriceClassification(price, stock?.currentPrice || (stock as any)?.price, limits, simCurrency || stock?.currency);
+                                        const sellPriceClass = (() => {
+                                            if (mode !== 'sell' || !price || price <= 0) return null;
+                                            const rawMkt = stock?.currentPrice || (stock as any)?.price || 0;
+                                            const mkt = stock?.currency === 'GBp' ? rawMkt / 100 : rawMkt;
+                                            if (limits.sellA !== null && Math.abs(price - limits.sellA) < 0.02) {
+                                                return { label: 'VK A', colorClass: 'text-blue-400 font-bold', badgeClass: 'text-blue-400 bg-blue-500/15 border-blue-500/30' };
+                                            }
+                                            if (limits.sellB !== null && Math.abs(price - limits.sellB) < 0.02) {
+                                                return { label: 'VK B', colorClass: 'text-purple-400 font-bold', badgeClass: 'text-purple-400 bg-purple-500/15 border-purple-500/30' };
+                                            }
+                                            if (limits.sellC !== null && Math.abs(price - limits.sellC) < 0.02) {
+                                                return { label: 'VK C', colorClass: 'text-amber-400 font-bold', badgeClass: 'text-amber-400 bg-amber-500/15 border-amber-500/30' };
+                                            }
+                                            if (limits.sellLimit && limits.sellLimit > 0 && Math.abs(price - (stock?.currency === 'GBp' ? limits.sellLimit / 100 : limits.sellLimit)) < 0.02) {
+                                                if (limits.activeSellType === 'sellA') {
+                                                    return { label: 'VK A', colorClass: 'text-blue-400 font-bold', badgeClass: 'text-blue-400 bg-blue-500/15 border-blue-500/30' };
+                                                }
+                                                if (limits.activeSellType === 'sellB') {
+                                                    return { label: 'VK B', colorClass: 'text-purple-400 font-bold', badgeClass: 'text-purple-400 bg-purple-500/15 border-purple-500/30' };
+                                                }
+                                                if (limits.activeSellType === 'sellC') {
+                                                    return { label: 'VK C', colorClass: 'text-amber-400 font-bold', badgeClass: 'text-amber-400 bg-amber-500/15 border-amber-500/30' };
+                                                }
+                                                return { label: 'VK M', colorClass: 'text-pink-400 font-bold', badgeClass: 'text-pink-400 bg-pink-500/15 border-pink-500/30' };
+                                            }
+                                            if (limits.savedManualSellLimit !== null && Math.abs(price - (stock?.currency === 'GBp' ? limits.savedManualSellLimit / 100 : limits.savedManualSellLimit)) < 0.02) {
+                                                return { label: 'VK M', colorClass: 'text-pink-400 font-bold', badgeClass: 'text-pink-400 bg-pink-500/15 border-pink-500/30' };
+                                            }
+                                            if (mkt > 0 && Math.abs(price - mkt) < 0.02) {
+                                                return null;
+                                            }
+                                            return { label: 'Manuell', colorClass: 'text-pink-400 font-bold', badgeClass: 'text-pink-400 bg-pink-500/15 border-pink-500/30' };
+                                        })();
                                         return (
                                             <div className="space-y-1">
                                                 <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
@@ -2355,7 +3392,10 @@ export function DividendCalculator() {
                                                                 const res = await fetchStockHistory(stock.symbol, '1D');
                                                                 if (res.data && res.data.length > 0) {
                                                                     let val = res.data[res.data.length - 1].value;
-                                                                    updateSimulatorState({ price: val });
+                                                                    updateSimulatorState({
+                                                                        price: val,
+                                                                        ...(mode === 'sell' ? { sellPrice: val } : { buyPrice: val })
+                                                                    });
                                                                 }
                                                             }}
                                                             className="text-[9px] sm:text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded-md transition-colors whitespace-nowrap shrink leading-none min-w-0"
@@ -2369,17 +3409,29 @@ export function DividendCalculator() {
                                                 <LocalNumberInput
                                                     step="0.01"
                                                     value={simCurrency === 'GBp' || simCurrency === 'GBP' ? parseFloat(price.toFixed(4)) : parseFloat(price.toFixed(2))}
-                                                    onChange={(val) => updateSimulatorState({ price: val })}
+                                                    onChange={(val) => updateSimulatorState({
+                                                        price: val,
+                                                        ...(mode === 'sell' ? { sellPrice: val } : { buyPrice: val })
+                                                    })}
                                                     className={cn(
                                                         "w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-right font-mono focus:ring-1 focus:ring-primary no-spinner transition-colors",
-                                                        mode === 'buy' && priceClass?.colorClass ? priceClass.colorClass : "text-foreground"
+                                                        mode === 'buy' && priceClass?.colorClass
+                                                            ? priceClass.colorClass
+                                                            : mode === 'sell' && sellPriceClass?.colorClass
+                                                                ? sellPriceClass.colorClass
+                                                                : "text-foreground"
                                                     )}
                                                 />
                                                 <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium flex items-center justify-end gap-1.5">
                                                     <span>pro Anteil</span>
                                                     {mode === 'buy' && priceClass && priceClass.type !== 'market' && (
-                                                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded border font-semibold leading-none shadow-2xs", priceClass.badgeClass)}>
+                                                        <span className={cn("text-xs px-1.5 py-0.5 rounded border font-semibold leading-none shadow-2xs", priceClass.badgeClass)}>
                                                             {priceClass.label}
+                                                        </span>
+                                                    )}
+                                                    {mode === 'sell' && sellPriceClass && (
+                                                        <span className={cn("text-xs px-1.5 py-0.5 rounded border font-semibold leading-none shadow-2xs", sellPriceClass.badgeClass)}>
+                                                            {sellPriceClass.label}
                                                         </span>
                                                     )}
                                                 </div>
@@ -2772,6 +3824,391 @@ export function DividendCalculator() {
                                         )}
                                     </button>
                                 </div>
+
+                                {/* Aktuelle Zonen-Einordnung zum aktuellen Kurs (strikt getrennt: Kaufzonen vs. Verkaufszonen) */}
+                                {selectedStock && selectedRadarItem && (() => {
+                                    const normVal = (v: number) => (selectedStock.currency === 'GBp' ? v / 100 : v);
+                                    const zoneCurr = selectedRadarItem.displayCurrency || (simCurrency === 'GBp' ? 'GBP' : simCurrency || 'CHF');
+                                    const curLiveNorm = normVal(selectedRadarItem.currentPrice);
+
+                                    if (mode === 'buy') {
+                                        const z1 = selectedRadarItem.supportZones.find(z => z.id === 'zone1');
+                                        const z2 = selectedRadarItem.supportZones.find(z => z.id === 'zone2');
+                                        const z3 = selectedRadarItem.supportZones.find(z => z.id === 'zone3');
+
+                                        const applyBuyZonePrice = (rawTarget: number) => {
+                                            const clean = parseFloat(normVal(rawTarget).toFixed(2));
+                                            updateSimulatorState({
+                                                mode: 'buy',
+                                                price: clean,
+                                                buyPrice: clean
+                                            });
+                                        };
+
+                                        // Welche Kaufzone gehört zum aktuell gewählten Kaufpreis (A / B / C / M / manuell / Kurs)?
+                                        const evalBuyPrice = price > 0 ? price : curLiveNorm;
+                                        const z1Max = z1 ? normVal(z1.maxPrice) : null;
+                                        const z2Max = z2 ? normVal(z2.maxPrice) : null;
+                                        const z3Max = z3 ? normVal(z3.maxPrice) : null;
+
+                                        let activeBuyZone: 1 | 2 | 3 | null = null;
+                                        if (evalBuyPrice > 0) {
+                                            if (z3Max !== null && evalBuyPrice <= z3Max) {
+                                                activeBuyZone = 3;
+                                            } else if (z2Max !== null && evalBuyPrice <= z2Max) {
+                                                activeBuyZone = 2;
+                                            } else if (z1Max !== null && evalBuyPrice <= z1Max) {
+                                                activeBuyZone = 1;
+                                            }
+                                        }
+
+                                        // Klarer Kauf-Abstand im aktivierten Feld (aktueller Kurs vs. gewählter Kaufpreis)
+                                        const formatBuyZoneSub = (z: NonNullable<typeof z1>, isActive: boolean) => {
+                                            if (isActive && curLiveNorm > 0 && evalBuyPrice > 0) {
+                                                if (curLiveNorm <= evalBuyPrice) {
+                                                    const underPct = ((curLiveNorm - evalBuyPrice) / evalBuyPrice) * 100;
+                                                    return underPct <= -0.05
+                                                        ? `Kauf Ziel erreicht · ${underPct.toFixed(1)} %`
+                                                        : 'Kauf Ziel erreicht';
+                                                }
+                                                const distToBuyPct = ((evalBuyPrice - curLiveNorm) / curLiveNorm) * 100;
+                                                return `Noch ${distToBuyPct.toFixed(1)} % bis Kauf`;
+                                            }
+                                            if (z.status === 'in_range') return 'Kurs in Zone';
+                                            if (z.status === 'below') return 'Unterschritten';
+                                            return `Noch ${z.distancePct > 0 ? '+' : ''}${z.distancePct.toFixed(1)} %`;
+                                        };
+
+                                        const buyTiles = [
+                                            z1 ? {
+                                                key: 'z1',
+                                                label: 'Zone 1 · Einstieg',
+                                                active: activeBuyZone === 1,
+                                                range: `${normVal(z1.minPrice).toFixed(2)} – ${normVal(z1.maxPrice).toFixed(2)} ${zoneCurr}`,
+                                                sub: formatBuyZoneSub(z1, activeBuyZone === 1),
+                                                activeCls: 'bg-teal-500/20 border-teal-500 ring-1 ring-teal-500/50 text-teal-300',
+                                                idleCls: 'bg-background/60 border-border/70 hover:border-teal-500/50 text-foreground',
+                                                labelCls: 'text-teal-400',
+                                                subActiveCls: 'text-teal-300',
+                                                onClick: () => applyBuyZonePrice(z1.targetPrice),
+                                                title: `Kaufzone 1 · Zielkurs ${normVal(z1.targetPrice).toFixed(2)} ${zoneCurr} als Kaufpreis übernehmen`
+                                            } : null,
+                                            z2 ? {
+                                                key: 'z2',
+                                                label: 'Zone 2 · Nachkauf',
+                                                active: activeBuyZone === 2,
+                                                range: `${normVal(z2.minPrice).toFixed(2)} – ${normVal(z2.maxPrice).toFixed(2)} ${zoneCurr}`,
+                                                sub: formatBuyZoneSub(z2, activeBuyZone === 2),
+                                                activeCls: 'bg-amber-500/20 border-amber-500 ring-1 ring-amber-500/50 text-amber-300',
+                                                idleCls: 'bg-background/60 border-border/70 hover:border-amber-500/50 text-foreground',
+                                                labelCls: 'text-amber-400',
+                                                subActiveCls: 'text-amber-300',
+                                                onClick: () => applyBuyZonePrice(z2.targetPrice),
+                                                title: `Kaufzone 2 · Zielkurs ${normVal(z2.targetPrice).toFixed(2)} ${zoneCurr} als Kaufpreis übernehmen`
+                                            } : null,
+                                            z3 ? {
+                                                key: 'z3',
+                                                label: 'Zone 3 · Crash',
+                                                active: activeBuyZone === 3,
+                                                range: `≤ ${normVal(z3.maxPrice).toFixed(2)} ${zoneCurr}`,
+                                                sub: formatBuyZoneSub(z3, activeBuyZone === 3),
+                                                activeCls: 'bg-rose-500/20 border-rose-500 ring-1 ring-rose-500/50 text-rose-300',
+                                                idleCls: 'bg-background/60 border-border/70 hover:border-rose-500/50 text-foreground',
+                                                labelCls: 'text-rose-400',
+                                                subActiveCls: 'text-rose-300',
+                                                onClick: () => applyBuyZonePrice(z3.targetPrice),
+                                                title: `Kaufzone 3 · Zielkurs ${normVal(z3.targetPrice).toFixed(2)} ${zoneCurr} als Kaufpreis übernehmen`
+                                            } : null
+                                        ].filter((t): t is NonNullable<typeof t> => t !== null);
+
+                                        return (
+                                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/70 space-y-2.5">
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                                                        <Radar className="size-4 text-emerald-400 shrink-0" />
+                                                        <span>Aktuelle Kaufzonen</span>
+                                                    </span>
+                                                </div>
+
+                                                {buyTiles.length > 0 && (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                        {buyTiles.map(tile => (
+                                                            <button
+                                                                key={tile.key}
+                                                                type="button"
+                                                                onClick={tile.onClick}
+                                                                title={tile.title}
+                                                                className={cn(
+                                                                    "p-3 rounded-lg border text-left transition-all cursor-pointer active:scale-[0.98] flex flex-col gap-1",
+                                                                    tile.active ? tile.activeCls : tile.idleCls
+                                                                )}
+                                                            >
+                                                                <div className="flex items-center justify-between gap-1">
+                                                                    <span className={cn("text-[13px] font-bold truncate", tile.labelCls)}>{tile.label}</span>
+                                                                    {tile.active && (
+                                                                        <span className="size-2 rounded-full bg-current shrink-0 animate-pulse" />
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-sm font-mono font-bold text-foreground tabular-nums truncate">
+                                                                    {tile.range}
+                                                                </div>
+                                                                <div className={cn(
+                                                                    "text-[13px] font-mono font-semibold tabular-nums",
+                                                                    tile.active ? tile.subActiveCls : "text-foreground/85"
+                                                                )}>
+                                                                    {tile.sub}
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    }
+
+                                    // VERKAUFEN-MODUS: Nur Verkaufszonen & Verkaufs-Status
+                                    const sellLimitsInfo = getStockLimits(selectedStock, rates);
+                                    const activeFvProfile: 'conservative' | 'quality' | 'risk' | 'manual' =
+                                        selectedRadarItem.effectiveSellLimit &&
+                                        (selectedRadarItem.sellLimitType === 'conservative' ||
+                                            selectedRadarItem.sellLimitType === 'quality' ||
+                                            selectedRadarItem.sellLimitType === 'risk')
+                                            ? selectedRadarItem.sellLimitType
+                                            : selectedRadarItem.fairValueMode;
+
+                                    const matchedFvRaw =
+                                        activeFvProfile === 'conservative'
+                                            ? (sellLimitsInfo.fvA || selectedRadarItem.fairValue)
+                                            : activeFvProfile === 'quality'
+                                                ? (sellLimitsInfo.fvB || selectedRadarItem.fairValue)
+                                                : activeFvProfile === 'risk'
+                                                    ? (sellLimitsInfo.fvC || selectedRadarItem.fairValue)
+                                                    : selectedRadarItem.fairValue;
+                                    const fvRaw = matchedFvRaw && matchedFvRaw > 0 ? matchedFvRaw : null;
+                                    const fvNorm = fvRaw ? normVal(fvRaw) : null;
+                                    const fvGapFromLivePct = fvNorm && curLiveNorm > 0
+                                        ? ((curLiveNorm - fvNorm) / fvNorm) * 100
+                                        : null;
+                                    const fvProfileTheme =
+                                        activeFvProfile === 'quality'
+                                            ? {
+                                                label: 'Fairer Wert · B',
+                                                activeCls: 'bg-purple-500/20 border-purple-500 ring-1 ring-purple-500/50 text-purple-300',
+                                                idleCls: 'bg-background/60 border-border/70 hover:border-purple-500/50 text-foreground',
+                                                labelCls: 'text-purple-400',
+                                                subActiveCls: 'text-purple-300'
+                                            }
+                                            : activeFvProfile === 'risk'
+                                                ? {
+                                                    label: 'Fairer Wert · C',
+                                                    activeCls: 'bg-amber-500/20 border-amber-500 ring-1 ring-amber-500/50 text-amber-300',
+                                                    idleCls: 'bg-background/60 border-border/70 hover:border-amber-500/50 text-foreground',
+                                                    labelCls: 'text-amber-400',
+                                                    subActiveCls: 'text-amber-300'
+                                                }
+                                                : activeFvProfile === 'manual'
+                                                    ? {
+                                                        label: 'Fairer Wert · M',
+                                                        activeCls: 'bg-pink-500/20 border-pink-500 ring-1 ring-pink-500/50 text-pink-300',
+                                                        idleCls: 'bg-background/60 border-border/70 hover:border-pink-500/50 text-foreground',
+                                                        labelCls: 'text-pink-400',
+                                                        subActiveCls: 'text-pink-300'
+                                                    }
+                                                    : {
+                                                        label: 'Fairer Wert · A',
+                                                        activeCls: 'bg-blue-500/20 border-blue-500 ring-1 ring-blue-500/50 text-blue-300',
+                                                        idleCls: 'bg-background/60 border-border/70 hover:border-blue-500/50 text-foreground',
+                                                        labelCls: 'text-blue-400',
+                                                        subActiveCls: 'text-blue-300'
+                                                    };
+
+                                    const sellTargetRaw = selectedRadarItem.effectiveSellLimit
+                                        || (fvRaw ? fvRaw * 1.25 : null);
+                                    const sellTargetNorm = sellTargetRaw ? normVal(sellTargetRaw) : null;
+                                    const sellDistPct = sellTargetNorm && curLiveNorm > 0
+                                        ? ((sellTargetNorm - curLiveNorm) / curLiveNorm) * 100
+                                        : null;
+
+                                    const approachLowRaw = selectedRadarItem.effectiveSellLimit
+                                        ? selectedRadarItem.effectiveSellLimit * 0.93
+                                        : (fvRaw ? fvRaw * 1.20 : null);
+                                    const approachHighRaw = selectedRadarItem.effectiveSellLimit
+                                        ? selectedRadarItem.effectiveSellLimit
+                                        : (fvRaw ? fvRaw * 1.30 : null);
+                                    const approachMidRaw = approachLowRaw && approachHighRaw ? (approachLowRaw + approachHighRaw) / 2 : null;
+                                    const approachDistPct = approachLowRaw && curLiveNorm > 0
+                                        ? ((normVal(approachLowRaw) - curLiveNorm) / curLiveNorm) * 100
+                                        : null;
+
+                                    const sellTargetLabel = selectedRadarItem.effectiveSellLimit
+                                        ? (selectedRadarItem.sellLimitType === 'conservative'
+                                            ? 'Ziel · VK A'
+                                            : selectedRadarItem.sellLimitType === 'quality'
+                                                ? 'Ziel · VK B'
+                                                : selectedRadarItem.sellLimitType === 'risk'
+                                                    ? 'Ziel · VK C'
+                                                    : selectedRadarItem.sellLimitType === 'manual'
+                                                        ? 'Ziel · VK M'
+                                                        : 'Ziel · Verkauf')
+                                        : 'Ziel · FW +25 %';
+
+                                    const isOverFairOnly = Boolean(
+                                        selectedRadarItem.sellStatus === null &&
+                                        fvRaw &&
+                                        selectedRadarItem.currentPrice >= fvRaw
+                                    );
+
+                                    const applySellZonePrice = (rawTarget: number) => {
+                                        const clean = parseFloat(normVal(rawTarget).toFixed(2));
+                                        updateSimulatorState({
+                                            mode: 'sell',
+                                            price: clean,
+                                            sellPrice: clean
+                                        });
+                                    };
+
+                                    const sellTargetTheme =
+                                        selectedRadarItem.effectiveSellLimit && selectedRadarItem.sellLimitType === 'conservative'
+                                            ? {
+                                                activeCls: 'bg-blue-500/20 border-blue-500 ring-1 ring-blue-500/50 text-blue-300',
+                                                idleCls: 'bg-background/60 border-border/70 hover:border-blue-500/50 text-foreground',
+                                                labelCls: 'text-blue-400',
+                                                statusCls: 'text-blue-400 font-semibold'
+                                            }
+                                            : selectedRadarItem.effectiveSellLimit && selectedRadarItem.sellLimitType === 'quality'
+                                                ? {
+                                                    activeCls: 'bg-purple-500/20 border-purple-500 ring-1 ring-purple-500/50 text-purple-300',
+                                                    idleCls: 'bg-background/60 border-border/70 hover:border-purple-500/50 text-foreground',
+                                                    labelCls: 'text-purple-400',
+                                                    statusCls: 'text-purple-400 font-semibold'
+                                                }
+                                                : selectedRadarItem.effectiveSellLimit && selectedRadarItem.sellLimitType === 'risk'
+                                                    ? {
+                                                        activeCls: 'bg-amber-500/20 border-amber-500 ring-1 ring-amber-500/50 text-amber-300',
+                                                        idleCls: 'bg-background/60 border-border/70 hover:border-amber-500/50 text-foreground',
+                                                        labelCls: 'text-amber-400',
+                                                        statusCls: 'text-amber-400 font-semibold'
+                                                    }
+                                                    : selectedRadarItem.effectiveSellLimit && selectedRadarItem.sellLimitType === 'manual'
+                                                        ? {
+                                                            activeCls: 'bg-pink-500/20 border-pink-500 ring-1 ring-pink-500/50 text-pink-300',
+                                                            idleCls: 'bg-background/60 border-border/70 hover:border-pink-500/50 text-foreground',
+                                                            labelCls: 'text-pink-400',
+                                                            statusCls: 'text-pink-400 font-semibold'
+                                                        }
+                                                        : {
+                                                            activeCls: 'bg-orange-500/20 border-orange-500 ring-1 ring-orange-500/50 text-orange-300',
+                                                            idleCls: 'bg-background/60 border-border/70 hover:border-orange-500/50 text-foreground',
+                                                            labelCls: 'text-orange-400',
+                                                            statusCls: 'text-orange-400 font-semibold'
+                                                        };
+
+                                    const sellTiles = [
+                                        fvRaw && fvNorm ? {
+                                            key: 'fv',
+                                            label: fvProfileTheme.label,
+                                            active: isOverFairOnly,
+                                            range: `${fvNorm.toFixed(2)} ${zoneCurr}`,
+                                            sub: fvGapFromLivePct !== null
+                                                ? (fvGapFromLivePct >= 0
+                                                    ? `Überschritten · +${fvGapFromLivePct.toFixed(1)} %`
+                                                    : `Darunter · ${fvGapFromLivePct.toFixed(1)} %`)
+                                                : '—',
+                                            activeCls: fvProfileTheme.activeCls,
+                                            idleCls: fvProfileTheme.idleCls,
+                                            labelCls: fvProfileTheme.labelCls,
+                                            subActiveCls: fvProfileTheme.subActiveCls,
+                                            onClick: () => applySellZonePrice(fvRaw),
+                                            title: `${fvProfileTheme.label} (${fvNorm.toFixed(2)} ${zoneCurr}) als Verkaufspreis übernehmen`
+                                        } : null,
+                                        approachLowRaw && approachHighRaw && approachMidRaw ? {
+                                            key: 'approach',
+                                            label: 'Verkauf Anlauf',
+                                            active: selectedRadarItem.sellStatus === 'approaching',
+                                            range: `${normVal(approachLowRaw).toFixed(2)} – ${normVal(approachHighRaw).toFixed(2)} ${zoneCurr}`,
+                                            sub: selectedRadarItem.sellStatus === 'approaching'
+                                                ? (selectedRadarItem.sellSource === 'limit' && selectedRadarItem.sellGapPct !== null
+                                                    ? `Aktiv · noch ${Math.abs(selectedRadarItem.sellGapPct).toFixed(1)} %`
+                                                    : 'Aktiv')
+                                                : selectedRadarItem.sellStatus === 'reached'
+                                                    ? 'Überschritten'
+                                                    : approachDistPct !== null
+                                                        ? `Noch ${approachDistPct >= 0 ? '+' : ''}${approachDistPct.toFixed(1)} %`
+                                                        : '—',
+                                            activeCls: 'bg-orange-500/20 border-orange-500 ring-1 ring-orange-500/50 text-orange-300',
+                                            idleCls: 'bg-background/60 border-border/70 hover:border-orange-500/50 text-foreground',
+                                            labelCls: 'text-orange-400',
+                                            subActiveCls: 'text-orange-300',
+                                            onClick: () => applySellZonePrice(approachMidRaw),
+                                            title: `Anlauf-Kurs ${normVal(approachMidRaw).toFixed(2)} ${zoneCurr} als Verkaufspreis übernehmen`
+                                        } : null,
+                                        sellTargetRaw && sellTargetNorm ? {
+                                            key: 'target',
+                                            label: sellTargetLabel,
+                                            active: selectedRadarItem.sellStatus === 'reached',
+                                            range: `${sellTargetNorm.toFixed(2)} ${zoneCurr}`,
+                                            sub: selectedRadarItem.sellStatus === 'reached'
+                                                ? (selectedRadarItem.sellSource === 'limit' && selectedRadarItem.sellGapPct !== null && selectedRadarItem.sellGapPct >= 0.05
+                                                    ? `Verkauf Ziel erreicht · +${selectedRadarItem.sellGapPct.toFixed(1)} %`
+                                                    : selectedRadarItem.sellSource === 'valuation' && selectedRadarItem.fairValueGapPct !== null
+                                                        ? `Verkauf Ziel erreicht · +${selectedRadarItem.fairValueGapPct.toFixed(0)} %`
+                                                        : 'Verkauf Ziel erreicht')
+                                                : sellDistPct !== null
+                                                    ? `Noch ${sellDistPct >= 0 ? '+' : ''}${sellDistPct.toFixed(1)} %`
+                                                    : '—',
+                                            activeCls: sellTargetTheme.activeCls,
+                                            idleCls: sellTargetTheme.idleCls,
+                                            labelCls: sellTargetTheme.labelCls,
+                                            subActiveCls: sellTargetTheme.labelCls,
+                                            onClick: () => applySellZonePrice(sellTargetRaw),
+                                            title: `Verkaufsziel ${sellTargetNorm.toFixed(2)} ${zoneCurr} als Verkaufspreis übernehmen`
+                                        } : null
+                                    ].filter((t): t is NonNullable<typeof t> => t !== null);
+
+                                    return (
+                                        <div className="p-3.5 rounded-xl bg-muted/40 border border-border/70 space-y-2.5">
+                                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                                                    <Radar className="size-4 text-orange-400 shrink-0" />
+                                                    <span>Aktuelle Verkaufszonen</span>
+                                                </span>
+                                            </div>
+
+                                            {sellTiles.length > 0 && (
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                    {sellTiles.map(tile => (
+                                                        <button
+                                                            key={tile.key}
+                                                            type="button"
+                                                            onClick={tile.onClick}
+                                                            title={tile.title}
+                                                            className={cn(
+                                                                "p-3 rounded-lg border text-left transition-all cursor-pointer active:scale-[0.98] flex flex-col gap-1",
+                                                                tile.active ? tile.activeCls : tile.idleCls
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center justify-between gap-1">
+                                                                <span className={cn("text-[13px] font-bold truncate", tile.labelCls)}>{tile.label}</span>
+                                                                {tile.active && (
+                                                                    <span className="size-2 rounded-full bg-current shrink-0 animate-pulse" />
+                                                                )}
+                                                            </div>
+                                                            <div className="text-sm font-mono font-bold text-foreground tabular-nums truncate">
+                                                                {tile.range}
+                                                            </div>
+                                                            <div className={cn(
+                                                                "text-[13px] font-mono font-semibold tabular-nums",
+                                                                tile.active ? tile.subActiveCls : "text-foreground/85"
+                                                            )}>
+                                                                {tile.sub}
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             <div className="space-y-2.5">
@@ -3126,6 +4563,230 @@ export function DividendCalculator() {
                                         </div>
                                     )}
 
+                                    {/* Verkaufs-Modus: Wegfallende Dividende & verbleibende Bestands-Dividende */}
+                                    {mode === 'sell' && !isAccumulating && dividend > 0 && shares > 0 && (() => {
+                                        const ownedPos = selectedStock ? positions.find(p => String(p.stockId) === String(selectedStock.id) && p.shares > 0) : null;
+                                        const ownedShares = ownedPos?.shares || 0;
+                                        const effectiveSoldShares = ownedShares > 0 ? Math.min(shares, ownedShares) : shares;
+                                        const remainingShares = ownedShares > 0 ? Math.max(0, ownedShares - shares) : null;
+
+                                        // Dividende hängt an der Stückzahl (nicht am Verkaufspreis); Umrechnung zum neutralen FX-Kurs
+                                        const lostNativeAnnualRaw = effectiveSoldShares * dividend;
+                                        const lostNativeAnnual = simCurrency === 'GBp' ? lostNativeAnnualRaw / 100 : lostNativeAnnualRaw;
+                                        const lostChfAnnual = simCurrency && simCurrency !== 'CHF'
+                                            ? convertToCHF(lostNativeAnnual, displayNativeCurrency, rates)
+                                            : lostNativeAnnual;
+                                        const lostChfAnnualNet = lostChfAnnual * taxFactor;
+                                        const lostChfPerPeriod = lostChfAnnual / freqFactor;
+                                        const lostNativePerPeriod = lostNativeAnnual / freqFactor;
+
+                                        const remNativeAnnualRaw = remainingShares !== null ? remainingShares * dividend : 0;
+                                        const remNativeAnnual = simCurrency === 'GBp' ? remNativeAnnualRaw / 100 : remNativeAnnualRaw;
+                                        const remChfAnnual = simCurrency && simCurrency !== 'CHF'
+                                            ? convertToCHF(remNativeAnnual, displayNativeCurrency, rates)
+                                            : remNativeAnnual;
+                                        const remChfPerPeriod = remChfAnnual / freqFactor;
+
+                                        const periodLabel = frequency === 'monthly'
+                                            ? 'Monat'
+                                            : frequency === 'quarterly'
+                                                ? 'Quartal'
+                                                : frequency === 'semi-annually'
+                                                    ? 'Halbjahr'
+                                                    : 'Jahr';
+
+                                        return (
+                                            <div className="p-3 rounded-xl border border-rose-500/35 bg-rose-500/10 space-y-2 text-xs shadow-xs">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="font-bold text-rose-400 flex items-center gap-1.5">
+                                                        <Coins className="size-3.5 shrink-0" />
+                                                        <span>Dividenden-Wegfall · -{effectiveSoldShares.toLocaleString('de-CH')} Stk.</span>
+                                                    </span>
+                                                    <span className="font-mono font-extrabold text-base text-rose-400 tabular-nums whitespace-nowrap">
+                                                        -{lostChfAnnual.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / J.
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-1 pt-1.5 border-t border-rose-500/20">
+                                                    {simCurrency && simCurrency !== 'CHF' && (
+                                                        <div className="flex items-center justify-between gap-2 text-muted-foreground">
+                                                            <span>In Originalwährung · pro Jahr</span>
+                                                            <span className="font-mono font-semibold text-rose-300 tabular-nums">
+                                                                -{lostNativeAnnual.toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency })}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {frequency !== 'annually' && (
+                                                        <div className="flex items-center justify-between gap-2 text-muted-foreground">
+                                                            <span>Wegfall pro {periodLabel}</span>
+                                                            <span className="font-mono font-semibold text-rose-300 tabular-nums">
+                                                                -{lostChfPerPeriod.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                                                {simCurrency && simCurrency !== 'CHF'
+                                                                    ? ` · -${lostNativePerPeriod.toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency })}`
+                                                                    : ''}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {taxRate > 0 && (
+                                                        <div className="flex items-center justify-between gap-2 text-muted-foreground">
+                                                            <span>Netto-Wegfall nach {taxRate} % QSt</span>
+                                                            <span className="font-mono font-semibold text-rose-300 tabular-nums">
+                                                                -{lostChfAnnualNet.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / J.
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {remainingShares !== null && (
+                                                    <div className="pt-1.5 border-t border-rose-500/20 flex items-center justify-between gap-2 flex-wrap">
+                                                        <span className="font-semibold text-foreground">
+                                                            {remainingShares > 0
+                                                                ? `Verbleibend · ${remainingShares.toLocaleString('de-CH')} Stk.`
+                                                                : 'Restbestand · 0 Stk.'}
+                                                        </span>
+                                                        {remainingShares > 0 ? (
+                                                            <span className="font-mono font-bold text-emerald-400 tabular-nums">
+                                                                {remChfAnnual.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / J.
+                                                                {frequency !== 'annually'
+                                                                    ? ` · ${remChfPerPeriod.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / ${periodLabel}`
+                                                                    : ''}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="font-semibold text-rose-400">
+                                                                Kompletter Dividenden-Wegfall
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {ownedShares > 0 && shares > ownedShares && (
+                                                    <div className="text-xs text-amber-400">
+                                                        Hinweis: Eingabe ({shares.toLocaleString('de-CH')} Stk.) liegt über deinem Bestand ({ownedShares.toLocaleString('de-CH')} Stk.).
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Nächste Dividenden-Termine (in Kaufen UND Verkaufen sichtbar) */}
+                                    {selectedStock && !isAccumulating && dividend > 0 && (() => {
+                                        const nextSlot = upcomingDividendInfo.slots[0];
+                                        const perPeriodNativeRaw = (shares * dividend) / freqFactor;
+                                        const perPeriodNative = simCurrency === 'GBp' ? perPeriodNativeRaw / 100 : perPeriodNativeRaw;
+                                        const perPeriodChf = simCurrency && simCurrency !== 'CHF'
+                                            ? convertToCHF(perPeriodNative, displayNativeCurrency, rates)
+                                            : perPeriodNative;
+
+                                        return (
+                                            <div className="p-3 rounded-xl bg-muted/40 border border-border/70 space-y-2 text-xs">
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                                                        <Calendar className="size-3.5 text-blue-400 shrink-0" />
+                                                        <span>Nächste Dividenden-Termine</span>
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleFetchDividendDatesInline}
+                                                            disabled={isLoadingDivDates}
+                                                            className="h-7 px-2.5 py-0 rounded-md border border-blue-500/70 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-xs font-semibold text-white inline-flex items-center justify-center gap-1.5 leading-none transition-colors cursor-pointer"
+                                                            title="Dividenden-Termine direkt über DivvyDiary oder Yahoo Finance laden und speichern"
+                                                        >
+                                                            <RefreshCw className={cn("size-3 shrink-0", isLoadingDivDates && "animate-spin")} />
+                                                            <span>{isLoadingDivDates ? 'Lädt…' : 'Termine laden'}</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigate(`/dividends/edit/${encodeURIComponent(String(selectedStock.id))}?from=calculator&section=termine`)}
+                                                            className="h-7 px-2.5 py-0 rounded-md border border-border bg-background hover:bg-muted text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1 leading-none transition-colors cursor-pointer"
+                                                            title="Dividenden-Termine manuell bearbeiten oder über DivvyDiary prüfen"
+                                                        >
+                                                            <Pencil className="size-3 shrink-0" />
+                                                            <span>Bearbeiten</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {divDatesFeedback && (
+                                                    <div
+                                                        className={cn(
+                                                            "px-2.5 py-1.5 rounded-lg border text-xs leading-snug",
+                                                            divDatesFeedback.type === 'success'
+                                                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                                                                : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                                                        )}
+                                                    >
+                                                        {divDatesFeedback.text}
+                                                    </div>
+                                                )}
+
+                                                {upcomingDividendInfo.slots.length > 0 ? (
+                                                    <div className="space-y-1.5">
+                                                        {upcomingDividendInfo.slots.map((slot, idx) => (
+                                                            <div
+                                                                key={`${slot.exDate || ''}-${slot.payDate || ''}-${idx}`}
+                                                                className="flex items-center justify-between gap-2 flex-wrap px-2.5 py-1.5 rounded-lg bg-background/70 border border-border/50"
+                                                            >
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="text-muted-foreground">Ex-Tag:</span>
+                                                                    <span className="font-mono font-bold text-foreground tabular-nums">{slot.exFormatted}</span>
+                                                                    {slot.daysToEx !== null && (
+                                                                        <span className={cn(
+                                                                            "px-1.5 py-0.5 rounded text-xs font-semibold leading-none",
+                                                                            slot.daysToEx < 0
+                                                                                ? "bg-muted text-muted-foreground"
+                                                                                : slot.daysToEx <= 14
+                                                                                    ? "bg-amber-500/20 text-amber-400 border border-amber-500/35"
+                                                                                    : "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                                                                        )}>
+                                                                            {slot.daysToEx < 0 ? 'Vorbei' : slot.daysToEx === 0 ? 'Heute' : `in ${slot.daysToEx} T.`}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="text-muted-foreground">Zahltag:</span>
+                                                                    <span className="font-mono font-bold text-foreground tabular-nums">{slot.payFormatted}</span>
+                                                                    {slot.daysToPay !== null && slot.daysToPay >= 0 && (
+                                                                        <span className="px-1.5 py-0.5 rounded text-xs font-semibold leading-none bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                                            {slot.daysToPay === 0 ? 'Heute' : `in ${slot.daysToPay} T.`}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+
+                                                        {nextSlot && upcomingDividendInfo.hasFuture && shares > 0 && perPeriodChf > 0 && (
+                                                            nextSlot.daysToEx !== null && nextSlot.daysToEx >= 0 ? (
+                                                                mode === 'sell' ? (
+                                                                    <div className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 leading-snug">
+                                                                        Verkauf vor dem Ex-Tag ({nextSlot.exFormatted}) verliert bereits die nächste Ausschüttung von <strong className="font-mono">-{perPeriodChf.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}</strong>.
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 leading-snug">
+                                                                        Kauf vor dem Ex-Tag ({nextSlot.exFormatted}) sichert bereits die nächste Ausschüttung von <strong className="font-mono">+{perPeriodChf.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}</strong>.
+                                                                    </div>
+                                                                )
+                                                            ) : nextSlot.daysToEx !== null && nextSlot.daysToEx < 0 && nextSlot.daysToPay !== null && nextSlot.daysToPay >= 0 && mode === 'sell' ? (
+                                                                <div className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 leading-snug">
+                                                                    Ex-Tag ({nextSlot.exFormatted}) bereits vorbei — die Zahlung am {nextSlot.payFormatted} (<strong className="font-mono">{perPeriodChf.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}</strong>) erhältst du trotzdem.
+                                                                </div>
+                                                            ) : null
+                                                        )}
+
+                                                        {!upcomingDividendInfo.hasFuture && (
+                                                            <div className="text-xs text-muted-foreground">
+                                                                Letzter gespeicherter Termin — klicke oben auf «Termine laden», um aktuelle Termine abzurufen.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-xs text-muted-foreground">
+                                                        Noch keine Dividenden-Termine hinterlegt — klicke oben auf «Termine laden».
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+
                                     {/* Info Badge for Accumulating (Thesaurierend) / Zero Dividend */}
                                     {mode === 'buy' && (isAccumulating || dividend === 0) && (
                                         <div className="p-3 bg-muted/40 border border-border/60 rounded-xl space-y-1 text-xs">
@@ -3142,7 +4803,7 @@ export function DividendCalculator() {
                                         </div>
                                     )}
 
-                                    {/* Direkt-Auswahl: In Watchlist speichern (1 Klick, ohne Scrollen direkt rechts sichtbar) */}
+                                    {/* Direkt-Auswahl: In Watchlist speichern / abwählen (1 Klick, ohne Scrollen direkt rechts sichtbar) */}
                                     {mode === 'buy' && (
                                         <div className="p-3.5 rounded-xl bg-blue-500/5 dark:bg-blue-950/25 border border-blue-500/25 space-y-2.5">
                                             <div className="flex items-center justify-between gap-2">
@@ -3150,10 +4811,15 @@ export function DividendCalculator() {
                                                     <Eye className="size-4 text-blue-500 shrink-0" />
                                                     <span>In Watchlist speichern</span>
                                                 </div>
-                                                {savedWatchlistId ? (
+                                                {watchlistFeedback?.type === 'added' ? (
                                                     <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1">
                                                         <Check className="size-3.5 shrink-0" />
                                                         Gespeichert!
+                                                    </span>
+                                                ) : watchlistFeedback?.type === 'removed' ? (
+                                                    <span className="text-xs font-bold text-rose-500 dark:text-rose-400 inline-flex items-center gap-1">
+                                                        <X className="size-3.5 shrink-0" />
+                                                        Entfernt
                                                     </span>
                                                 ) : !canSaveToWatchlist ? (
                                                     <span className="text-xs text-muted-foreground">
@@ -3161,35 +4827,34 @@ export function DividendCalculator() {
                                                     </span>
                                                 ) : (
                                                     <span className="text-xs text-muted-foreground">
-                                                        1 Klick genügt
+                                                        1 Klick an-/abwählen
                                                     </span>
                                                 )}
                                             </div>
                                             <div className="flex flex-wrap gap-1.5">
                                                 {watchlists.map(wl => {
                                                     const isAlreadyInWl = Boolean(selectedStockId && selectedStockId !== 'new' && wl.stockIds.includes(selectedStockId));
-                                                    const justSaved = savedWatchlistId === wl.id;
                                                     return (
                                                         <button
                                                             key={wl.id}
                                                             type="button"
                                                             disabled={!canSaveToWatchlist}
-                                                            onClick={() => handleAddToWatchlist(wl.id)}
+                                                            onClick={() => handleToggleWatchlist(wl.id)}
                                                             className={cn(
                                                                 "h-7 px-2.5 py-0 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1.5 leading-none transition-all cursor-pointer active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed",
-                                                                justSaved || isAlreadyInWl
-                                                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
+                                                                isAlreadyInWl
+                                                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-rose-500/15 hover:text-rose-400 hover:border-rose-500/40"
                                                                     : "bg-background/80 text-foreground border-border hover:bg-blue-600 hover:text-white hover:border-blue-500"
                                                             )}
                                                             title={
                                                                 !canSaveToWatchlist
                                                                     ? 'Zuerst Aktie / ETF auswählen oder Name & Symbol laden'
                                                                     : isAlreadyInWl
-                                                                        ? `Bereits in ${wl.name} · Klick aktualisiert Daten`
+                                                                        ? `Aus Watchlist ${wl.name} entfernen`
                                                                         : `Direkt in Watchlist ${wl.name} speichern`
                                                             }
                                                         >
-                                                            {justSaved || isAlreadyInWl ? (
+                                                            {isAlreadyInWl ? (
                                                                 <Check className="size-3.5 shrink-0" />
                                                             ) : (
                                                                 <Plus className="size-3.5 shrink-0 opacity-75" />
@@ -3228,6 +4893,33 @@ export function DividendCalculator() {
                 onClose={() => setShowOrderBook(false)}
                 onLoadIntoSimulator={handleLoadOrderIntoSimulator}
             />
+
+            {/* Kauf- & Verkaufs-Radar Modal */}
+            {(() => {
+                const initialRadarScope = resolveRadarInitialSource({
+                    stock: selectedStock,
+                    stocks,
+                    positions,
+                    watchlists
+                });
+                return (
+                    <TradeRadarModal
+                        isOpen={showTradeRadar}
+                        onClose={() => setShowTradeRadar(false)}
+                        radar={tradeRadar}
+                        initialTradeMode={mode}
+                        initialCategory={radarInitialCategory}
+                        initialSourceFilter={initialRadarScope.sourceFilter}
+                        initialSearchTerm={initialRadarScope.searchTerm}
+                        highlightStockId={selectedStock ? String(selectedStock.id) : undefined}
+                        highlightSymbol={selectedStock?.symbol}
+                        watchlists={watchlists}
+                        isRefreshing={isGlobalRefreshing}
+                        onRefreshPrices={() => refreshAllPrices(true)}
+                        onSelectForTrade={handleSelectFromRadar}
+                    />
+                );
+            })()}
 
             {/* Guide / Anleitung Modal */}
             {showGuide && (

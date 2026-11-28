@@ -252,8 +252,8 @@ export function isEtfAsset(stockObj?: any, qData?: any, symbolStr?: string | nul
     if (ETF_PRESETS[symUpper]) return true;
     const name = (stockObj?.name || qData?.name || '').toLowerCase();
     const sym = symUpper.toLowerCase();
-    if (name.includes('etf') || name.includes('ucits') || name.includes('ishares') || name.includes('vanguard ftse')) return true;
-    if (sym.includes('etf')) return true;
+    if (/\betf\b/.test(name) || name.includes('ucits') || name.includes('ishares') || name.includes('vanguard ftse')) return true;
+    if (/\betf\b/.test(sym)) return true;
     return false;
 }
 
@@ -870,31 +870,34 @@ export function computeStockSupportZones(params: {
             : Math.round(clamped * 100) / 100;
     };
 
-    // --- ZONE 2: Starke Unterstützung (Institutionelle Kaufzone) ---
-    // Priorität: GD200 -> 52-Wochen-Tief (ideal für junge IPOs ohne GD200 oder unter GD200) ->
-    // realistisches Qualität-B-Kauflimit (mind. 55% vom Kurs, nie -80%-Absturz) -> -20% Rücksetzer
+    // --- ZONE 2: Starke Unterstützung (Nachkauf / 2. Tranche, typisch -10% bis -30%) ---
+    // Priorität: GD200 -> 52-Wochen-Tief (sofern nicht tiefer Crash ab -28%) ->
+    // Qualität-B-Kauflimit -> Sicherheit-A-Kauflimit (wenn 52W-Tief noch tiefer liegt) -> -20% Rücksetzer
     let anchor2: number;
-    let zone2Source: 'gd200' | 'low52' | 'quality' | 'fallback';
-    if (gd200 && gd200 >= price * 0.58 && gd200 <= price * 0.93) {
+    let zone2Source: 'gd200' | 'low52' | 'quality' | 'safetyBuy' | 'fallback';
+    if (gd200 && gd200 >= price * 0.68 && gd200 <= price * 0.93) {
         anchor2 = gd200;
         zone2Source = 'gd200';
-    } else if (low52 && low52 >= price * 0.55 && low52 <= price * 0.89) {
+    } else if (low52 && low52 >= price * 0.72 && low52 <= price * 0.89) {
         anchor2 = low52;
         zone2Source = 'low52';
-    } else if (qualityBuy > 0 && qualityBuy >= price * 0.55 && qualityBuy <= price * 0.91) {
+    } else if (qualityBuy > 0 && qualityBuy >= price * 0.68 && qualityBuy <= price * 0.91) {
         anchor2 = qualityBuy;
         zone2Source = 'quality';
+    } else if (safetyBuy > 0 && safetyBuy >= price * 0.68 && safetyBuy <= price * 0.88) {
+        anchor2 = safetyBuy;
+        zone2Source = 'safetyBuy';
     } else {
         anchor2 = price * 0.80;
         zone2Source = 'fallback';
     }
 
     // --- ZONE 3: Panik- / Crash-Zone (Maximaler Kapitalschutz) ---
-    // Basis: Strikte Sicherheit A (sofern im plausiblen Crash-Korridor ab -60% und klar unter Zone 2),
-    // sonst 52W-Tief (falls nicht schon Zone 2), sonst Bärenmarkt-Drawdown unter Zone 2 (-32% bis -38%).
+    // Basis: Strikte Sicherheit A (falls noch nicht Zone 2 & im Crash-Korridor ab -60%),
+    // sonst tiefes 52W-Tief (falls nicht schon Zone 2), sonst Bärenmarkt-Drawdown unter Zone 2.
     let anchor3: number;
     let zone3Source: 'safety' | 'low52' | 'crash_ipo' | 'fallback';
-    if (safetyBuy > 0 && safetyBuy >= price * 0.40 && safetyBuy <= anchor2 * 0.92) {
+    if (zone2Source !== 'safetyBuy' && safetyBuy > 0 && safetyBuy >= price * 0.40 && safetyBuy <= anchor2 * 0.92) {
         anchor3 = safetyBuy;
         zone3Source = 'safety';
     } else if (zone2Source !== 'low52' && low52 && low52 >= price * 0.40 && low52 <= anchor2 * 0.92) {
@@ -926,7 +929,7 @@ export function computeStockSupportZones(params: {
     } else if (safetyFair > 0 && safetyFair > anchor2 * 1.05 && safetyFair <= price * 0.97) {
         anchor1 = safetyFair;
         zone1Source = 'fair';
-    } else if (safetyBuy > 0 && safetyBuy > anchor2 * 1.05 && safetyBuy <= price * 0.97) {
+    } else if (zone2Source !== 'safetyBuy' && safetyBuy > 0 && safetyBuy > anchor2 * 1.05 && safetyBuy <= price * 0.97) {
         anchor1 = safetyBuy;
         zone1Source = 'safetyBuy';
     } else {
@@ -942,16 +945,22 @@ export function computeStockSupportZones(params: {
         anchor1 = Math.max(anchor2 * 1.04, (anchor2 + price) / 2);
     }
 
-    const min1 = roundBand(anchor1 * 0.97);
-    const max1 = roundBand(anchor1 * 1.02);
+    // Nahtlose, lückenlose Kaufzonen (Zone 1 → Zone 2 → Zone 3 schließen exakt aneinander an)
+    const step = price >= 10 ? 0.1 : 0.01;
+    const boundary12 = roundBand((anchor1 + anchor2) / 2);
+    const rawBoundary23 = roundBand((anchor2 + anchor3) / 2);
+    const boundary23 = Math.max(0.02, Math.min(rawBoundary23, boundary12 - step));
+
+    const max1 = Math.max(roundBand(anchor1 * 1.02), boundary12 + step);
+    const min1 = boundary12;
     const target1 = parseFloat(anchor1.toFixed(2));
 
-    const min2 = roundBand(anchor2 * 0.97);
-    const max2 = roundBand(anchor2 * 1.02);
+    const max2 = boundary12;
+    const min2 = boundary23;
     const target2 = parseFloat(anchor2.toFixed(2));
 
-    const min3 = roundBand(anchor3 * 0.96);
-    const max3 = roundBand(anchor3 * 1.02);
+    const max3 = boundary23;
+    const min3 = Math.max(0.01, Math.min(roundBand(anchor3 * 0.92), boundary23 - step));
     const target3 = parseFloat(anchor3.toFixed(2));
 
     const zone1Desc = zone1Source === 'gd50'
@@ -970,7 +979,9 @@ export function computeStockSupportZones(params: {
             ? 'Solider Rebound-Bereich am 52-Wochen-Tief. Wichtige Chart-Unterstützung für die 2. Tranche.'
             : zone2Source === 'quality'
                 ? 'Solider Rebound-Bereich am Kauflimit Qualität B. Hier greifen Grossanleger und Value-Fonds wieder zu.'
-                : 'Solider Rebound-Bereich (-20 % Korrektur / Mittelwert). Hier greifen Grossanleger und Value-Fonds wieder zu.';
+                : zone2Source === 'safetyBuy'
+                    ? 'Solider Nachkauf-Bereich rund um das Kauflimit Sicherheit A. Attraktive Zone für die 2. Tranche.'
+                    : 'Solider Rebound-Bereich (-20 % Korrektur / Mittelwert). Hier greifen Grossanleger und Value-Fonds wieder zu.';
 
     const zone3Desc = zone3Source === 'safety'
         ? 'Entspricht dem strikten Kauflimit aus Sicherheit A. Historische Ausverkaufs- und Panikpreise.'
@@ -994,12 +1005,21 @@ export function computeStockSupportZones(params: {
         let status: 'above' | 'in_range' | 'below' = 'above';
         let badgeText: string | undefined;
 
-        if (price >= minP && price <= maxP) {
-            status = 'in_range';
-            badgeText = '🟢 Aktuell in dieser Zone!';
-        } else if (price < minP) {
-            status = 'below';
-            badgeText = '⚡ Bereits unterboten (Stark korrigiert)';
+        if (id === 'zone3') {
+            if (price <= maxP && price >= minP) {
+                status = 'in_range';
+                badgeText = '🟢 Aktuell in dieser Zone!';
+            } else if (price < minP) {
+                status = 'below';
+                badgeText = '⚡ Bereits unterboten (Stark korrigiert)';
+            }
+        } else {
+            if (price > minP && price <= maxP) {
+                status = 'in_range';
+                badgeText = '🟢 Aktuell in dieser Zone!';
+            } else if (price <= minP) {
+                status = 'below';
+            }
         }
 
         return {
