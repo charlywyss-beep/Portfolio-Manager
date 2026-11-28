@@ -173,6 +173,12 @@ export function TradeRadarModal({
         setRadarMode(nextMode);
         setActiveCategory('all_assets');
         clearPrefilledSearchIfActive();
+        if (nextMode === 'sell') {
+            const hasOwnedInCurrentScope = scopeFilteredItems.some(i => i.inPortfolio);
+            if (!hasOwnedInCurrentScope) {
+                setSourceFilter('portfolio_all');
+            }
+        }
     };
 
     useEffect(() => {
@@ -237,8 +243,8 @@ export function TradeRadarModal({
 
     const scopedCounts = useMemo(() => {
         const buySignals = scopeFilteredItems.filter(i => i.isBuyLimitReached || i.buyZone !== null || i.isBelowSma200).length;
-        const sellSignals = scopeFilteredItems.filter(i => i.sellStatus !== null).length;
-        const sellCandidates = scopeFilteredItems.filter(i => i.inPortfolio || i.hasExplicitSellLimit).length;
+        const sellSignals = scopeFilteredItems.filter(i => i.inPortfolio && i.sellStatus !== null).length;
+        const sellCandidates = scopeFilteredItems.filter(i => i.inPortfolio).length;
         return {
             allSignals: scopeFilteredItems.filter(i => i.hasAnySignal).length,
             buySignals,
@@ -249,8 +255,8 @@ export function TradeRadarModal({
             zone2: scopeFilteredItems.filter(i => i.buyZone === 2).length,
             zone3: scopeFilteredItems.filter(i => i.buyZone === 3).length,
             belowSma200: scopeFilteredItems.filter(i => i.isBelowSma200).length,
-            sellApproaching: scopeFilteredItems.filter(i => i.sellStatus === 'approaching').length,
-            sellReached: scopeFilteredItems.filter(i => i.sellStatus === 'reached').length,
+            sellApproaching: scopeFilteredItems.filter(i => i.inPortfolio && i.sellStatus === 'approaching').length,
+            sellReached: scopeFilteredItems.filter(i => i.inPortfolio && i.sellStatus === 'reached').length,
             allAssets: scopeFilteredItems.length
         };
     }, [scopeFilteredItems]);
@@ -277,14 +283,15 @@ export function TradeRadarModal({
                 }
             }
 
-            // Verkaufs-Modus: strikt nur Verkaufs-Signale bzw. Bestände & gesetzte Verkaufslimite
+            // Verkaufs-Modus: strikt nur Titel im Bestand!
+            if (!item.inPortfolio) return false;
             switch (activeCategory) {
                 case 'sell_approaching':
                     return item.sellStatus === 'approaching';
                 case 'sell_reached':
                     return item.sellStatus === 'reached';
                 case 'all_assets':
-                    return isWatchlistSource ? true : (item.inPortfolio || item.hasExplicitSellLimit);
+                    return true;
                 case 'all_signals':
                 default:
                     return item.sellStatus !== null;
@@ -364,8 +371,8 @@ export function TradeRadarModal({
 
     const allAssetsPool = useMemo(() => {
         if (radarMode === 'buy') return scopedItems;
-        return isWatchlistSource ? scopedItems : scopedItems.filter(i => i.inPortfolio || i.hasExplicitSellLimit);
-    }, [scopedItems, radarMode, isWatchlistSource]);
+        return scopedItems.filter(i => i.inPortfolio);
+    }, [scopedItems, radarMode]);
 
     const hiddenItems = useMemo(() => {
         if (activeCategory === 'all_assets') return [];
@@ -477,7 +484,7 @@ export function TradeRadarModal({
     const activeModeSignalCount = radarMode === 'buy' ? scopedCounts.buySignals : scopedCounts.sellSignals;
     const activeModeAssetCount = radarMode === 'buy'
         ? scopedCounts.allAssets
-        : (isWatchlistSource ? scopedCounts.allAssets : scopedCounts.sellCandidates);
+        : scopedCounts.sellCandidates;
 
     return createPortal(
         <div
@@ -518,7 +525,7 @@ export function TradeRadarModal({
                             <p className="text-xs text-foreground/80 truncate">
                                 {radarMode === 'buy'
                                     ? 'Kauflimiten & Kaufzonen 1–3 für Bestand und alle Watchlists auf einen Blick'
-                                    : 'Verkaufslimiten & Verkaufszonen für Bestand und gesetzte Verkaufslimite'}
+                                    : 'Verkaufslimiten & Verkaufszonen für deinen Bestand'}
                             </p>
                         </div>
                     </div>
@@ -852,20 +859,38 @@ export function TradeRadarModal({
                                 <Layers className="size-6" />
                             </div>
                             <p className="text-sm font-semibold text-foreground">
-                                Keine Titel in dieser Auswahl
+                                {radarMode === 'sell' && isWatchlistSource
+                                    ? 'Keine Bestands-Titel in dieser Watchlist'
+                                    : 'Keine Titel in dieser Auswahl'}
                             </p>
-                            <p className="text-xs text-muted-foreground max-w-md">
-                                Aktuell erfüllt kein Titel im gewählten Filter dieses Signal. Wechsle auf «Alle Signale» oder «Alle Titel», um alle Bestände und Watchlist-Werte zu sehen.
+                            <p className="text-xs text-foreground/80 max-w-md">
+                                {radarMode === 'sell'
+                                    ? 'Im Verkaufs-Radar werden nur Titel aus deinem Bestand angezeigt, da nur vorhandene Positionen verkauft werden können.'
+                                    : 'Aktuell erfüllt kein Titel im gewählten Filter dieses Signal. Wechsle auf alle Titel, um alle Bestände und Watchlist-Werte zu sehen.'}
                             </p>
-                            {activeCategory !== 'all_assets' && (
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveCategory('all_assets')}
-                                    className="h-7 px-3 py-0 rounded-lg border border-border bg-background hover:bg-muted text-xs font-semibold text-foreground inline-flex items-center justify-center leading-none transition-colors cursor-pointer mt-1"
-                                >
-                                    Alle Titel anzeigen
-                                </button>
-                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                                {activeCategory !== 'all_assets' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveCategory('all_assets')}
+                                        className="h-7 px-3 py-0 rounded-lg border border-border bg-background hover:bg-muted text-xs font-semibold text-foreground inline-flex items-center justify-center leading-none transition-colors cursor-pointer"
+                                    >
+                                        Alle Titel anzeigen
+                                    </button>
+                                )}
+                                {radarMode === 'sell' && isWatchlistSource && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSourceFilter('portfolio_all');
+                                            setActiveCategory('all_assets');
+                                        }}
+                                        className="h-7 px-3 py-0 rounded-lg border border-blue-500/45 bg-blue-600/20 hover:bg-blue-600 text-foreground hover:text-white text-xs font-semibold inline-flex items-center justify-center leading-none transition-colors cursor-pointer"
+                                    >
+                                        Bestand Alle anzeigen
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <>
@@ -926,12 +951,12 @@ export function TradeRadarModal({
                                     <th className="py-2.5 px-2.5 text-right">
                                         <button
                                             type="button"
-                                            onClick={() => handleSort('limit')}
+                                            onClick={() => handleSort('fairValue')}
                                             className="inline-flex items-center justify-end gap-1 text-foreground hover:text-blue-400 transition-colors cursor-pointer select-none uppercase"
-                                            title={radarMode === 'buy' ? 'Nach Abstand zum Kauflimit in % sortieren' : 'Nach Abstand zum Verkaufslimit in % sortieren'}
+                                            title="Nach Abstand zum Fairen Wert in % sortieren"
                                         >
-                                            <span>{radarMode === 'buy' ? 'Kauflimit & Zonen' : 'Verkaufslimit'}</span>
-                                            {sortConfig.key === 'limit' ? (
+                                            <span>Fairer Wert</span>
+                                            {sortConfig.key === 'fairValue' ? (
                                                 <span className="text-blue-400 font-bold leading-none">
                                                     {sortConfig.direction === 'asc' ? '↑' : '↓'}
                                                 </span>
@@ -943,12 +968,12 @@ export function TradeRadarModal({
                                     <th className="py-2.5 px-2.5 text-right">
                                         <button
                                             type="button"
-                                            onClick={() => handleSort('fairValue')}
+                                            onClick={() => handleSort('limit')}
                                             className="inline-flex items-center justify-end gap-1 text-foreground hover:text-blue-400 transition-colors cursor-pointer select-none uppercase"
-                                            title="Nach Abstand zum Fairen Wert in % sortieren"
+                                            title={radarMode === 'buy' ? 'Nach Abstand zum Kauflimit in % sortieren' : 'Nach Abstand zum Verkaufslimit in % sortieren'}
                                         >
-                                            <span>Fairer Wert</span>
-                                            {sortConfig.key === 'fairValue' ? (
+                                            <span>{radarMode === 'buy' ? 'Kauflimit & Zonen' : 'Verkaufslimit'}</span>
+                                            {sortConfig.key === 'limit' ? (
                                                 <span className="text-blue-400 font-bold leading-none">
                                                     {sortConfig.direction === 'asc' ? '↑' : '↓'}
                                                 </span>
@@ -1163,14 +1188,73 @@ export function TradeRadarModal({
                                                         {item.dayChangePct >= 0 ? '+' : ''}{item.dayChangePct.toFixed(2)}%
                                                     </span>
                                                     {item.drawdownFrom52wHighPct !== null && item.drawdownFrom52wHighPct <= -5 && (
-                                                        <span className="text-muted-foreground" title="Abstand vom 52-Wochen-Hoch">
+                                                        <span
+                                                            className={cn(
+                                                                item.drawdownFrom52wHighPct <= -30
+                                                                    ? 'text-rose-400'
+                                                                    : item.drawdownFrom52wHighPct <= -15
+                                                                        ? 'text-amber-400'
+                                                                        : 'text-sky-400'
+                                                            )}
+                                                            title="Abstand vom 52-Wochen-Hoch"
+                                                        >
                                                             · 52W {item.drawdownFrom52wHighPct.toFixed(0)}%
                                                         </span>
                                                     )}
                                                 </div>
                                             </td>
 
-                                            {/* 4. Kauflimit & Zonen (Kauf-Modus) ODER Verkaufslimit (Verkauf-Modus) */}
+                                            {/* 4. Fairer Wert (direkt neben dem Kurs) */}
+                                            <td className="py-2.5 px-2.5 text-right align-middle whitespace-nowrap">
+                                                {item.fairValue > 0 ? (
+                                                    <div className="inline-flex flex-col items-end">
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            {(() => {
+                                                                const fwBadge =
+                                                                    item.fairValueMode === 'quality'
+                                                                        ? { label: 'FW', title: 'Fairer Wert Qualität B', cls: 'bg-purple-500/15 text-purple-400 border-purple-500/35' }
+                                                                        : item.fairValueMode === 'risk'
+                                                                            ? { label: 'FW', title: 'Fairer Wert Risiko-Abschlag C', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/35' }
+                                                                            : item.fairValueMode === 'manual'
+                                                                                ? { label: 'FW', title: 'Fairer Wert Manuell', cls: 'bg-pink-500/15 text-pink-400 border-pink-500/35' }
+                                                                                : { label: 'FW', title: 'Fairer Wert Sicherheit A', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/35' };
+                                                                return (
+                                                                    <span
+                                                                        className={cn(
+                                                                            'w-[26px] h-5 inline-flex items-center justify-center rounded text-xs font-bold border leading-none shrink-0',
+                                                                            fwBadge.cls
+                                                                        )}
+                                                                        title={fwBadge.title}
+                                                                    >
+                                                                        {fwBadge.label}
+                                                                    </span>
+                                                                );
+                                                            })()}
+                                                            <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums min-w-[96px] text-right">
+                                                                {fmtPrice(item.fairValue, item.displayCurrency)}
+                                                            </span>
+                                                        </div>
+                                                        {item.fairValueGapPct !== null && (
+                                                            <span className={cn(
+                                                                'text-xs font-mono font-semibold tabular-nums mt-0.5',
+                                                                item.fairValueGapPct <= 0
+                                                                    ? 'text-emerald-400'
+                                                                    : item.fairValueGapPct >= 35
+                                                                        ? 'text-fuchsia-400'
+                                                                        : item.fairValueGapPct >= 15
+                                                                            ? 'text-orange-400'
+                                                                            : 'text-amber-400'
+                                                            )}>
+                                                                {item.fairValueGapPct >= 0 ? '+' : ''}{item.fairValueGapPct.toFixed(1)}%
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* 5. Kauflimit & Zonen (Kauf-Modus) ODER Verkaufslimit (Verkauf-Modus) — direkt neben Aktion */}
                                             <td className="py-2.5 px-2.5 text-right align-middle whitespace-nowrap">
                                                 {radarMode === 'buy' ? (
                                                     item.effectiveBuyLimit ? (
@@ -1199,9 +1283,11 @@ export function TradeRadarModal({
                                                                     'text-xs font-mono font-semibold tabular-nums mt-0.5',
                                                                     item.buyGapPct <= 0
                                                                         ? 'text-emerald-400'
-                                                                        : item.buyGapPct <= 4
+                                                                        : item.buyGapPct <= 5
                                                                             ? 'text-teal-400'
-                                                                            : 'text-muted-foreground'
+                                                                            : item.buyGapPct <= 20
+                                                                                ? 'text-amber-400'
+                                                                                : 'text-rose-400'
                                                                 )}>
                                                                     {item.buyGapPct <= 0
                                                                         ? `Erreicht · ${item.buyGapPct.toFixed(1)}%`
@@ -1262,7 +1348,9 @@ export function TradeRadarModal({
                                                                     ? 'text-fuchsia-400'
                                                                     : item.sellGapPct >= -7
                                                                         ? 'text-orange-400'
-                                                                        : 'text-muted-foreground'
+                                                                        : item.sellGapPct >= -20
+                                                                            ? 'text-amber-400'
+                                                                            : 'text-sky-400'
                                                             )}>
                                                                 {item.sellGapPct >= 0 ? `Erreicht · +${item.sellGapPct.toFixed(1)}%` : `${item.sellGapPct.toFixed(1)}%`}
                                                             </span>
@@ -1270,56 +1358,6 @@ export function TradeRadarModal({
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs font-medium text-muted-foreground">Kein VK-Limit</span>
-                                                )}
-                                            </td>
-
-                                            {/* 5. Fairer Wert */}
-                                            <td className="py-2.5 px-2.5 text-right align-middle whitespace-nowrap">
-                                                {item.fairValue > 0 ? (
-                                                    <div className="inline-flex flex-col items-end">
-                                                        <div className="flex items-center justify-end gap-1.5">
-                                                            {(() => {
-                                                                const fwBadge =
-                                                                    item.fairValueMode === 'quality'
-                                                                        ? { label: 'FW', title: 'Fairer Wert Qualität B', cls: 'bg-purple-500/15 text-purple-400 border-purple-500/35' }
-                                                                        : item.fairValueMode === 'risk'
-                                                                            ? { label: 'FW', title: 'Fairer Wert Risiko-Abschlag C', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/35' }
-                                                                            : item.fairValueMode === 'manual'
-                                                                                ? { label: 'FW', title: 'Fairer Wert Manuell', cls: 'bg-pink-500/15 text-pink-400 border-pink-500/35' }
-                                                                                : { label: 'FW', title: 'Fairer Wert Sicherheit A', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/35' };
-                                                                return (
-                                                                    <span
-                                                                        className={cn(
-                                                                            'w-[26px] h-5 inline-flex items-center justify-center rounded text-xs font-bold border leading-none shrink-0',
-                                                                            fwBadge.cls
-                                                                        )}
-                                                                        title={fwBadge.title}
-                                                                    >
-                                                                        {fwBadge.label}
-                                                                    </span>
-                                                                );
-                                                            })()}
-                                                            <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums min-w-[96px] text-right">
-                                                                {fmtPrice(item.fairValue, item.displayCurrency)}
-                                                            </span>
-                                                        </div>
-                                                        {item.fairValueGapPct !== null && (
-                                                            <span className={cn(
-                                                                'text-xs font-mono font-semibold tabular-nums mt-0.5',
-                                                                item.fairValueGapPct <= 0
-                                                                    ? 'text-emerald-400'
-                                                                    : item.fairValueGapPct >= 45
-                                                                        ? 'text-fuchsia-400'
-                                                                        : item.fairValueGapPct >= 25
-                                                                            ? 'text-orange-400'
-                                                                            : 'text-muted-foreground'
-                                                            )}>
-                                                                {item.fairValueGapPct >= 0 ? '+' : ''}{item.fairValueGapPct.toFixed(1)}%
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xs text-muted-foreground">—</span>
                                                 )}
                                             </td>
 
@@ -1421,7 +1459,7 @@ export function TradeRadarModal({
                             <>
                                 <span><strong className="text-orange-400">Verkauf Anlauf:</strong> ab 93 % vom Verkaufslimit oder +25 % über Fairem Wert</span>
                                 <span><strong className="text-fuchsia-400">Verkauf erreicht:</strong> Kurs ≥ Verkaufslimit oder stark überbewertet</span>
-                                <span><strong className="text-foreground">Gilt für:</strong> Bestand &amp; gesetzte Verkaufslimite</span>
+                                <span><strong className="text-foreground">Gilt für:</strong> Nur Titel im Bestand</span>
                             </>
                         )}
                     </div>

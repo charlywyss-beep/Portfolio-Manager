@@ -4900,7 +4900,8 @@ export function DividendCalculator() {
                     stock: selectedStock,
                     stocks,
                     positions,
-                    watchlists
+                    watchlists,
+                    tradeMode: mode
                 });
                 return (
                     <TradeRadarModal

@@ -13,8 +13,8 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'O': { eps: 4.20, growth: 3.5, pe: 15.0, pe10: 14.0, mos: 15, label: 'AFFO (Cashflow)' },
     'SREN.SW': { eps: 16.42, growth: 2.5, pe: 9.5, pe10: 9.0, div: 4.82, mos: 20, label: 'Konsens EPS' },
     'SREN': { eps: 16.42, growth: 2.5, pe: 9.5, pe10: 9.0, div: 4.82, mos: 20, label: 'Konsens EPS' },
-    'ZURN.SW': { eps: 35.0, growth: 4.0, pe: 11.5, pe10: 10.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
-    'ZURN': { eps: 35.0, growth: 4.0, pe: 11.5, pe10: 10.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
+    'ZURN.SW': { eps: 40.30, growth: 6.0, pe: 14.0, pe10: 13.0, mos: 15, label: 'Konsens EPS 2026 (CHF)' },
+    'ZURN': { eps: 40.30, growth: 6.0, pe: 14.0, pe10: 13.0, mos: 15, label: 'Konsens EPS 2026 (CHF)' },
     'BRK-B': { eps: 25.0, growth: 7.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Look-Through EPS 2026' },
     'BRK.B': { eps: 25.0, growth: 7.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Look-Through EPS 2026' },
     'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, pe10: 30.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
@@ -323,14 +323,18 @@ export function computeSmartAutoParams(
         autoDiv = (Number(stockObj.dividendAmount) / price) * 100;
     }
 
-    // Handle decimal yield if reported as ratio (e.g. 0.003 -> 0.3%) - only for API quotes, never presets
-    if (!preset && autoDiv > 0.0005 && autoDiv < 0.1) {
+    // Handle decimal yield if reported as ratio (e.g. 0.003 -> 0.3%) - only for API quotes, never hardcoded preset.div
+    if (preset?.div === undefined && autoDiv > 0.0005 && autoDiv < 0.1) {
         autoDiv = autoDiv * 100;
     }
 
     // Specific fallback for Alphabet (GOOG / GOOGL) if Yahoo still returned 0: Alphabet pays $0.80/yr ($0.20/qtr) ~ 0.3%
     if (autoDiv === 0 && (symUpper === 'GOOG' || symUpper === 'GOOGL' || symUpper === 'ABEA.DE' || symUpper === 'ABEC.DE')) {
         autoDiv = price > 0 ? parseFloat(((0.80 / price) * 100).toFixed(2)) : 0.3;
+    }
+    // Specific fallback for Zurich Insurance (CHF 30.00 FY25 dividend paid April 2026)
+    if (autoDiv === 0 && (symUpper === 'ZURN.SW' || symUpper === 'ZURN')) {
+        autoDiv = price > 0 ? parseFloat(((30.0 / price) * 100).toFixed(2)) : 4.62;
     }
 
     autoDiv = parseFloat(Math.min(Math.max(autoDiv, 0), 25).toFixed(2));
@@ -624,7 +628,7 @@ export function computeSmartAutoParams(
             } else if (symUpper.startsWith('SREN')) {
                 rawExitPe = 11.5;
             } else if (symUpper.startsWith('ZURN')) {
-                rawExitPe = 13.0;
+                rawExitPe = 15.0;
             } else if (symUpper === 'PBR-A' || symUpper === 'PBR') {
                 rawExitPe = 5.5;
             } else if (symUpper === 'BP.L' || symUpper === 'BP') {

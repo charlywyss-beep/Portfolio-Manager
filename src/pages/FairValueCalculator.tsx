@@ -65,6 +65,7 @@ export function FairValueCalculator() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [isTradeRadarOpen, setIsTradeRadarOpen] = useState(false);
+    const [, setManualBackupTick] = useState(0);
 
     const handleBack = () => {
         const from = searchParams.get('from');
@@ -483,8 +484,9 @@ export function FairValueCalculator() {
                     : (params.customBackup || validPrevBackup || validPrevAsBackup);
 
             const { clearCustomBackup, ...restParams } = params;
+            const { customBackup: _droppedBackup, ...prevWithoutBackup } = prevEntry;
             map[key] = {
-                ...prevEntry,
+                ...prevWithoutBackup,
                 ...restParams,
                 ...(nextCustomBackup ? { customBackup: nextCustomBackup } : {}),
                 updatedAt: now
@@ -524,6 +526,15 @@ export function FairValueCalculator() {
         // Auto-apply 10J Ø cycle multiple for oil & energy stocks when switching stocks
         const matchedStockForOil = stocks.find(s => s.symbol.toLowerCase() === sym.toLowerCase());
         if (isOilEnergyStock(matchedStockForOil, null, sym) && params.peHorizon !== '10Y') {
+            return true;
+        }
+
+        // Auto-heal stale non-custom preset params when FUNDAMENTAL_FALLBACKS was updated (e.g. ZURN.SW 2026 EPS/PE)
+        const fundPreset = FUNDAMENTAL_FALLBACKS[symUpper];
+        if (fundPreset && (
+            Math.abs(Number(params.eps) - fundPreset.eps) > 0.05 ||
+            ((symUpper === 'ZURN.SW' || symUpper === 'ZURN') && params.valuationMode !== 'quality' && Number(params.pe) < 13.9)
+        )) {
             return true;
         }
 
@@ -681,8 +692,9 @@ export function FairValueCalculator() {
             peHorizon: defaultHorizon
         });
 
-        if (existingStock) {
-            updateStock(existingStock.id, {
+        const matchingStocks = stocks.filter(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
+        for (const matched of matchingStocks) {
+            updateStock(matched.id, {
                 fairValueParams: {
                     eps: smart.eps,
                     growthRate: smart.growthRate,
@@ -691,6 +703,8 @@ export function FairValueCalculator() {
                     discountRate: smart.discountRate,
                     mos: smart.mos,
                     isCustom: false,
+                    valuationMode: valuationProfile,
+                    ...(matched.fairValueParams?.sellLimitType ? { sellLimitType: matched.fairValueParams.sellLimitType } : {}),
                     updatedAt: new Date().toISOString()
                 }
             });
@@ -708,6 +722,7 @@ export function FairValueCalculator() {
         setEpsSourceLabel(smart.epsLabel);
         setGrowthSourceLabel(smart.growthLabel);
         setIsSavedForStock(false);
+        setManualBackupTick(t => t + 1);
     };
 
     // Wachstums-Helfer State
@@ -1482,10 +1497,11 @@ export function FairValueCalculator() {
                             updatedAt: now
                         }
                         : prevCustomBackup;
+                    const { customBackup: _droppedStockBackup, ...prevStockFvParams } = existingStock.fairValueParams || {};
                     updateStock(existingStock.id, {
                         fairValue: calculation.fairValue,
                         fairValueParams: {
-                            ...(existingStock.fairValueParams || {}),
+                            ...prevStockFvParams,
                             eps: numEps,
                             growthRate: numGrowth,
                             pe: numPe,

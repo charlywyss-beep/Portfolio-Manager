@@ -497,62 +497,64 @@ export function buildTradeRadar(params: {
             ? `${sma200GapPct.toFixed(1)} % unter GD 200 · ${gd200.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${displayCurrency}`
             : null;
 
-        // 3. Verkaufszone Anlauf / erreicht — NUR für Bestand oder explizit gesetztes Verkaufslimit!
+        // 3. Verkaufszone Anlauf / erreicht — STRIKT nur für Titel im Bestand!
         // (Reine Watchlist-Titel ohne Bestand können nicht verkauft werden.)
         let sellStatus: RadarSellStatus = null;
         let sellSource: 'limit' | 'valuation' | null = null;
         let sellReason: string | null = null;
 
-        if (hasExplicitSellLimit && effectiveSellLimit && sellGapPct !== null) {
-            if (curPrice >= effectiveSellLimit) {
-                sellStatus = 'reached';
-                sellSource = 'limit';
-                sellReason = sellGapPct >= 0.1
-                    ? `Verkaufslimit erreicht · +${sellGapPct.toFixed(1)} %`
-                    : 'Verkaufslimit erreicht';
-            } else if (curPrice >= effectiveSellLimit * 0.93) {
-                sellStatus = 'approaching';
-                sellSource = 'limit';
-                sellReason = `Noch ${Math.abs(sellGapPct).toFixed(1)} % bis Verkaufslimit`;
-            }
-        } else if (inPortfolio) {
-            // Automatische Gewinnmitnahme-/Überbewertungs-Zone nur für echte Bestandspositionen ohne manuelles VK-Limit
-            const notInPullback =
-                buyZone === null &&
-                !isBuyLimitReached &&
-                (drawdownFrom52wHighPct === null || drawdownFrom52wHighPct > -10);
+        if (inPortfolio) {
+            if (hasExplicitSellLimit && effectiveSellLimit && sellGapPct !== null) {
+                if (curPrice >= effectiveSellLimit) {
+                    sellStatus = 'reached';
+                    sellSource = 'limit';
+                    sellReason = sellGapPct >= 0.1
+                        ? `Verkaufslimit erreicht · +${sellGapPct.toFixed(1)} %`
+                        : 'Verkaufslimit erreicht';
+                } else if (curPrice >= effectiveSellLimit * 0.93) {
+                    sellStatus = 'approaching';
+                    sellSource = 'limit';
+                    sellReason = `Noch ${Math.abs(sellGapPct).toFixed(1)} % bis Verkaufslimit`;
+                }
+            } else {
+                // Automatische Gewinnmitnahme-/Überbewertungs-Zone nur für echte Bestandspositionen ohne manuelles VK-Limit
+                const notInPullback =
+                    buyZone === null &&
+                    !isBuyLimitReached &&
+                    (drawdownFrom52wHighPct === null || drawdownFrom52wHighPct > -10);
 
-            if (notInPullback) {
-                if (fairValueGapPct !== null && fairValueGapPct >= 45) {
-                    sellStatus = 'reached';
-                    sellSource = 'valuation';
-                    sellReason = `Stark überbewertet · +${fairValueGapPct.toFixed(0)} % über Fairer Wert`;
-                } else if (
-                    positionGainPct !== null &&
-                    positionGainPct >= 25 &&
-                    high52 &&
-                    curPrice >= high52 * 0.98 &&
-                    fairValueGapPct !== null &&
-                    fairValueGapPct >= 20
-                ) {
-                    sellStatus = 'reached';
-                    sellSource = 'valuation';
-                    sellReason = `Am 52W-Hoch · +${positionGainPct.toFixed(0)} % im Plus`;
-                } else if (fairValueGapPct !== null && fairValueGapPct >= 25) {
-                    sellStatus = 'approaching';
-                    sellSource = 'valuation';
-                    sellReason = `Läuft in Überbewertung · +${fairValueGapPct.toFixed(0)} % über Fairer Wert`;
-                } else if (
-                    positionGainPct !== null &&
-                    positionGainPct >= 15 &&
-                    high52 &&
-                    curPrice >= high52 * 0.96 &&
-                    fairValueGapPct !== null &&
-                    fairValueGapPct >= 12
-                ) {
-                    sellStatus = 'approaching';
-                    sellSource = 'valuation';
-                    sellReason = `Nahe 52W-Hoch · +${positionGainPct.toFixed(0)} % im Plus`;
+                if (notInPullback) {
+                    if (fairValueGapPct !== null && fairValueGapPct >= 45) {
+                        sellStatus = 'reached';
+                        sellSource = 'valuation';
+                        sellReason = `Stark überbewertet · +${fairValueGapPct.toFixed(0)} % über Fairer Wert`;
+                    } else if (
+                        positionGainPct !== null &&
+                        positionGainPct >= 25 &&
+                        high52 &&
+                        curPrice >= high52 * 0.98 &&
+                        fairValueGapPct !== null &&
+                        fairValueGapPct >= 20
+                    ) {
+                        sellStatus = 'reached';
+                        sellSource = 'valuation';
+                        sellReason = `Am 52W-Hoch · +${positionGainPct.toFixed(0)} % im Plus`;
+                    } else if (fairValueGapPct !== null && fairValueGapPct >= 25) {
+                        sellStatus = 'approaching';
+                        sellSource = 'valuation';
+                        sellReason = `Läuft in Überbewertung · +${fairValueGapPct.toFixed(0)} % über Fairer Wert`;
+                    } else if (
+                        positionGainPct !== null &&
+                        positionGainPct >= 15 &&
+                        high52 &&
+                        curPrice >= high52 * 0.96 &&
+                        fairValueGapPct !== null &&
+                        fairValueGapPct >= 12
+                    ) {
+                        sellStatus = 'approaching';
+                        sellSource = 'valuation';
+                        sellReason = `Nahe 52W-Hoch · +${positionGainPct.toFixed(0)} % im Plus`;
+                    }
                 }
             }
         }
@@ -652,9 +654,46 @@ export function resolveRadarInitialSource(params: {
     stocks: Stock[];
     positions: Position[];
     watchlists: Watchlist[];
+    tradeMode?: 'buy' | 'sell';
     fallbackToSearch?: boolean;
 }): { sourceFilter: string; searchTerm: string } {
-    const { stock, stocks, positions, watchlists, fallbackToSearch = false } = params;
+    const { stock, stocks, positions, watchlists, tradeMode = 'buy', fallbackToSearch = false } = params;
+    if (tradeMode === 'sell') {
+        if (!stock) {
+            return { sourceFilter: 'portfolio_all', searchTerm: '' };
+        }
+        const symLower = (stock.symbol || '').trim().toLowerCase();
+        const matchingIds = new Set<string>([String(stock.id)]);
+        if (symLower) {
+            for (const s of stocks) {
+                if ((s.symbol || '').trim().toLowerCase() === symLower) {
+                    matchingIds.add(String(s.id));
+                }
+            }
+        }
+        const isInPortfolio = positions.some(
+            p => p.shares > 0 && matchingIds.has(String(p.stockId))
+        );
+        if (!isInPortfolio) {
+            return { sourceFilter: 'portfolio_all', searchTerm: '' };
+        }
+        const matchingWatchlists = watchlists.filter(wl =>
+            (wl.stockIds || []).some(sid => matchingIds.has(String(sid)))
+        );
+        let lastActiveTab: string | null = null;
+        try {
+            lastActiveTab = localStorage.getItem('watchlist_active_tab');
+        } catch {
+            lastActiveTab = null;
+        }
+        const lastActiveMatch = lastActiveTab
+            ? matchingWatchlists.find(wl => wl.id === lastActiveTab)
+            : undefined;
+        if (lastActiveMatch) {
+            return { sourceFilter: `wl:${lastActiveMatch.id}`, searchTerm: '' };
+        }
+        return { sourceFilter: 'portfolio_all', searchTerm: '' };
+    }
     if (!stock) {
         return { sourceFilter: 'all', searchTerm: '' };
     }
