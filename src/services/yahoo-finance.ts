@@ -551,6 +551,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
     trailingPE?: number | null,
     forwardPE?: number | null,
     eps?: number | null,
+    dividendRate?: number | null,
     dividendYield?: number,
     exDividendDate?: number | null,
     dividendPayDate?: number | null,
@@ -616,6 +617,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
             forwardEps?: number | null,
             epsSource?: string | null,
             growthRate?: number | null,
+            dividendRate?: number | null,
             dividendYield?: number,
             longName?: string | null,
             shortName?: string | null,
@@ -710,6 +712,11 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                         }
                         return dy ? parseFloat(Number(dy).toFixed(2)) : undefined;
                     })(),
+                    dividendRate: (() => {
+                        const rawRate = extractValue(res.dividendRate) ?? extractValue(res.trailingAnnualDividendRate);
+                        if (!rawRate || rawRate <= 0) return null;
+                        return normalizeYahooPrice(rawRate, res.currency, res.symbol);
+                    })(),
                     longName: res.longName || null,
                     shortName: res.shortName || null,
                     displayName: res.displayName || null,
@@ -745,6 +752,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
     forwardEps?: number | null,
     epsSource?: string | null,
     growthRate?: number | null,
+    dividendRate?: number | null,
     dividendYield: number | null,
     country: string | null,
     marketState?: string | null,
@@ -803,6 +811,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 forwardEps: (batchResult as any).forwardEps || null,
                 epsSource: (batchResult as any).epsSource || null,
                 growthRate: (batchResult as any).growthRate ?? null,
+                dividendRate: (batchResult as any).dividendRate ?? null,
                 dividendYield: (batchResult as any).dividendYield || null,
                 country: country,
                 marketState: batchResult.marketState || null,
@@ -821,7 +830,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                     name: (batchResult.longName || batchResult.shortName) || undefined
                 }) || null,
                 name: batchResult.longName || batchResult.shortName || batchResult.displayName || initialName || symbol,
-                isin: batchResult.isin || null,
+                isin: batchResult.isin || resolveKnownIsin(symbol) || null,
                 exDividendDate: (batchResult as any).exDividendDate ? new Date((batchResult as any).exDividendDate * 1000) : null,
                 dividendPayDate: (batchResult as any).dividendPayDate ? new Date((batchResult as any).dividendPayDate * 1000) : null,
                 kcv: batchResult.kcv || null,
@@ -862,7 +871,7 @@ export const searchStocks = async (query: string): Promise<any[]> => {
         const data = await response.json();
         const quotes = data.quotes || [];
         if (!Array.isArray(quotes)) return [];
-        return quotes.map((quote: any) => ({
+        const mapped = quotes.map((quote: any) => ({
             symbol: quote.symbol,
             name: quote.shortname || quote.longname || quote.displayName || quote.symbol,
             shortname: quote.shortname,
@@ -871,6 +880,15 @@ export const searchStocks = async (query: string): Promise<any[]> => {
             exch: quote.exchange,
             isin: quote.isin || (quote.symbol.length === 12 && !quote.symbol.includes('.') ? quote.symbol : null)
         }));
+        // Deprioritize exotic BDR / secondary LatAm listings (.SA Brazil BRL, .MX Mexico MXN, .BA Argentina)
+        // unless the user explicitly searched for that suffix (e.g. "TSMC34.SA")
+        const qUpper = query.trim().toUpperCase();
+        const wantsExoticSuffix = /\.(SA|MX|BA|SN|CR|LM)$/.test(qUpper);
+        if (!wantsExoticSuffix) {
+            const isExotic = (sym: string) => /\.(SA|MX|BA|SN|CR|LM)$/i.test(sym || '');
+            mapped.sort((a: any, b: any) => Number(isExotic(a.symbol)) - Number(isExotic(b.symbol)));
+        }
+        return mapped;
     } catch (error) {
         console.error("Search Error:", error);
         return [];
@@ -1415,6 +1433,20 @@ const KNOWN_SYMBOL_ISINS: Record<string, string> = {
     'AVGO': 'US11135F1012',
     // US Tech / Magnificent 7
     'NVDA': 'US67066G1040',
+    'NVD.DE': 'US67066G1040',
+    'TSM': 'US8740391003',
+    'TSFA.DE': 'US8740391003',
+    '2330.TW': 'TW0002330008',
+    '005930.KS': 'KR7005930003',
+    'SMSN.IL': 'US7960508882',
+    'SMSN.L': 'US7960508882',
+    'SSUN.F': 'US7960508882',
+    'SSUN.DE': 'US7960508882',
+    'SSU.DE': 'US7960508882',
+    'SSU.F': 'US7960508882',
+    'SSNLF': 'KR7005930003',
+    'ASML': 'USN070592100',
+    'ASML.AS': 'NL0010273215',
     'AAPL': 'US0378331005',
     'MSFT': 'US5949181045',
     'GOOG': 'US02079K1079',
@@ -1426,6 +1458,11 @@ const KNOWN_SYMBOL_ISINS: Record<string, string> = {
     'NFLX': 'US64110L1061',
     'ORCL': 'US68389X1054',
     'COST': 'US22160K1051',
+    'LLY': 'US5324571083',
+    'NVO': 'US6701002056',
+    'NOVO-B.CO': 'DK0062498333',
+    'SYK': 'US8636671013',
+    'SYK.DE': 'US8636671013',
     // Switzerland (.SW)
     'NESN.SW': 'CH0038863350',
     'NOVN.SW': 'CH0012005267',

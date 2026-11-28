@@ -7,7 +7,7 @@ import { TradeRadarModal } from '../components/TradeRadarModal';
 import type { SavedSimulation, OrderBookEntry } from '../types';
 
 import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, HelpCircle, BookOpen, AlertTriangle, Telescope, FolderArchive, BookmarkPlus, ClipboardList, Calendar, Radar } from 'lucide-react';
-import { fetchStockHistory, searchStocks, fetchStockQuote, fetchSmartDividendSchedule } from '../services/yahoo-finance';
+import { fetchStockHistory, searchStocks, fetchStockQuote, fetchSmartDividendSchedule, resolveKnownIsin } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -2127,10 +2127,13 @@ export function DividendCalculator() {
                 searchStocks(s)
             ]);
 
-            // 1. Update Price & Currency (Primary Source: History Chart)
-            if (res.data && res.data.length > 0) {
-                let val = res.data[res.data.length - 1].value;
-                const fetchedCurrency = res.currency;
+            // 1. Update Price & Currency (Primary Source: History Chart, Fallback: Quote regularMarketPrice for OTC / closed markets like SSNLF)
+            const histVal = res.data && res.data.length > 0 ? res.data[res.data.length - 1].value : 0;
+            const quotePriceVal = quoteDetails && !quoteDetails.error && quoteDetails.price && quoteDetails.price > 0 ? quoteDetails.price : 0;
+            let val = histVal > 0 ? histVal : quotePriceVal;
+
+            if (val > 0) {
+                const fetchedCurrency = res.currency || (quoteDetails && !quoteDetails.error ? quoteDetails.currency : null);
 
                 // Update Currency if available
                 const nextCurrency = fetchedCurrency || simCurrency;
@@ -2147,11 +2150,10 @@ export function DividendCalculator() {
 
                 let autoDiv: number | undefined = undefined;
                 if (quoteDetails && !quoteDetails.error) {
-                    if ((quoteDetails as any).dividendRate && (quoteDetails as any).dividendRate > 0) {
-                        autoDiv = (quoteDetails as any).dividendRate;
+                    if (quoteDetails.dividendRate && quoteDetails.dividendRate > 0) {
+                        autoDiv = parseFloat(quoteDetails.dividendRate.toFixed(4));
                     } else if (quoteDetails.dividendYield && quoteDetails.dividendYield > 0 && val > 0) {
-                        const y = quoteDetails.dividendYield > 1 ? quoteDetails.dividendYield / 100 : quoteDetails.dividendYield;
-                        autoDiv = parseFloat((val * y).toFixed(4));
+                        autoDiv = parseFloat((val * (quoteDetails.dividendYield / 100)).toFixed(4));
                     }
                 }
 
@@ -2166,42 +2168,111 @@ export function DividendCalculator() {
                 });
             }
 
-            // 2. Update Metadata (Name, ISIN)
+            // 2. Update Metadata (Name, ISIN, Sektor)
             if (quoteDetails && !quoteDetails.error && (quoteDetails.name || quoteDetails.price)) {
                 const newName = quoteDetails.name || (quoteDetails.country ? (simName || s) : s);
-                let newIsin = simIsin;
+                let newIsin = '';
                 if (searchRes && searchRes.length > 0) {
                     const match = searchRes.find((q: any) => q.symbol.toUpperCase() === s.toUpperCase()) || searchRes[0];
                     if (match && match.isin) newIsin = match.isin;
                 }
+                if (!newIsin) {
+                    newIsin = quoteDetails.isin || resolveKnownIsin(s) || simIsin;
+                }
+                const resolvedSector = quoteDetails.sector && quoteDetails.sector !== 'Andere' && quoteDetails.sector !== 'Unbekannt'
+                    ? quoteDetails.sector
+                    : undefined;
 
                 updateSimulatorState({
                     simName: newName,
                     simSymbol: s,
-                    simIsin: newIsin
+                    simIsin: newIsin,
+                    ...(resolvedSector ? { simSector: resolvedSector } : {})
                 });
             }
             else if (searchRes && searchRes.length > 0) {
                 const searchUpper = s.toUpperCase();
+                const isUsOtcPink = (sym: string) => /^[A-Z]{5}$/.test((sym || '').toUpperCase()) && /[FYQ]$/.test((sym || '').toUpperCase());
+                const isPrimaryExchange = (sym: string) => {
+                    const u = (sym || '').toUpperCase();
+                    if (!u.includes('.')) return !isUsOtcPink(u); // Echte US NYSE/NASDAQ (z.B. TSM), keine illiquiden 5-Buchstaben-OTC-Pink-Sheets (z.B. SSNLF)
+                    return /\.(SW|DE|L|IL|PA|AS|MI|MC|VI|TO|KS)$/.test(u);
+                };
+                // 1. Exakter Symbol-Treffer
                 let match = searchRes.find((q: any) => q.symbol.toUpperCase() === searchUpper);
-
+                // 2. StartsWith NUR auf Hauptbörsen (niemals brasilianische .SA-BDRs wie TSMC34.SA vor NYSE TSM ziehen!)
                 if (!match) {
-                    match = searchRes.find((q: any) => q.symbol.toUpperCase().startsWith(searchUpper));
+                    match = searchRes.find((q: any) => isPrimaryExchange(q.symbol) && q.symbol.toUpperCase().startsWith(searchUpper));
                 }
-
+                // 3. Erster Treffer auf einer Hauptbörse (z.B. "TSMC" -> "TSM", "Samsung" -> "SMSN.IL" / "SSU.DE" / "005930.KS")
+                if (!match) {
+                    match = searchRes.find((q: any) => isPrimaryExchange(q.symbol));
+                }
+                // 4. Fallback: erster Suchtreffer
                 if (!match) {
                     match = searchRes[0];
                 }
 
                 if (match) {
-                    const newName = match.shortname || match.longname || match.symbol;
-                    const newIsin = match.isin || simIsin;
+                    const resolvedSym = match.symbol;
+                    const newName = match.longname || match.shortname || resolvedSym;
 
-                    updateSimulatorState({
-                        simName: newName,
-                        simSymbol: match.symbol,
-                        simIsin: newIsin
-                    });
+                    // Direkt auch Kurs, Währung & Dividende für das aufgelöste Symbol laden
+                    const [resolvedHist, resolvedQuote] = await Promise.all([
+                        fetchStockHistory(resolvedSym, '1D'),
+                        fetchStockQuote(resolvedSym)
+                    ]);
+
+                    const newIsin = match.isin || resolvedQuote?.isin || resolveKnownIsin(resolvedSym) || simIsin;
+                    const resolvedSector = resolvedQuote?.sector && resolvedQuote.sector !== 'Andere' && resolvedQuote.sector !== 'Unbekannt'
+                        ? resolvedQuote.sector
+                        : undefined;
+
+                    const patch: Partial<typeof simulatorState> = {
+                        simName: resolvedQuote?.name || newName,
+                        simSymbol: resolvedSym,
+                        simIsin: newIsin,
+                        ...(resolvedSector ? { simSector: resolvedSector } : {})
+                    };
+
+                    const resolvedHistVal = resolvedHist.data && resolvedHist.data.length > 0
+                        ? resolvedHist.data[resolvedHist.data.length - 1].value
+                        : 0;
+                    const resolvedQuoteVal = resolvedQuote && !resolvedQuote.error && resolvedQuote.price && resolvedQuote.price > 0
+                        ? resolvedQuote.price
+                        : 0;
+                    let val = resolvedHistVal > 0 ? resolvedHistVal : resolvedQuoteVal;
+
+                    if (val > 0) {
+                        const fetchedCurrency = resolvedHist.currency || resolvedQuote?.currency || simCurrency;
+                        if (fetchedCurrency === 'GBP' || fetchedCurrency === 'GBp') {
+                            const isLSE = resolvedSym.toUpperCase().endsWith('.L') || (newIsin && newIsin.startsWith('GB'));
+                            if (isLSE && val > 500) val /= 100;
+                        }
+                        const normCurrency = fetchedCurrency === 'GBp' ? 'GBP' : (fetchedCurrency || 'USD');
+                        const isForeign = normCurrency !== 'CHF';
+                        const isUK = resolvedSym.toUpperCase().endsWith('.L') || (newIsin && newIsin.startsWith('GB'));
+                        const autoStamp = isUK ? 0.65 : (isForeign ? 0.15 : 0.075);
+
+                        let autoDiv: number | undefined = undefined;
+                        if (resolvedQuote && !resolvedQuote.error) {
+                            if (resolvedQuote.dividendRate && resolvedQuote.dividendRate > 0) {
+                                autoDiv = parseFloat(resolvedQuote.dividendRate.toFixed(4));
+                            } else if (resolvedQuote.dividendYield && resolvedQuote.dividendYield > 0 && val > 0) {
+                                autoDiv = parseFloat((val * (resolvedQuote.dividendYield / 100)).toFixed(4));
+                            }
+                        }
+
+                        patch.price = val;
+                        patch.simCurrency = normCurrency;
+                        patch.dividend = autoDiv !== undefined && autoDiv > 0 ? autoDiv : 0;
+                        patch.fees = {
+                            ...fees,
+                            stampDutyPercent: autoStamp
+                        };
+                    }
+
+                    updateSimulatorState(patch);
                 }
             }
         } catch (err) {
@@ -2682,7 +2753,7 @@ export function DividendCalculator() {
                                                             type="button"
                                                             onClick={handleLoadStockData}
                                                             disabled={isLoadingStockData}
-                                                            className="text-[10px] flex items-center gap-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-2 py-0.5 rounded transition-all font-semibold shadow-xs disabled:opacity-50"
+                                                            className="text-xs flex items-center gap-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-2 py-0.5 rounded transition-all font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
                                                             title="Aktie / ETF Daten laden"
                                                         >
                                                             <RefreshCw className={cn("size-3", isLoadingStockData && "animate-spin")} />
@@ -2717,6 +2788,9 @@ export function DividendCalculator() {
                                                     <option value="CHF">CHF</option>
                                                     <option value="EUR">EUR</option>
                                                     <option value="GBP">GBP (Pfund)</option>
+                                                    {simCurrency && !['USD', 'CHF', 'EUR', 'GBP'].includes(simCurrency) && (
+                                                        <option value={simCurrency}>{simCurrency}</option>
+                                                    )}
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
@@ -2783,7 +2857,7 @@ export function DividendCalculator() {
                                                             type="button"
                                                             onClick={handleLoadStockData}
                                                             disabled={isLoadingStockData}
-                                                            className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded transition-colors disabled:opacity-50"
+                                                            className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded transition-colors disabled:opacity-50 cursor-pointer"
                                                         >
                                                             <RefreshCw className={cn("size-3", isLoadingStockData && "animate-spin")} /> {isLoadingStockData ? 'Lade...' : 'Kurs laden'}
                                                         </button>

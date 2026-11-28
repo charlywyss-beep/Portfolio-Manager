@@ -113,7 +113,7 @@ export default defineConfig({
               if (!result && !quoteBasic) {
                    // BULLETPROOF FALLBACK for totally crumb-blocked IPs (1Y daily closes also yield exact GD50 & GD200!)
                    try {
-                       const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`;
+                       const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y&events=div`;
                        const chartRes = await fetch(chartUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }});
                        if (!chartRes.ok) return { symbol: sym, error: 'Completely blocked' };
                        const chartData: any = await chartRes.json();
@@ -131,6 +131,15 @@ export default defineConfig({
                        };
                        const calcSma50 = validCloses.length >= 20 ? avgTail(validCloses, 50) : null;
                        const calcSma200 = validCloses.length >= 100 ? avgTail(validCloses, 200) : null;
+                       const rawDivEvents = Object.values(chartResult0?.events?.dividends || {}) as { date?: number; amount?: number }[];
+                       const cutoffSec = Math.floor(Date.now() / 1000) - 366 * 86400;
+                       const recentDivs = rawDivEvents.filter(d => typeof d.amount === 'number' && isFinite(d.amount) && d.amount > 0 && (!d.date || d.date >= cutoffSec));
+                       const calcDivRate = recentDivs.length > 0
+                           ? parseFloat(recentDivs.reduce((sum, d) => sum + (d.amount || 0), 0).toFixed(4))
+                           : null;
+                       const calcDivYield = calcDivRate && chartMeta.regularMarketPrice > 0
+                           ? parseFloat(((calcDivRate / chartMeta.regularMarketPrice) * 100).toFixed(2))
+                           : null;
                        const prevCloseSafe = chartMeta.previousClose
                            ?? (validCloses.length >= 2 ? validCloses[validCloses.length - 2] : chartMeta.regularMarketPrice);
                        const lastValidOpen = [...rawDailyOpens].reverse().find((v): v is number => typeof v === 'number' && isFinite(v) && v > 0);
@@ -201,7 +210,8 @@ export default defineConfig({
                            forwardPE: null,
                            eps: fallbackEps,
                            forwardEps: tsLocal.normalizedEps || null,
-                           dividendYield: null,
+                           dividendRate: calcDivRate,
+                           dividendYield: calcDivYield,
                            kcv: kcvValue,
                            fiftyDayAverage: calcSma50,
                            twoHundredDayAverage: calcSma200,
@@ -318,6 +328,7 @@ export default defineConfig({
                 forwardEps: rawForwardEps,
                 epsSource,
                 growthRate: growthRate5Y,
+                dividendRate: getRawVal(summaryDetail.dividendRate) || getRawVal(summaryDetail.trailingAnnualDividendRate) || getRawVal((quoteBasic as any)?.trailingAnnualDividendRate) || null,
                 dividendYield: getRawVal(summaryDetail.dividendYield) ? getRawVal(summaryDetail.dividendYield) * 100 : (getRawVal(quoteBasic?.dividendYield) || null),
                 exDividendDate: toUnixSec(calendarEvents.exDividendDate) ?? toUnixSec(summaryDetail.exDividendDate) ?? toUnixSec(quoteBasic?.exDividendDate) ?? null,
                 dividendPayDate: toUnixSec(calendarEvents.dividendDate) ?? toUnixSec((quoteBasic as any)?.dividendDate) ?? null,
