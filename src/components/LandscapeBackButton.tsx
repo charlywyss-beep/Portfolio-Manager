@@ -5,12 +5,13 @@ import { cn } from '../utils';
 interface LandscapeBackButtonProps {
     onClick?: () => void;
     className?: string;
+    title?: string;
 }
 
 /**
  * Einheitlicher Zurück-Button (nur Pfeil) für den Seiten-Header.
  */
-export function LandscapeBackButton({ onClick, className }: LandscapeBackButtonProps = {}) {
+export function LandscapeBackButton({ onClick, className, title = 'Zurück' }: LandscapeBackButtonProps = {}) {
     const navigate = useNavigate();
 
     return (
@@ -21,8 +22,8 @@ export function LandscapeBackButton({ onClick, className }: LandscapeBackButtonP
                 "flex items-center justify-center p-2 rounded-xl border border-foreground/40 hover:border-foreground/75 bg-card text-foreground hover:bg-accent transition-all shadow-sm shrink-0 active:scale-95 group cursor-pointer",
                 className
             )}
-            title="Zurück"
-            aria-label="Zurück"
+            title={title}
+            aria-label={title}
         >
             <ArrowLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
         </button>

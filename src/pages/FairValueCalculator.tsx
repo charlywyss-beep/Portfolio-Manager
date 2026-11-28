@@ -4,7 +4,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, Target, Lock, Radar } from 'lucide-react';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { TradeRadarModal } from '../components/TradeRadarModal';
-import { buildTradeRadar } from '../utils/tradeRadar';
+import { buildRadarReturnUrl, buildTradeRadar, parseRadarReturnParams, type RadarCategory, type RadarViewSnapshot } from '../utils/tradeRadar';
 import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -64,12 +64,48 @@ export function FairValueCalculator() {
     const { positions, stocks, watchlists, fixedDeposits, orderBook, updateStock, addStock, addFairValueQuickLink, removeFairValueQuickLink, refreshAllPrices, isGlobalRefreshing } = usePortfolio();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [isTradeRadarOpen, setIsTradeRadarOpen] = useState(false);
+    const [isTradeRadarOpen, setIsTradeRadarOpen] = useState(() => searchParams.get('radar') === 'true');
+    const [radarReturnSnapshot, setRadarReturnSnapshot] = useState<RadarViewSnapshot | null>(() => parseRadarReturnParams(searchParams));
     const [, setManualBackupTick] = useState(0);
 
+    useEffect(() => {
+        const parsed = parseRadarReturnParams(searchParams);
+        if (parsed) {
+            setRadarReturnSnapshot(parsed);
+            setIsTradeRadarOpen(true);
+        }
+    }, [searchParams]);
+
+    const backButtonTitle = radarReturnSnapshot
+        ? (radarReturnSnapshot.mode === 'sell' ? 'Zurück zum Verkaufs-Radar' : 'Zurück zum Kauf-Radar')
+        : searchParams.get('from') === 'radar'
+            ? (searchParams.get('radarMode') === 'sell' ? 'Zurück zum Verkaufs-Radar' : 'Zurück zum Kauf-Radar')
+            : searchParams.get('from') === 'watchlist-performance'
+                ? 'Zurück zur Watchlist Performance'
+                : searchParams.get('from') === 'watchlist'
+                    ? 'Zurück zur Watchlist'
+                    : searchParams.get('from') === 'portfolio'
+                        ? 'Zurück zu Positionen'
+                        : searchParams.get('from') === 'calculator'
+                            ? 'Zurück zu Kauf / Verkauf'
+                            : searchParams.get('from') === 'dividends'
+                                ? 'Zurück zu Dividenden'
+                                : 'Zurück';
+
     const handleBack = () => {
+        if (radarReturnSnapshot) {
+            setIsTradeRadarOpen(true);
+            return;
+        }
         const from = searchParams.get('from');
-        if (from === 'watchlist-performance') {
+        if (from === 'radar') {
+            const returnTo = searchParams.get('returnTo') || '/calculator';
+            const mode: 'buy' | 'sell' = searchParams.get('radarMode') === 'sell' ? 'sell' : 'buy';
+            const sourceFilter = searchParams.get('radarSource') || (mode === 'sell' ? 'portfolio_all' : 'all');
+            const category = (searchParams.get('radarCategory') as RadarCategory) || 'all_assets';
+            const highlightSymbol = selectedSymbol || searchParams.get('stock') || searchParams.get('radarHighlight') || undefined;
+            navigate(buildRadarReturnUrl(returnTo, { mode, sourceFilter, category, highlightSymbol }));
+        } else if (from === 'watchlist-performance') {
             navigate('/watchlist?openPerformance=true');
         } else if (from === 'watchlist') {
             navigate('/watchlist');
@@ -201,11 +237,14 @@ export function FairValueCalculator() {
     useEffect(() => {
         const isCurrentEtf = isEtfAsset(currentStock, quote, selectedSymbol);
         if (isCurrentEtf) {
-            setSellPremiumPct(valuationProfile === 'quality' ? 25 : 20);
+            const numDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : Number(dividendYield) || 0;
+            const etfDist = getEtfDistributionType(currentStock, quote, selectedSymbol, numDiv);
+            // Thesaurierende ETFs wachsen durch wiederangelegte Dividenden schneller im Kurs mit -> weiteres Rebalancing-Ziel
+            setSellPremiumPct(etfDist === 'accumulating' ? 35 : 25);
         } else {
             setSellPremiumPct(valuationProfile === 'quality' ? 30 : 25);
         }
-    }, [valuationProfile, selectedSymbol, currentStock?.type]);
+    }, [valuationProfile, selectedSymbol, currentStock?.type, quote?.name]);
 
     useEffect(() => {
         if (currentStock?.sellLimit && currentStock.sellLimit > 0) {
@@ -1920,7 +1959,7 @@ export function FairValueCalculator() {
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
-                                <LandscapeBackButton onClick={handleBack} />
+                                <LandscapeBackButton onClick={handleBack} title={backButtonTitle} />
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
                                     <Telescope className="size-6" />
                                 </div>
@@ -3555,8 +3594,14 @@ export function FairValueCalculator() {
                                                         </div>
                                                     </div>
 
-                                                    {/* 2. Verkaufslimit Box (Berechnet & manuell anpassbar — einheitliche Profilfarbe wie Kauflimit) */}
+                                                    {/* 2. Verkaufslimit Box (Berechnet & manuell anpassbar — für ETFs als optionales Rebalancing-Ziel) */}
                                                     {(() => {
+                                                        const isSellBoxEtf = isEtfAsset(currentStock, quote, selectedSymbol);
+                                                        const sellBoxDivNum = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : Number(dividendYield) || 0;
+                                                        const sellBoxEtfDist = isSellBoxEtf
+                                                            ? getEtfDistributionType(currentStock, quote, selectedSymbol, sellBoxDivNum)
+                                                            : null;
+                                                        const sellPresets = isSellBoxEtf ? [25, 35, 50] : [20, 25, 30, 45];
                                                         const sellPresetActiveCls = isManualMode
                                                             ? "bg-pink-600 text-white border-pink-400"
                                                             : isRiskMode
@@ -3615,7 +3660,7 @@ export function FairValueCalculator() {
                                                              </div>
                                                              <div className="flex items-center justify-between gap-1.5 flex-wrap">
                                                                  <div className="flex items-center gap-1 flex-wrap">
-                                                                     {[20, 25, 30, 45].map((pct) => (
+                                                                     {sellPresets.map((pct) => (
                                                                          <button
                                                                              key={pct}
                                                                              type="button"
@@ -3626,7 +3671,9 @@ export function FairValueCalculator() {
                                                                                      ? sellPresetActiveCls
                                                                                      : cn("bg-background/80 text-muted-foreground border-border hover:text-foreground", sellPresetHoverCls)
                                                                              )}
-                                                                             title={`Fairer Wert +${pct} % als Verkaufslimit berechnen`}
+                                                                             title={isSellBoxEtf
+                                                                                 ? `Fairer Wert +${pct} % als ETF Rebalancing-Ziel berechnen`
+                                                                                 : `Fairer Wert +${pct} % als Verkaufslimit berechnen`}
                                                                          >
                                                                              +{pct}%
                                                                          </button>
@@ -3658,6 +3705,13 @@ export function FairValueCalculator() {
                                                                      </span>
                                                                  )}
                                                              </div>
+                                                             {isSellBoxEtf && (
+                                                                 <p className="text-xs text-foreground/80 leading-snug pt-0.5">
+                                                                     {sellBoxEtfDist === 'accumulating'
+                                                                         ? 'Thesaurierend: Dividenden steigen im Kurs mit — als Rebalancing-Ziel nutzen oder für Buy & Hold leer lassen.'
+                                                                         : 'Ausschüttend: Für laufende Dividende halten — VK-Limit nur bei gewünschter Reduktion setzen.'}
+                                                                 </p>
+                                                             )}
                                                          </div>
 
                                                          {/* Aktives Verkaufslimit Input (manuell änderbar) */}
@@ -3699,7 +3753,9 @@ export function FairValueCalculator() {
                                                                                  </span>
                                                                              </span>
                                                                          ) : (
-                                                                             <span className="text-xs text-muted-foreground">Optional</span>
+                                                                             <span className={cn("text-xs font-semibold", isSellBoxEtf ? "text-emerald-400" : "text-muted-foreground")}>
+                                                                                 {isSellBoxEtf ? 'Buy & Hold' : 'Optional'}
+                                                                             </span>
                                                                          )}
                                                                      </div>
 
@@ -3715,12 +3771,20 @@ export function FairValueCalculator() {
                                                                                          handleSaveSellLimit(sellLimitInput, 'manual');
                                                                                      }
                                                                                  }}
-                                                                                 placeholder={calculation.sellPrice > 0 ? calculation.sellPrice.toFixed(2) : "Optional"}
-                                                                                 className={cn("w-full px-2.5 py-0 rounded-lg border bg-background text-xs sm:text-sm font-mono font-bold pr-11 focus:ring-1 h-7 transition-colors", activeInputMeta.border, activeInputMeta.text)}
+                                                                                 placeholder={isSellBoxEtf ? "Buy & Hold" : "Kein VK-Limit"}
+                                                                                 className={cn(
+                                                                                     "w-full px-2.5 py-0 rounded-lg border bg-background text-xs sm:text-sm font-mono font-bold focus:ring-1 h-7 transition-colors placeholder:font-sans placeholder:text-xs",
+                                                                                     isSellBoxEtf ? "placeholder:font-semibold placeholder:text-emerald-400" : "placeholder:font-normal placeholder:text-muted-foreground/75",
+                                                                                     sellLimitInput.trim() !== '' ? "pr-11" : "pr-2.5",
+                                                                                     activeInputMeta.border,
+                                                                                     activeInputMeta.text
+                                                                                 )}
                                                                              />
-                                                                             <span className={cn("absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono font-bold pointer-events-none", activeInputMeta.curr)}>
-                                                                                 {dispCurr}
-                                                                             </span>
+                                                                             {sellLimitInput.trim() !== '' && (
+                                                                                 <span className={cn("absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono font-bold pointer-events-none", activeInputMeta.curr)}>
+                                                                                     {dispCurr}
+                                                                                 </span>
+                                                                             )}
                                                                          </div>
 
                                                                          {isSellDirty ? (
@@ -4273,19 +4337,39 @@ export function FairValueCalculator() {
                 return (
                     <TradeRadarModal
                         isOpen={isTradeRadarOpen}
-                        onClose={() => setIsTradeRadarOpen(false)}
+                        onClose={() => {
+                            setIsTradeRadarOpen(false);
+                            setRadarReturnSnapshot(null);
+                            if (searchParams.get('radar') === 'true') {
+                                const nextParams = new URLSearchParams(searchParams);
+                                nextParams.delete('radar');
+                                nextParams.delete('radarMode');
+                                nextParams.delete('radarSource');
+                                nextParams.delete('radarCategory');
+                                nextParams.delete('radarHighlight');
+                                const qs = nextParams.toString();
+                                navigate(qs ? `/fair-value?${qs}` : '/fair-value', { replace: true });
+                            }
+                        }}
                         radar={radarData}
-                        initialTradeMode="buy"
-                        initialCategory="all_assets"
-                        initialSourceFilter={initialSourceFilter}
-                        initialSearchTerm={initialSearchTerm}
-                        highlightStockId={matchedStock ? String(matchedStock.id) : selectedSymbol}
-                        highlightSymbol={matchedStock?.symbol || selectedSymbol}
+                        initialTradeMode={radarReturnSnapshot?.mode || 'buy'}
+                        initialCategory={radarReturnSnapshot?.category || 'all_assets'}
+                        initialSourceFilter={radarReturnSnapshot?.sourceFilter || initialSourceFilter}
+                        initialSearchTerm={radarReturnSnapshot ? '' : initialSearchTerm}
+                        highlightStockId={radarReturnSnapshot ? undefined : (matchedStock ? String(matchedStock.id) : selectedSymbol)}
+                        highlightSymbol={radarReturnSnapshot?.highlightSymbol || matchedStock?.symbol || selectedSymbol}
                         watchlists={watchlists}
                         isRefreshing={isGlobalRefreshing}
                         onRefreshPrices={() => refreshAllPrices(true)}
+                        onOpenFairValue={(targetSym, snapshot) => {
+                            setRadarReturnSnapshot(snapshot);
+                            setIsTradeRadarOpen(false);
+                            const matched = stocks.find(s => s.symbol.toLowerCase() === targetSym.toLowerCase());
+                            loadStockData(matched?.symbol || targetSym, matched?.name || targetSym, false, matched?.isin);
+                        }}
                         onSelectForTrade={(targetStockId, tradeMode, suggestedPrice) => {
                             setIsTradeRadarOpen(false);
+                            setRadarReturnSnapshot(null);
                             const params = new URLSearchParams();
                             params.set('stock', String(targetStockId));
                             params.set('mode', tradeMode);

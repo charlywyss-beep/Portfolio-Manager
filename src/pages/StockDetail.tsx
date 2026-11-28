@@ -22,7 +22,7 @@ import { Logo } from '../components/Logo';
 import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
 import { EditPositionModal } from '../components/EditPositionModal';
 import { TradeRadarModal } from '../components/TradeRadarModal';
-import { buildTradeRadar } from '../utils/tradeRadar';
+import { buildRadarReturnUrl, buildTradeRadar, parseRadarReturnParams, type RadarCategory, type RadarViewSnapshot } from '../utils/tradeRadar';
 
 import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
@@ -109,7 +109,16 @@ export function StockDetail() {
     const { rates } = useExchangeRates();
     const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
     const [isEditPositionModalOpen, setIsEditPositionModalOpen] = useState(false);
-    const [isTradeRadarOpen, setIsTradeRadarOpen] = useState(false);
+    const [isTradeRadarOpen, setIsTradeRadarOpen] = useState(() => searchParams.get('radar') === 'true');
+    const [radarReturnOverride, setRadarReturnOverride] = useState<RadarViewSnapshot | null>(() => parseRadarReturnParams(searchParams));
+
+    useEffect(() => {
+        const parsed = parseRadarReturnParams(searchParams);
+        if (parsed) {
+            setRadarReturnOverride(parsed);
+            setIsTradeRadarOpen(true);
+        }
+    }, [searchParams]);
 
     // Find stock by ID or Symbol (case-insensitive)
     const stockFromContext = stocks.find(s =>
@@ -1100,7 +1109,14 @@ export function StockDetail() {
             return;
         }
         const from = searchParams.get('from');
-        if (from === 'performance') {
+        if (from === 'radar') {
+            const returnTo = searchParams.get('returnTo') || '/calculator';
+            const mode: 'buy' | 'sell' = searchParams.get('radarMode') === 'sell' ? 'sell' : 'buy';
+            const sourceFilter = searchParams.get('radarSource') || (mode === 'sell' ? 'portfolio_all' : 'all');
+            const category = (searchParams.get('radarCategory') as RadarCategory) || 'all_assets';
+            const highlightSymbol = stock?.symbol || searchParams.get('radarHighlight') || undefined;
+            navigate(buildRadarReturnUrl(returnTo, { mode, sourceFilter, category, highlightSymbol }));
+        } else if (from === 'performance') {
             navigate('/?openPerformance=true');
         } else if (from === 'market-overview-performance') {
             const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
@@ -1140,7 +1156,9 @@ export function StockDetail() {
                             onClick={handleBackNavigation}
                             className="h-7 w-7 inline-flex items-center justify-center leading-none rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-foreground/40 hover:border-foreground/75 shadow-sm p-0 transition-all group active:scale-95 shrink-0 cursor-pointer"
                             title={
-                                searchParams.get('from') === 'performance' || searchParams.get('from') === 'market-overview-performance'
+                                searchParams.get('from') === 'radar'
+                                    ? (searchParams.get('radarMode') === 'sell' ? 'Zurück zum Verkaufs-Radar' : 'Zurück zum Kauf-Radar')
+                                    : searchParams.get('from') === 'performance' || searchParams.get('from') === 'market-overview-performance'
                                     ? "Zurück zu Performance Details"
                                     : searchParams.get('from') === 'watchlist-performance'
                                         ? "Zurück zur Watchlist Performance"
@@ -2798,19 +2816,33 @@ export function StockDetail() {
                 return (
                     <TradeRadarModal
                         isOpen={isTradeRadarOpen}
-                        onClose={() => setIsTradeRadarOpen(false)}
+                        onClose={() => {
+                            setIsTradeRadarOpen(false);
+                            setRadarReturnOverride(null);
+                            if (searchParams.get('radar') === 'true') {
+                                const nextParams = new URLSearchParams(searchParams);
+                                nextParams.delete('radar');
+                                nextParams.delete('radarMode');
+                                nextParams.delete('radarSource');
+                                nextParams.delete('radarCategory');
+                                nextParams.delete('radarHighlight');
+                                const qs = nextParams.toString();
+                                navigate(qs ? `${location.pathname}?${qs}` : location.pathname, { replace: true });
+                            }
+                        }}
                         radar={tradeRadar}
-                        initialTradeMode="buy"
-                        initialCategory="all_assets"
-                        initialSourceFilter={initialSourceFilter}
-                        initialSearchTerm={initialSearchTerm}
-                        highlightStockId={String(stock.id)}
-                        highlightSymbol={stock.symbol}
+                        initialTradeMode={radarReturnOverride?.mode || 'buy'}
+                        initialCategory={radarReturnOverride?.category || 'all_assets'}
+                        initialSourceFilter={radarReturnOverride?.sourceFilter || initialSourceFilter}
+                        initialSearchTerm={radarReturnOverride ? '' : initialSearchTerm}
+                        highlightStockId={radarReturnOverride ? undefined : String(stock.id)}
+                        highlightSymbol={radarReturnOverride?.highlightSymbol || stock.symbol}
                         watchlists={watchlists}
                         isRefreshing={isGlobalRefreshing}
                         onRefreshPrices={() => refreshAllPrices(true)}
                         onSelectForTrade={(targetStockId, tradeMode, suggestedPrice) => {
                             setIsTradeRadarOpen(false);
+                            setRadarReturnOverride(null);
                             const params = new URLSearchParams();
                             params.set('stock', String(targetStockId));
                             params.set('mode', tradeMode);

@@ -15,7 +15,7 @@ import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { cn } from '../utils';
 import { computeSmartAutoParams, applyRiskModeParams, calculateDcfFairValue } from '../utils/fairValue';
-import { buildTradeRadar, resolveRadarInitialSource, type RadarCategory } from '../utils/tradeRadar';
+import { buildTradeRadar, parseRadarReturnParams, resolveRadarInitialSource, type RadarCategory, type RadarViewSnapshot } from '../utils/tradeRadar';
 import { getWithholdingTaxRate } from '../utils/tax';
 
 const getStampDutyForStock = (stock: { currency?: string; symbol?: string; isin?: string } | null | undefined): number => {
@@ -1032,10 +1032,12 @@ export function DividendCalculator() {
     const [showOrderBook, setShowOrderBook] = useState(() => searchParams.get('orderbook') === 'true');
     const [showTradeRadar, setShowTradeRadar] = useState(() => searchParams.get('radar') === 'true');
     const [radarInitialCategory, setRadarInitialCategory] = useState<RadarCategory>('all_assets');
+    const [radarReturnOverride, setRadarReturnOverride] = useState<RadarViewSnapshot | null>(() => parseRadarReturnParams(searchParams));
     const [showSavedFeedback, setShowSavedFeedback] = useState(false);
     const [showOrderBookSavedFeedback, setShowOrderBookSavedFeedback] = useState(false);
 
     const openTradeRadar = (category: RadarCategory = 'all_assets') => {
+        setRadarReturnOverride(null);
         setRadarInitialCategory(category);
         setShowTradeRadar(true);
     };
@@ -1078,6 +1080,10 @@ export function DividendCalculator() {
             setShowOrderBook(true);
         }
         if (searchParams.get('radar') === 'true') {
+            const parsed = parseRadarReturnParams(searchParams);
+            if (parsed) {
+                setRadarReturnOverride(parsed);
+            }
             setShowTradeRadar(true);
         }
     }, [searchParams]);
@@ -4906,14 +4912,27 @@ export function DividendCalculator() {
                 return (
                     <TradeRadarModal
                         isOpen={showTradeRadar}
-                        onClose={() => setShowTradeRadar(false)}
+                        onClose={() => {
+                            setShowTradeRadar(false);
+                            setRadarReturnOverride(null);
+                            if (searchParams.get('radar') === 'true') {
+                                const nextParams = new URLSearchParams(searchParams);
+                                nextParams.delete('radar');
+                                nextParams.delete('radarMode');
+                                nextParams.delete('radarSource');
+                                nextParams.delete('radarCategory');
+                                nextParams.delete('radarHighlight');
+                                const qs = nextParams.toString();
+                                navigate(qs ? `/calculator?${qs}` : '/calculator', { replace: true });
+                            }
+                        }}
                         radar={tradeRadar}
-                        initialTradeMode={mode}
-                        initialCategory={radarInitialCategory}
-                        initialSourceFilter={initialRadarScope.sourceFilter}
-                        initialSearchTerm={initialRadarScope.searchTerm}
-                        highlightStockId={selectedStock ? String(selectedStock.id) : undefined}
-                        highlightSymbol={selectedStock?.symbol}
+                        initialTradeMode={radarReturnOverride?.mode || mode}
+                        initialCategory={radarReturnOverride?.category || radarInitialCategory}
+                        initialSourceFilter={radarReturnOverride?.sourceFilter || initialRadarScope.sourceFilter}
+                        initialSearchTerm={radarReturnOverride ? '' : initialRadarScope.searchTerm}
+                        highlightStockId={radarReturnOverride ? undefined : (selectedStock ? String(selectedStock.id) : undefined)}
+                        highlightSymbol={radarReturnOverride?.highlightSymbol || selectedStock?.symbol}
                         watchlists={watchlists}
                         isRefreshing={isGlobalRefreshing}
                         onRefreshPrices={() => refreshAllPrices(true)}

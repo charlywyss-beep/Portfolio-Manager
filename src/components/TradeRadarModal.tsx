@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     X,
     Radar,
@@ -20,13 +20,14 @@ import {
     Activity,
     ArrowUpDown,
     ChevronDown,
-    Check
+    Check,
+    Plus
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { StockName } from './StockName';
 import { cn } from '../utils';
 import type { Watchlist } from '../types';
-import type { RadarCategory, TradeRadarItem, TradeRadarSummary } from '../utils/tradeRadar';
+import type { RadarCategory, RadarViewSnapshot, TradeRadarItem, TradeRadarSummary } from '../utils/tradeRadar';
 
 interface TradeRadarModalProps {
     isOpen: boolean;
@@ -42,6 +43,7 @@ interface TradeRadarModalProps {
     isRefreshing?: boolean;
     onRefreshPrices?: () => void;
     onSelectForTrade: (stockId: string, tradeMode: 'buy' | 'sell', suggestedPrice?: number) => void;
+    onOpenFairValue?: (symbol: string, snapshot: RadarViewSnapshot) => void;
 }
 
 const fmtPrice = (val: number | null | undefined, currency: string) => {
@@ -83,9 +85,45 @@ export function TradeRadarModal({
     watchlists,
     isRefreshing = false,
     onRefreshPrices,
-    onSelectForTrade
+    onSelectForTrade,
+    onOpenFairValue
 }: TradeRadarModalProps) {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const buildReturnQuery = (symbol: string) => {
+        const params = new URLSearchParams();
+        params.set('from', 'radar');
+        params.set('returnTo', location.pathname || '/calculator');
+        params.set('radarMode', radarMode);
+        params.set('radarSource', sourceFilter);
+        params.set('radarCategory', activeCategory);
+        params.set('radarHighlight', symbol);
+        return params;
+    };
+
+    const handleOpenFairValue = (symbol: string) => {
+        const snapshot: RadarViewSnapshot = {
+            mode: radarMode,
+            sourceFilter,
+            category: activeCategory,
+            highlightSymbol: symbol
+        };
+        onClose();
+        if (onOpenFairValue) {
+            onOpenFairValue(symbol, snapshot);
+        } else {
+            const params = buildReturnQuery(symbol);
+            params.set('stock', symbol);
+            navigate(`/fair-value?${params.toString()}`);
+        }
+    };
+
+    const handleOpenStockDetail = (stockId: string, symbol: string) => {
+        onClose();
+        const params = buildReturnQuery(symbol);
+        navigate(`/stock/${encodeURIComponent(stockId)}?${params.toString()}`);
+    };
 
     const [radarMode, setRadarMode] = useState<'buy' | 'sell'>(initialTradeMode);
     const [activeCategory, setActiveCategory] = useState<RadarCategory>(initialCategory);
@@ -1003,8 +1041,17 @@ export function TradeRadarModal({
                                                     : 'Kein Rücksetzer · Kurs im Trend'
                                             : null;
 
+                                    const waitSellReason =
+                                        radarMode === 'sell' && item.sellStatus === null && item.assetType === 'etf' && !item.effectiveSellLimit
+                                            ? item.etfDistribution === 'accumulating'
+                                                ? 'Thesaurierend · Buy & Hold'
+                                                : item.etfDistribution === 'distributing'
+                                                    ? 'Ausschüttend · Buy & Hold'
+                                                    : 'ETF · Buy & Hold'
+                                            : null;
+
                                     const primaryReason = radarMode === 'sell'
-                                        ? item.sellReason
+                                        ? (item.sellReason || waitSellReason)
                                         : activeCategory === 'buy_limit'
                                             ? item.buyLimitReason
                                             : activeCategory === 'below_sma200'
@@ -1048,10 +1095,7 @@ export function TradeRadarModal({
                                                     <div className="min-w-0 flex-1">
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
-                                                                onClose();
-                                                                navigate(`/stock/${encodeURIComponent(item.stock.id)}`);
-                                                            }}
+                                                            onClick={() => handleOpenStockDetail(item.stock.id, item.stock.symbol)}
                                                             className="text-left hover:text-primary transition-colors block w-full cursor-pointer"
                                                             title="Aktien-Details öffnen"
                                                         >
@@ -1204,10 +1248,15 @@ export function TradeRadarModal({
                                                 </div>
                                             </td>
 
-                                            {/* 4. Fairer Wert (direkt neben dem Kurs) */}
+                                            {/* 4. Fairer Wert (direkt neben dem Kurs — klickbar zum Fairen-Wert-Rechner) */}
                                             <td className="py-2.5 px-2.5 text-right align-middle whitespace-nowrap">
                                                 {item.fairValue > 0 ? (
-                                                    <div className="inline-flex flex-col items-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenFairValue(item.stock.symbol)}
+                                                        className="inline-flex flex-col items-end px-1.5 py-1 -mx-1.5 -my-1 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer text-right"
+                                                        title="Fairer Wert im Rechner öffnen & anpassen"
+                                                    >
                                                         <div className="flex items-center justify-end gap-1.5">
                                                             {(() => {
                                                                 const fwBadge =
@@ -1248,19 +1297,35 @@ export function TradeRadarModal({
                                                                 {item.fairValueGapPct >= 0 ? '+' : ''}{item.fairValueGapPct.toFixed(1)}%
                                                             </span>
                                                         )}
-                                                    </div>
+                                                    </button>
                                                 ) : (
-                                                    <span className="text-xs text-muted-foreground">—</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenFairValue(item.stock.symbol)}
+                                                        className="inline-flex items-center justify-end gap-1.5 px-1.5 py-1 -mx-1.5 -my-1 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer group/fw"
+                                                        title="Fairen Wert im Rechner berechnen"
+                                                    >
+                                                        <span className="w-[26px] h-5 inline-flex items-center justify-center rounded text-xs font-bold border bg-blue-500/15 text-blue-400 border-blue-500/35 leading-none shrink-0">
+                                                            <Plus className="size-3.5" />
+                                                        </span>
+                                                        <span className="text-xs font-semibold text-foreground/85 group-hover/fw:text-blue-400 min-w-[96px] text-right">
+                                                            FW berechnen
+                                                        </span>
+                                                    </button>
                                                 )}
                                             </td>
 
-                                            {/* 5. Kauflimit & Zonen (Kauf-Modus) ODER Verkaufslimit (Verkauf-Modus) — direkt neben Aktion */}
+                                            {/* 5. Kauflimit & Zonen (Kauf-Modus) ODER Verkaufslimit (Verkauf-Modus) — klickbar zum Ändern/Setzen im Fairen-Wert-Rechner */}
                                             <td className="py-2.5 px-2.5 text-right align-middle whitespace-nowrap">
                                                 {radarMode === 'buy' ? (
                                                     item.effectiveBuyLimit ? (
-                                                        <div
-                                                            className="inline-flex flex-col items-end"
-                                                            title={z1 && z2 && z3 ? `Zonen · Z1: ${z1.targetPrice.toFixed(2)} · Z2: ${z2.targetPrice.toFixed(2)} · Z3: ${z3.targetPrice.toFixed(2)} ${item.displayCurrency}` : undefined}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenFairValue(item.stock.symbol)}
+                                                            className="inline-flex flex-col items-end px-1.5 py-1 -mx-1.5 -my-1 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer text-right"
+                                                            title={z1 && z2 && z3
+                                                                ? `Kauflimit im Fairen-Wert-Rechner ändern · Z1: ${z1.targetPrice.toFixed(2)} · Z2: ${z2.targetPrice.toFixed(2)} · Z3: ${z3.targetPrice.toFixed(2)} ${item.displayCurrency}`
+                                                                : 'Kauflimit im Fairen-Wert-Rechner ändern'}
                                                         >
                                                             <div className="flex items-center justify-end gap-1.5">
                                                                 {modeMeta && (
@@ -1294,22 +1359,39 @@ export function TradeRadarModal({
                                                                         : `Abstand +${item.buyGapPct.toFixed(1)}%`}
                                                                 </span>
                                                             )}
-                                                        </div>
+                                                        </button>
                                                     ) : (
-                                                        <div className="inline-flex flex-col items-end">
-                                                            <span className="text-xs font-medium text-muted-foreground">Kein Limit</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenFairValue(item.stock.symbol)}
+                                                            className="inline-flex flex-col items-end px-1.5 py-1 -mx-1.5 -my-1 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer text-right group/limit"
+                                                            title="Kauflimit im Fairen-Wert-Rechner setzen"
+                                                        >
+                                                            <div className="flex items-center justify-end gap-1.5">
+                                                                <span className="w-[26px] h-5 inline-flex items-center justify-center rounded text-xs font-bold border bg-emerald-500/15 text-emerald-400 border-emerald-500/40 group-hover/limit:bg-emerald-500 group-hover/limit:text-white leading-none shrink-0 transition-colors">
+                                                                    <Plus className="size-3.5" />
+                                                                </span>
+                                                                <span className="text-xs font-semibold text-foreground/90 group-hover/limit:text-emerald-400 min-w-[96px] text-right transition-colors">
+                                                                    Limit setzen
+                                                                </span>
+                                                            </div>
                                                             {z1 && z2 && z3 && (
                                                                 <span
-                                                                    className="text-xs font-mono text-muted-foreground/80 mt-0.5 tabular-nums"
+                                                                    className="text-xs font-mono text-muted-foreground mt-0.5 tabular-nums"
                                                                     title={`Zone 1: ${z1.targetPrice.toFixed(2)} · Zone 2: ${z2.targetPrice.toFixed(2)} · Zone 3: ${z3.targetPrice.toFixed(2)} ${item.displayCurrency}`}
                                                                 >
                                                                     Z1 {z1.targetPrice.toFixed(0)} · Z2 {z2.targetPrice.toFixed(0)} · Z3 {z3.targetPrice.toFixed(0)}
                                                                 </span>
                                                             )}
-                                                        </div>
+                                                        </button>
                                                     )
                                                 ) : item.effectiveSellLimit ? (
-                                                    <div className="inline-flex flex-col items-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenFairValue(item.stock.symbol)}
+                                                        className="inline-flex flex-col items-end px-1.5 py-1 -mx-1.5 -my-1 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer text-right"
+                                                        title="Verkaufslimit im Fairen-Wert-Rechner ändern"
+                                                    >
                                                         <div className="flex items-center justify-end gap-1.5">
                                                             {(() => {
                                                                 const slBadge =
@@ -1355,9 +1437,35 @@ export function TradeRadarModal({
                                                                 {item.sellGapPct >= 0 ? `Erreicht · +${item.sellGapPct.toFixed(1)}%` : `${item.sellGapPct.toFixed(1)}%`}
                                                             </span>
                                                         )}
-                                                    </div>
+                                                    </button>
+                                                ) : item.assetType === 'etf' ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenFairValue(item.stock.symbol)}
+                                                        className="inline-flex items-center justify-end gap-1.5 px-1.5 py-1 -mx-1.5 -my-1 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer group/vk"
+                                                        title="ETF ohne festes VK-Limit (Buy & Hold) · Klick setzt optional ein Rebalancing-Ziel"
+                                                    >
+                                                        <span className="w-[26px] h-5 inline-flex items-center justify-center rounded text-xs font-bold border bg-emerald-500/15 text-emerald-400 border-emerald-500/35 group-hover/vk:bg-emerald-500 group-hover/vk:text-white leading-none shrink-0 transition-colors">
+                                                            <Plus className="size-3.5" />
+                                                        </span>
+                                                        <span className="text-xs font-semibold text-emerald-400 group-hover/vk:text-emerald-300 min-w-[96px] text-right transition-colors">
+                                                            Buy &amp; Hold
+                                                        </span>
+                                                    </button>
                                                 ) : (
-                                                    <span className="text-xs font-medium text-muted-foreground">Kein VK-Limit</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenFairValue(item.stock.symbol)}
+                                                        className="inline-flex items-center justify-end gap-1.5 px-1.5 py-1 -mx-1.5 -my-1 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer group/vk"
+                                                        title="Verkaufslimit im Fairen-Wert-Rechner setzen"
+                                                    >
+                                                        <span className="w-[26px] h-5 inline-flex items-center justify-center rounded text-xs font-bold border bg-orange-500/15 text-orange-400 border-orange-500/40 group-hover/vk:bg-orange-500 group-hover/vk:text-white leading-none shrink-0 transition-colors">
+                                                            <Plus className="size-3.5" />
+                                                        </span>
+                                                        <span className="text-xs font-semibold text-foreground/90 group-hover/vk:text-orange-400 min-w-[96px] text-right transition-colors">
+                                                            VK-Limit setzen
+                                                        </span>
+                                                    </button>
                                                 )}
                                             </td>
 
@@ -1386,10 +1494,7 @@ export function TradeRadarModal({
 
                                                     <button
                                                         type="button"
-                                                        onClick={() => {
-                                                            onClose();
-                                                            navigate(`/fair-value?stock=${encodeURIComponent(item.stock.symbol)}&from=calculator`);
-                                                        }}
+                                                        onClick={() => handleOpenFairValue(item.stock.symbol)}
                                                         className="h-7 w-7 p-0 rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground inline-flex items-center justify-center leading-none transition-colors cursor-pointer shrink-0"
                                                         title="Im Fairen-Wert-Rechner öffnen"
                                                         aria-label="Fairer Wert öffnen"

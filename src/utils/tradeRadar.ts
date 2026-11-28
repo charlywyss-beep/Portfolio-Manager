@@ -23,9 +23,39 @@ export type RadarBuyZone = 1 | 2 | 3 | null;
 export type RadarSellStatus = 'approaching' | 'reached' | null;
 export type RadarProfileMode = 'conservative' | 'quality' | 'risk' | 'manual';
 
+export interface RadarViewSnapshot {
+    mode: 'buy' | 'sell';
+    sourceFilter: string;
+    category: RadarCategory;
+    highlightSymbol?: string;
+}
+
+export function buildRadarReturnUrl(basePath: string, snapshot: RadarViewSnapshot): string {
+    const cleanBase = basePath && basePath.startsWith('/') ? basePath.split('?')[0] : '/calculator';
+    const params = new URLSearchParams();
+    params.set('radar', 'true');
+    params.set('radarMode', snapshot.mode);
+    if (snapshot.sourceFilter) params.set('radarSource', snapshot.sourceFilter);
+    if (snapshot.category) params.set('radarCategory', snapshot.category);
+    if (snapshot.highlightSymbol) params.set('radarHighlight', snapshot.highlightSymbol);
+    return `${cleanBase}?${params.toString()}`;
+}
+
+export function parseRadarReturnParams(searchParams: URLSearchParams): RadarViewSnapshot | null {
+    if (searchParams.get('radar') !== 'true') return null;
+    const rawMode = searchParams.get('radarMode');
+    const mode: 'buy' | 'sell' = rawMode === 'sell' ? 'sell' : 'buy';
+    const sourceFilter = searchParams.get('radarSource') || (mode === 'sell' ? 'portfolio_all' : 'all');
+    const rawCat = searchParams.get('radarCategory') as RadarCategory | null;
+    const category: RadarCategory = rawCat || 'all_assets';
+    const highlightSymbol = searchParams.get('radarHighlight') || undefined;
+    return { mode, sourceFilter, category, highlightSymbol };
+}
+
 export interface TradeRadarItem {
     stock: Stock;
     assetType: 'stock' | 'etf';
+    etfDistribution?: 'accumulating' | 'distributing';
     inPortfolio: boolean;
     shares: number;
     buyPriceAvg: number | null;
@@ -524,7 +554,19 @@ export function buildTradeRadar(params: {
                     (drawdownFrom52wHighPct === null || drawdownFrom52wHighPct > -10);
 
                 if (notInPullback) {
-                    if (fairValueGapPct !== null && fairValueGapPct >= 45) {
+                    if (assetType === 'etf') {
+                        // Breite ETFs steigen langfristig immer wieder auf neue Hochs:
+                        // Ohne manuelles VK-Limit kein Fehlalarm wegen Buchgewinn am 52W-Hoch, sondern erst bei echter Index-Überhitzung
+                        if (fairValueGapPct !== null && fairValueGapPct >= 45) {
+                            sellStatus = 'reached';
+                            sellSource = 'valuation';
+                            sellReason = `ETF stark überhitzt · +${fairValueGapPct.toFixed(0)} % über FW · Rebalancing prüfen`;
+                        } else if (fairValueGapPct !== null && fairValueGapPct >= 30) {
+                            sellStatus = 'approaching';
+                            sellSource = 'valuation';
+                            sellReason = `ETF überhitzt · +${fairValueGapPct.toFixed(0)} % über FW · Rebalancing prüfen`;
+                        }
+                    } else if (fairValueGapPct !== null && fairValueGapPct >= 45) {
                         sellStatus = 'reached';
                         sellSource = 'valuation';
                         sellReason = `Stark überbewertet · +${fairValueGapPct.toFixed(0)} % über Fairer Wert`;
@@ -586,6 +628,7 @@ export function buildTradeRadar(params: {
         items.push({
             stock,
             assetType,
+            etfDistribution: isEtfItem ? (smartConservative as any).etfDistribution : undefined,
             inPortfolio,
             shares,
             buyPriceAvg,
